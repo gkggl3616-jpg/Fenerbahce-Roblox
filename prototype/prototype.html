@@ -1,0 +1,375 @@
+<title>Fener Kariyer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Düzen: üstte sabit oyuncu çubuğu, altında sekmeli oyun ekranları; tek koyu lacivert dünya, sarı vurgu */
+:root{
+  --navy:#0b1747; --navy-2:#112063; --navy-3:#1a2d86; --ink:#050b26;
+  --yellow:#ffe600; --yellow-d:#c9b800; --text:#eef1ff; --muted:#9aa6df;
+  --good:#3ddc84; --bad:#ff6b6b; --line:rgba(255,255,255,.12);
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'Barlow',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-top:16px}
+h1,h2,h3{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
+h2{font-size:28px;font-weight:800}
+h3{font-size:19px;font-weight:700}
+.muted{color:var(--muted)}
+.label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--muted);font-weight:600}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+/* üst çubuk */
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;background:var(--navy);border:1px solid var(--line);padding:12px 16px;border-radius:10px;
+  position:sticky;top:8px;z-index:5}
+.badge{width:48px;height:56px;background:var(--yellow);color:var(--navy);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:26px;
+  clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%)}
+.who b{font-family:var(--f-display);font-size:22px;text-transform:uppercase;letter-spacing:.04em;display:block;line-height:1.1}
+.xp{height:8px;background:var(--ink);border-radius:4px;margin-top:6px;overflow:hidden}
+.xp i{display:block;height:100%;background:var(--yellow);width:0;transition:width .4s}
+.coins{font-family:var(--f-display);font-size:26px;font-weight:800;color:var(--yellow);text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+/* sekmeler */
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font-family:var(--f-display);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--yellow);border-bottom-color:var(--yellow)}
+.tabs button:disabled{opacity:.35;cursor:not-allowed}
+.panel{display:flex;flex-direction:column;gap:16px}
+.panel[hidden]{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.box{background:var(--navy);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.btn{background:var(--yellow);color:var(--navy);border:0;border-radius:6px;padding:10px 16px;font-family:var(--f-display);font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.06em}
+.btn:hover:not(:disabled){background:#fff27a}
+.btn:disabled{background:var(--navy-3);color:var(--muted);cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid var(--yellow);color:var(--yellow)}
+input,select{background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:10px 12px;font:inherit;width:100%}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-family:var(--f-display);font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.05em}
+.chip[aria-pressed=true]{background:var(--yellow);color:var(--navy);border-color:var(--yellow)}
+.warn{border-left:3px solid var(--yellow);padding:6px 12px;background:rgba(255,230,0,.08);font-size:14px}
+/* statlar */
+.stat{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.stat .bar{grid-column:1/-1;height:10px;background:var(--ink);border-radius:5px;overflow:hidden}
+.stat .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--navy-3),var(--yellow))}
+.stat b{font-family:var(--f-display);font-size:19px;text-transform:uppercase;letter-spacing:.04em}
+.num{font-variant-numeric:tabular-nums}
+/* skill zinciri */
+.chain{display:flex;flex-direction:column;gap:0}
+.skill{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:10px 0;position:relative}
+.skill+.skill::before{content:"";position:absolute;left:17px;top:-12px;height:24px;width:2px;background:var(--line)}
+.skill.open+.skill::before{background:var(--yellow)}
+.node{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;background:var(--ink)}
+.skill.open .node{background:var(--yellow);color:var(--navy);border-color:var(--yellow)}
+.skill.ready .node{border-color:var(--yellow);color:var(--yellow)}
+.skill small{display:block;color:var(--muted)}
+.skill .btn{font-size:15px;padding:6px 12px}
+/* antrenman */
+.drill{display:grid;gap:8px}
+.prog{height:12px;background:var(--ink);border-radius:6px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--good)}
+/* maç */
+canvas{width:100%;height:auto;aspect-ratio:2/1;border-radius:8px;background:#0f6b3a;display:block;max-width:100%}
+.score{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-display);font-weight:800;font-size:30px;text-transform:uppercase}
+.score span:nth-child(2){color:var(--yellow);font-size:40px}
+.feed{max-height:130px;overflow:auto;font-size:14px;display:flex;flex-direction:column;gap:4px}
+/* tablo */
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.1em;font-size:13px;color:var(--muted);font-weight:600}
+tr.me td{background:rgba(255,230,0,.14);color:var(--yellow);font-weight:600}
+.tw{overflow-x:auto}
+.rw{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.rw .lv{font-family:var(--f-display);font-size:24px;font-weight:800;color:var(--yellow)}
+.tag{font-size:12px;font-family:var(--f-display);letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--yellow);color:var(--navy);font-family:var(--f-display);font-weight:800;font-size:18px;padding:10px 18px;border-radius:6px;z-index:20;text-transform:uppercase}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:520px){.hud{grid-template-columns:auto 1fr}.coins{grid-column:1/-1;text-align:left}}
+</style>
+
+<div class="wrap">
+  <div class="note" style="padding-top:4px">Roblox oyununun görsel prototipi. Tüm veriler örnektir, ilerleme sayfa kapanınca sıfırlanır.</div>
+
+  <header class="hud" id="hud" hidden>
+    <div class="badge" id="badge">F</div>
+    <div class="who">
+      <b id="hName">-</b>
+      <span class="muted" id="hSub">-</span>
+      <div class="xp"><i id="xpBar"></i></div>
+    </div>
+    <div><div class="label">Bakiye</div><div class="coins" id="coins">0</div></div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" aria-selected="true" data-t="create">Kariyer</button>
+    <button role="tab" data-t="train" disabled>Antrenman</button>
+    <button role="tab" data-t="skills" disabled>Yetenekler</button>
+    <button role="tab" data-t="match" disabled>Maç</button>
+    <button role="tab" data-t="rank" disabled>Sıralama</button>
+    <button role="tab" data-t="rewards" disabled>Ödüller</button>
+  </nav>
+
+  <!-- KARİYER KURULUMU -->
+  <section class="panel" id="p-create">
+    <h2>Kariyerine başla</h2>
+    <div class="grid">
+      <div class="box">
+        <label class="label" for="inName">Futbolcu adı</label>
+        <input id="inName" maxlength="16" value="Emre Kadıköy">
+        <label class="label" for="inClub">Başlangıç kulübü</label>
+        <select id="inClub">
+          <option>Moda Gençlik SK</option><option>Kalamış Spor</option><option>Fikirtepe 1967</option><option>Acıbadem Belediyespor</option>
+        </select>
+        <div class="label">Mevki</div>
+        <div class="chips" id="posChips">
+          <button class="chip" aria-pressed="false">Kaleci</button>
+          <button class="chip" aria-pressed="false">Defans</button>
+          <button class="chip" aria-pressed="false">Orta Saha</button>
+          <button class="chip" aria-pressed="true">Forvet</button>
+        </div>
+        <div class="warn">Mevki bir kez seçilir ve kariyer boyunca değişmez. Kulüp ise transferlerle değişir.</div>
+        <button class="btn" id="startBtn">Kariyere başla</button>
+      </div>
+      <div class="box">
+        <h3>Yol haritası</h3>
+        <ol class="muted" style="margin:0;padding-left:20px;display:grid;gap:6px">
+          <li>Küçük bir kulüpte ilk maçlarını yap</li>
+          <li>Antrenmanla para kazan, yetenek aç</li>
+          <li>Seviye atla, ödülleri topla</li>
+          <li>Büyük kulüplerden teklif al</li>
+          <li>Fenerbahçe'ye imza at ve dünya sıralamasına gir</li>
+        </ol>
+        <div class="note">Rakipler yapay zekalı botlardır. Sıralama tablosu sunucuda tutulur, maçlar tek oyunculu oynanır.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANTRENMAN -->
+  <section class="panel" id="p-train" hidden>
+    <h2>Antrenman sahası</h2>
+    <div class="grid" id="drills"></div>
+    <div class="box">
+      <h3>Özellikler</h3>
+      <div class="grid" id="stats"></div>
+      <div class="note">Her özellik 10. seviyeye kadar paralı olarak geliştirilir.</div>
+    </div>
+  </section>
+
+  <!-- YETENEKLER -->
+  <section class="panel" id="p-skills" hidden>
+    <h2>Yetenek ağacı</h2>
+    <div class="note">Her zincirde bir sonraki yetenek için öncekini açman ve seviye şartını sağlaman gerekir.</div>
+    <div class="grid" id="chains"></div>
+  </section>
+
+  <!-- MAÇ -->
+  <section class="panel" id="p-match" hidden>
+    <h2>Maç günü</h2>
+    <div class="box">
+      <div class="score"><span id="mHome">Ben</span><span id="mScore">0 - 0</span><span id="mAway">Bot FC</span></div>
+      <div class="chips" style="justify-content:space-between;align-items:center">
+        <span class="label" id="mClock">0'</span>
+        <span class="label" id="mOpp"></span>
+      </div>
+      <canvas id="pitch" width="800" height="400"></canvas>
+      <div class="feed" id="feed"></div>
+      <button class="btn" id="playBtn">Maça çık</button>
+    </div>
+  </section>
+
+  <!-- SIRALAMA -->
+  <section class="panel" id="p-rank" hidden>
+    <h2>Dünya sıralaması</h2>
+    <div class="box">
+      <div class="chips" id="rankChips">
+        <button class="chip" aria-pressed="true" data-r="all">Dünya</button>
+        <button class="chip" aria-pressed="false" data-r="pos">Mevkim</button>
+      </div>
+      <div class="tw"><table><thead><tr><th>#</th><th>Oyuncu</th><th>Kulüp</th><th>Mevki</th><th>Güç</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+      <div class="note">Örnek oyuncular. Gerçek sürümde sunucu verisinden gelir.</div>
+    </div>
+  </section>
+
+  <!-- ÖDÜLLER -->
+  <section class="panel" id="p-rewards" hidden>
+    <h2>Seviye ödülleri</h2>
+    <div class="box" id="rewardList"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var S = {created:false,name:'',club:'',pos:'Forvet',level:1,xp:0,coins:100,stats:{hiz:1,pas:1,defans:1,sut:1},skills:{},claimed:{},busy:false,matches:0,wins:0};
+  var $ = function(id){return document.getElementById(id)};
+  var STAT_NAMES = {hiz:'Koşu hızı',pas:'Çalım ve pas',defans:'Defans gücü',sut:'Şut gücü'};
+  var DRILLS = [
+    {k:'hiz',n:'Sprint serisi',d:'Koşu hızı için',pay:35},
+    {k:'pas',n:'Slalom ve çalım',d:'Çalım atma için',pay:30},
+    {k:'defans',n:'Top kapma çalışması',d:'Defans gücü için',pay:30},
+    {k:'sut',n:'Şut çalışması',d:'Şut gücü için',pay:40}
+  ];
+  var CHAINS = {
+    'Şut yetenekleri':[
+      {n:'Plase şut',lv:2,c:150},{n:'Füze şut',lv:4,c:350},{n:'Röveşata',lv:6,c:700},{n:'Serbest vuruş uzmanı',lv:8,c:1200}],
+    'Çalım yetenekleri':[
+      {n:'Çalım: Marsilya',lv:2,c:150},{n:'Çalım: Nutmeg',lv:4,c:350},{n:'Çalım: Rabona',lv:6,c:700},{n:'Çalım: Elastico',lv:8,c:1200}],
+    'Özel güçler':[
+      {n:'Çifte hız (turbo)',lv:3,c:300},{n:'Demir adam (dayanıklılık)',lv:5,c:600},{n:'Kaptan lideri (takım bonusu)',lv:7,c:1000},{n:'Efsane an (yavaş çekim şut)',lv:10,c:2000}]
+  };
+  var REWARDS = [
+    {lv:2,t:'+200 bakiye'},{lv:3,t:'Yeni forma: Deplasman'},{lv:4,t:'+500 bakiye'},{lv:5,t:'Gol sevinci: Kol kavuşturma'},
+    {lv:6,t:'Kulüp transfer teklifi (orta lig)'},{lv:7,t:'+1000 bakiye'},{lv:8,t:'Altın krampon'},{lv:9,t:'Üst lig transfer teklifi'},{lv:10,t:'Fenerbahçe teklifi ve kaptan bandı'}
+  ];
+  var BOTS = [
+    ['Mert Yıldırım','Fenerbahçe','Forvet',92],['L. Santos','Kuzey Yıldızları','Orta Saha',90],['K. Okafor','Anadolu Kartalları','Defans',88],
+    ['Arda Tunç','Fenerbahçe','Orta Saha',86],['J. Müller','Rhein FC','Kaleci',84],['Deniz Aksoy','Boğaz SK','Forvet',79],
+    ['T. Silva','Atlantik','Defans',74],['Can Er','Kalamış Spor','Orta Saha',58],['Yusuf Ay','Moda Gençlik SK','Forvet',47],['Ece Bal','Fikirtepe 1967','Defans',41]
+  ];
+  var XP_NEED = function(l){return 60 + l*40};
+  var toastT;
+  function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},1800)}
+  function power(){var s=S.stats;return Math.round(30+(s.hiz+s.pas+s.defans+s.sut)*3+S.level*4)}
+  function cost(k){return 40*S.stats[k]*S.stats[k]/1.0|0}
+
+  function renderHud(){
+    $('hud').hidden=!S.created;
+    $('badge').textContent=S.name.charAt(0).toUpperCase()||'F';
+    $('hName').textContent=S.name+' · '+S.pos;
+    $('hSub').textContent=S.club+' · Seviye '+S.level+' · Güç '+power();
+    $('coins').textContent=S.coins.toLocaleString('tr-TR');
+    $('xpBar').style.width=Math.min(100,S.xp/XP_NEED(S.level)*100)+'%';
+  }
+  function addXp(n){
+    if(S.level>=10)return;S.xp+=n;
+    while(S.level<10&&S.xp>=XP_NEED(S.level)){S.xp-=XP_NEED(S.level);S.level++;toast('Seviye '+S.level+'!');}
+    if(S.level>=10)S.xp=0;
+  }
+  function renderDrills(){
+    var h='';DRILLS.forEach(function(d){
+      h+='<div class="box drill"><h3>'+d.n+'</h3><span class="muted">'+d.d+' · +'+d.pay+' bakiye</span><div class="prog"><i id="pr-'+d.k+'"></i></div>'+
+      '<button class="btn" data-drill="'+d.k+'">Antrenman yap</button></div>';
+    });$('drills').innerHTML=h;
+  }
+  function renderStats(){
+    var h='';Object.keys(STAT_NAMES).forEach(function(k){
+      var v=S.stats[k],max=v>=10;
+      h+='<div class="stat"><b>'+STAT_NAMES[k]+'</b><span class="num">'+v+' / 10</span><div class="bar"><i style="width:'+v*10+'%"></i></div>'+
+      '<span class="muted num">'+(max?'En üst seviye':'Sonraki: '+cost(k)+' bakiye')+'</span>'+
+      '<button class="btn" style="justify-self:end;font-size:15px;padding:6px 12px" data-up="'+k+'" '+(max||S.coins<cost(k)?'disabled':'')+'>Geliştir</button></div>';
+    });$('stats').innerHTML=h;
+  }
+  function renderChains(){
+    var h='';Object.keys(CHAINS).forEach(function(cn){
+      h+='<div class="box"><h3>'+cn+'</h3><div class="chain">';
+      CHAINS[cn].forEach(function(s,i){
+        var key=cn+i,open=!!S.skills[key],prev=i===0||S.skills[cn+(i-1)],lvOk=S.level>=s.lv,can=!open&&prev&&lvOk&&S.coins>=s.c;
+        var why=open?'Açık':!prev?'Önce önceki yeteneği aç':!lvOk?'Seviye '+s.lv+' gerekli':s.c+' bakiye';
+        h+='<div class="skill '+(open?'open':(prev&&lvOk?'ready':''))+'"><div class="node">'+(i+1)+'</div><div><b>'+s.n+'</b><small>'+why+'</small></div>'+
+        (open?'<span class="tag">Açık</span>':'<button class="btn" data-skill="'+key+'" data-cn="'+cn+'" data-i="'+i+'" '+(can?'':'disabled')+'>Aç</button>')+'</div>';
+      });h+='</div></div>';
+    });$('chains').innerHTML=h;
+  }
+  function renderRewards(){
+    var h='';REWARDS.forEach(function(r){
+      var ok=S.level>=r.lv,got=S.claimed[r.lv];
+      h+='<div class="rw"><span class="lv">'+r.lv+'</span><span>'+r.t+'</span>'+
+      (got?'<span class="tag">Alındı</span>':'<button class="btn" data-claim="'+r.lv+'" '+(ok?'':'disabled')+'>'+(ok?'Al':'Kilitli')+'</button>')+'</div>';
+    });$('rewardList').innerHTML=h;
+  }
+  var rankMode='all';
+  function renderRank(){
+    var rows=BOTS.map(function(b){return {n:b[0],c:b[1],p:b[2],v:b[3],me:false}});
+    rows.push({n:S.name,c:S.club,p:S.pos,v:power(),me:true});
+    if(rankMode==='pos')rows=rows.filter(function(r){return r.p===S.pos});
+    rows.sort(function(a,b){return b.v-a.v});
+    $('rankBody').innerHTML=rows.map(function(r,i){return '<tr class="'+(r.me?'me':'')+'"><td class="num">'+(i+1)+'</td><td>'+r.n+(r.me?' (sen)':'')+'</td><td>'+r.c+'</td><td>'+r.p+'</td><td class="num">'+r.v+'</td></tr>'}).join('');
+  }
+  function renderAll(){renderHud();renderStats();renderChains();renderRewards();renderRank()}
+
+  // sekmeler
+  function show(t){
+    document.querySelectorAll('#tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.t===t)});
+    document.querySelectorAll('.panel').forEach(function(p){p.hidden=p.id!=='p-'+t});
+    if(t==='match')$('mHome').textContent=S.name.split(' ')[0];
+    renderAll();
+  }
+  $('tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&!b.disabled)show(b.dataset.t)});
+
+  // kurulum
+  $('posChips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b||S.created)return;
+    document.querySelectorAll('#posChips .chip').forEach(function(c){c.setAttribute('aria-pressed',c===b)})});
+  $('startBtn').addEventListener('click',function(){
+    var n=$('inName').value.trim();if(!n){toast('Bir isim yaz');return}
+    S.name=n;S.club=$('inClub').value;S.pos=document.querySelector('#posChips [aria-pressed=true]').textContent;
+    S.created=true;
+    document.querySelectorAll('#tabs button').forEach(function(b){b.disabled=false});
+    $('inName').disabled=$('inClub').disabled=true;$('startBtn').disabled=true;$('startBtn').textContent='Kariyer başladı';
+    document.querySelectorAll('#posChips .chip').forEach(function(c){c.disabled=true});
+    toast('Hoş geldin '+n);show('train');
+  });
+
+  // antrenman, geliştirme, yetenek, ödül
+  document.addEventListener('click',function(e){
+    var d=e.target.closest('[data-drill]');
+    if(d&&!S.busy){
+      var k=d.dataset.drill,dr=DRILLS.filter(function(x){return x.k===k})[0],bar=$('pr-'+k),p=0;S.busy=true;d.disabled=true;
+      var iv=setInterval(function(){p+=5;bar.style.width=p+'%';
+        if(p>=100){clearInterval(iv);S.busy=false;d.disabled=false;bar.style.width='0';
+          var pay=dr.pay+S.level*3;S.coins+=pay;addXp(25);toast('+'+pay+' bakiye');renderAll();}},100);
+      return;
+    }
+    var u=e.target.closest('[data-up]');
+    if(u){var kk=u.dataset.up,c=cost(kk);if(S.coins>=c&&S.stats[kk]<10){S.coins-=c;S.stats[kk]++;addXp(15);renderAll();}return}
+    var s=e.target.closest('[data-skill]');
+    if(s){var sk=CHAINS[s.dataset.cn][+s.dataset.i];if(S.coins>=sk.c){S.coins-=sk.c;S.skills[s.dataset.skill]=true;toast(sk.n+' açıldı');renderAll();}return}
+    var r=e.target.closest('[data-claim]');
+    if(r){var lv=+r.dataset.claim;S.claimed[lv]=true;if(lv===2)S.coins+=200;if(lv===4)S.coins+=500;if(lv===7)S.coins+=1000;toast('Ödül alındı');renderAll();return}
+    var rc=e.target.closest('#rankChips [data-r]');
+    if(rc){rankMode=rc.dataset.r;document.querySelectorAll('#rankChips .chip').forEach(function(c){c.setAttribute('aria-pressed',c===rc)});renderRank()}
+  });
+
+  // maç
+  var cv=$('pitch'),cx=cv.getContext('2d'),mi=null,dots=[],ball={x:400,y:200,tx:400,ty:200};
+  function initDots(){dots=[];for(var i=0;i<22;i++){dots.push({x:80+Math.random()*640,y:30+Math.random()*340,team:i<11?0:1})}}
+  function drawPitch(){
+    cx.clearRect(0,0,800,400);cx.fillStyle='#0f6b3a';cx.fillRect(0,0,800,400);
+    for(var i=0;i<8;i++){if(i%2){cx.fillStyle='rgba(255,255,255,.04)';cx.fillRect(i*100,0,100,400)}}
+    cx.strokeStyle='rgba(255,255,255,.7)';cx.lineWidth=2;cx.strokeRect(10,10,780,380);
+    cx.beginPath();cx.moveTo(400,10);cx.lineTo(400,390);cx.stroke();
+    cx.beginPath();cx.arc(400,200,50,0,7);cx.stroke();
+    cx.strokeRect(10,110,100,180);cx.strokeRect(690,110,100,180);
+    dots.forEach(function(d){d.x+=(Math.random()-.5)*6;d.y+=(Math.random()-.5)*6;d.x=Math.max(20,Math.min(780,d.x));d.y=Math.max(20,Math.min(380,d.y));
+      cx.fillStyle=d.team?'#e04848':'#ffe600';cx.beginPath();cx.arc(d.x,d.y,7,0,7);cx.fill()});
+    ball.x+=(ball.tx-ball.x)*.12;ball.y+=(ball.ty-ball.y)*.12;
+    cx.fillStyle='#fff';cx.beginPath();cx.arc(ball.x,ball.y,5,0,7);cx.fill();
+  }
+  function log(t){var d=document.createElement('div');d.textContent=t;$('feed').prepend(d)}
+  function poisson(l){var L=Math.exp(-l),k=0,p=1;do{k++;p*=Math.random()}while(p>L);return k-1}
+  initDots();drawPitch();
+  $('playBtn').addEventListener('click',function(){
+    if(mi)return;
+    var botP=Math.max(30,power()+Math.round((Math.random()-.5)*30)-(S.matches===0?-8:0));
+    var names=['Bot SK','Bot Spor','Bot Belediye','Bot Gençlik'];var opp=names[S.matches%4];
+    $('mAway').textContent=opp;$('mOpp').textContent='Rakip gücü '+botP;$('feed').innerHTML='';
+    var mine=power(),hg=Math.min(6,poisson(1.1*mine/botP)),ag=Math.min(5,poisson(1.1*botP/mine*.8));
+    var ev=[];for(var i=0;i<hg;i++)ev.push({m:5+Math.floor(Math.random()*85),h:1});
+    for(var j=0;j<ag;j++)ev.push({m:5+Math.floor(Math.random()*85),h:0});
+    ev.sort(function(a,b){return a.m-b.m});
+    var min=0,sh=0,sa=0;$('playBtn').disabled=true;$('mScore').textContent='0 - 0';
+    mi=setInterval(function(){
+      min+=2;$('mClock').textContent=min+"'";
+      if(Math.random()<.4){var d=dots[Math.floor(Math.random()*22)];ball.tx=d.x;ball.ty=d.y}
+      ev.filter(function(x){return x.m<=min&&!x.done}).forEach(function(x){x.done=true;
+        if(x.h){sh++;log(x.m+"' GOL! "+S.name+" fileleri havalandırdı")}else{sa++;log(x.m+"' "+opp+" gol attı")}
+        $('mScore').textContent=sh+' - '+sa});
+      drawPitch();
+      if(min>=90){clearInterval(mi);mi=null;$('playBtn').disabled=false;S.matches++;
+        var res=sh>sa?'Galibiyet':sh===sa?'Beraberlik':'Mağlubiyet',pay=sh>sa?150:sh===sa?70:30;
+        if(sh>sa)S.wins++;S.coins+=pay;addXp(sh>sa?60:30);log('Maç bitti: '+res+' · +'+pay+' bakiye');toast(res);renderAll();}
+    },110);
+  });
+  show('create');
+})();
+</script>
