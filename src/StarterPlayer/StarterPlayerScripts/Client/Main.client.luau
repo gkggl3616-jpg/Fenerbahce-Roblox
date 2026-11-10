@@ -160,6 +160,8 @@ end
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
+local enterPitch: () -> ()
+
 local function buildLobby()
 	-- Oyuncu kartı (sol üst)
 	local card, cc = Components.Panel({ Name = "PlayerCard", Size = UDim2.fromOffset(340, 104), Position = UDim2.fromOffset(20, 20) })
@@ -209,6 +211,7 @@ local function buildLobby()
 		Title = "Kariyer Merkezi",
 	})
 	menu.Parent = gui
+	refs.menu = menu
 	local holder = Instance.new("Frame")
 	holder.BackgroundTransparency = 1
 	holder.Position = UDim2.fromOffset(0, 40)
@@ -221,10 +224,8 @@ local function buildLobby()
 		b.Parent = holder
 		table.insert(buttons, b)
 	end
-	add("Maça çık", "Primary", nil, function()
-		UIMotion.Wipe(function()
-			Components.Toast("info", "Maç sistemi 5. adımda geliyor.")
-		end)
+	add("Deneme sahası", "Primary", nil, function()
+		enterPitch()
 	end)
 	add("Pası geliştir", "Secondary", nil, function()
 		Remotes.Get("UpgradeStat"):FireServer("Pas")
@@ -247,6 +248,7 @@ local function buildLobby()
 	})
 	tasks.Position = UDim2.new(1, -20, 1, -234)
 	tasks.Parent = gui
+	refs.tasks = tasks
 	local th = Instance.new("Frame")
 	th.BackgroundTransparency = 1
 	th.Position = UDim2.fromOffset(0, 40)
@@ -303,6 +305,43 @@ Remotes.Get("Notify").OnClientEvent:Connect(function(kind, text)
 end)
 
 local Creator = require(script.Parent.Screens.Creator)
+local PlayerController = require(script.Parent.Controllers.PlayerController)
+
+local controllerStarted = false
+local function exitPitch()
+	UIMotion.Wipe(function()
+		PlayerController.SetHud(false)
+		refs.menu.Visible = true
+		refs.tasks.Visible = true
+		UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
+		UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
+	end)
+end
+
+-- Deneme sahası: menüler kapanır, saha içi arayüz açılır, oyuncu çime ışınlanır
+enterPitch = function()
+	UIMotion.Wipe(function()
+		refs.menu.Visible = false
+		refs.tasks.Visible = false
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			hrp.CFrame = CFrame.lookAt(Vector3.new(0, 4, 70), Vector3.new(0, 4, 140))
+		end
+		PlayerController.SetHud(true)
+	end)
+end
+
+local function startController()
+	if controllerStarted then
+		PlayerController.Rebind()
+		return
+	end
+	controllerStarted = true
+	PlayerController.Start(gui, function()
+		return state.data
+	end, exitPitch)
+end
 
 -- Ekran ölçeği: 1600x900 tasarım ölçüsüne göre küçük ekranlarda arayüz orantılı küçülür
 local uiScale = Instance.new("UIScale")
@@ -323,6 +362,7 @@ showLoading(function()
 	if data.created then
 		buildLobby()
 		render(data)
+		startController()
 	else
 		Creator.Open(gui, function()
 			buildLobby()
@@ -331,7 +371,8 @@ showLoading(function()
 				state.data = nil
 				render(d)
 			end
-			Components.Toast("success", "Kariyerin başladı. Mahalle sahasında görüşürüz.")
+			Components.Toast("success", "Kariyerin başladı. Deneme sahasında hareketleri dene.")
+			task.delay(1, startController) -- görünüm sunucuda uygulandıktan sonra eklemlere bağlan
 		end)
 	end
 end)

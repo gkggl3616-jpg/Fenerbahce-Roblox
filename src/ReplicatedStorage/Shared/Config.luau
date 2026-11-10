@@ -265,6 +265,41 @@ Config.Economy = { StartCoins = 100, StartClubFunds = 0 }
 Config.Remote = { MinInterval = 0.2 } -- aynı oyuncudan iki istek arası en az süre
 Config.Data = { AutoSave = 90, Retries = 4, LockTimeout = 600 }
 
+-- Hareket (stud/saniye). Özellikler bu değerleri sonraki adımlarda ölçekler.
+Config.Movement = {
+	Run = 17,
+	Sprint = 25,
+	AccelTime = 0.45, -- 0'dan tam hıza
+	DecelTime = 0.25,
+	TurnLoss = 0.5, -- ani dönüşte kalan hız oranı
+	TurnDot = -0.25, -- bu değerin altındaki yön değişimi "ani dönüş" sayılır
+	StaminaMax = 100,
+	SprintDrain = 20, -- saniyede
+	Regen = 13,
+	TiredFactor = 0.75, -- dayanıklılık bitince hız çarpanı
+	TiredUntil = 25, -- bu değere dolana kadar yorgun kalır
+	FovBase = 70,
+	FovSprint = 75,
+	JumpHeight = 6.5,
+}
+
+-- Tuşlar (PC). Mobilde aynı eylemler ekrandaki butonlardadır.
+Config.Keys = {
+	Sprint = Enum.KeyCode.LeftShift,
+	Shoot = Enum.KeyCode.F,
+	Pass = Enum.KeyCode.E,
+	Dribble = Enum.KeyCode.Q,
+	Jump = Enum.KeyCode.Space,
+	Tackle = Enum.KeyCode.C,
+	Special = Enum.KeyCode.R,
+	Celebrate = Enum.KeyCode.G,
+}
+
+-- Geliştirme ayarları. Yayından önce UnlockAllActions kapatılır.
+Config.Debug = {
+	UnlockAllActions = true, -- yetenek kilidine bakmadan bütün hareketler denenebilir
+}
+
 -- Genel güç (sıralama ve teklif şartı için)
 function Config.Power(stats: { [string]: number }, level: number): number
 	local sum = 0

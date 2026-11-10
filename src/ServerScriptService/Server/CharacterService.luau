@@ -388,6 +388,15 @@ function CharacterService.BuildStudio()
 		return p
 	end
 	part(Vector3.new(80, 1, 80), CFrame.new(0, -0.5, 0), Color3.fromRGB(14, 26, 85))
+	-- Stüdyonun önünde deneme çimi (hareket ve animasyonları sınamak için)
+	local grass = part(Vector3.new(240, 1, 160), CFrame.new(0, -0.52, 120), Color3.fromRGB(47, 143, 67), Enum.Material.Grass)
+	grass.Name = "TestPitch"
+	for i = -5, 5 do
+		if i % 2 == 0 then
+			part(Vector3.new(21.8, 0.02, 160), CFrame.new(i * 21.8, -0.01, 120), Color3.fromRGB(56, 158, 78), Enum.Material.Grass).CanCollide =
+				false
+		end
+	end
 	local disc = part(Vector3.new(0.2, 14, 14), CFrame.new(0, 0.02, 0) * CFrame.Angles(0, 0, math.rad(90)), C.Navy)
 	disc.Shape = Enum.PartType.Cylinder
 	local ring = part(Vector3.new(0.22, 14.6, 14.6), CFrame.new(0, 0, 0) * CFrame.Angles(0, 0, math.rad(90)), C.Yellow, Enum.Material.Neon)
