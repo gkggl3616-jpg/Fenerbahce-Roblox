@@ -1,141 +1,71 @@
-# Fener Kariyer: Roblox Futbol Kariyer Oyunu
+# Fener Kariyer: Oyun Tasarımı
 
-Bu belge iki parçadan oluşuyor: (1) oyun tasarımı, (2) Claude'a verilecek ana geliştirme promptu.
+Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu için yapılıyor.
 
-Not: "Online olmayacak" ifadesini şöyle yorumladım: maçlar tek oyunculu, rakipler yapay zekalı bot. Sunucu yalnızca kayıt (DataStore) ve dünya sıralaması için kullanılır. Farklıysa söyle, değiştiririz.
+## Dosyalar
+- `tasarim/tasarim-panosu.html`: tüm ekranların görsel tasarımı, numaralı notlarla (ana referans)
+- `tasarim/gorseller/`: 23 konsept görsel (6 stadyum kademesi, maç, gol, karakter, lobi, antrenman)
+- `PROMPTLAR.md`: geliştirme, görsel üretim ve 3D model promptları
+- `tasarim/render/`: görselleri üreten kaynak kod
+- `prototype/`: önceki oynanabilir denemeler (eski, yalnızca kontrol hissi için)
 
----
+## Oyunun özü
+Oyuncu kendi futbolcusunu ve kendi kulübünü yaratır. Kulüp amatör ligde, mahalle sahasında başlar. Sezonlar kazanıldıkça kulüp lig atlar ve stadyumu büyür. En tepede Fenerbahçe'den teklif gelir ve oyuncu Kadıköy'de oynar.
 
-## 1. Oyun tasarımı
+Varsayımlar:
+- Maçlar tek oyunculu, rakipler ve takım arkadaşları bot. Sunucu yalnızca kayıt ve dünya sıralaması için.
+- "Kulübümüz yükseldikçe sahamız yükselsin": oyuncunun kurduğu kulüp lig atlar. Fenerbahçe en üst basamaktır ve transferle açılır.
 
-### Temel fikir
-Oyuncu kendi futbolcusunu yaratır. Küçük bir kulüpte başlar, maç oynar, antrenman yapar, yeteneklerini açar ve basamak basamak Fenerbahçe'ye yükselir. Hedef: dünya sıralamasında ilk sıra.
-
-### Karakter oluşturma
-- Futbolcu adı (isim filtresi Roblox `TextService:FilterStringAsync` ile)
-- Başlangıç kulübü (4 küçük kulüp seçeneği)
-- Mevki: Kaleci, Defans, Orta Saha, Forvet. Mevki seçildikten sonra asla değişmez. Sunucu tarafında kilitli tutulur.
-- Mevki yetenek ağacını ve statların başlangıç dağılımını belirler (forvet şutta, defans savunmada güçlü başlar).
-
-### Ana döngü
-1. Maç oyna (bot takım, yapay zeka)
-2. Maç ve antrenmandan bakiye + XP kazan
-3. Bakiye ile özellik geliştir ve yetenek aç
-4. Seviye atla, ödül al
-5. Güç arttıkça daha iyi kulüplerden teklif gelir
-
-### Özellikler (stat)
-| Özellik | Etkisi | Seviye |
+## İlerleme katmanları
+| Katman | Ne yükselir | Nasıl |
 |---|---|---|
-| Koşu hızı | WalkSpeed, sprint süresi | 1-10 |
-| Çalım ve pas | Top kontrolü, pas isabeti | 1-10 |
-| Defans gücü | Top kapma, müdahale şansı | 1-10 |
-| Şut gücü | Şut hızı ve isabeti | 1-10 |
-| Dayanıklılık (öneri) | Sprint barı | 1-10 |
+| Futbolcu | Seviye 1-30, beş özellik, dört yetenek zinciri | Maç ve antrenman XP'si, bakiye |
+| Kulüp | Amatör, 3. Lig, 2. Lig, 1. Lig, Süper Lig | 10 maçlık sezonu ilk ikide bitir |
+| Tesis | Çim, tribün eki, aydınlatma, soyunma odası, antrenman sahası, sağlık merkezi | Kulüp kasası (maç geliri) |
+| Efsane | Fenerbahçe forması, kaptanlık | Süper Lig şampiyonluğu veya seviye 25 + güç 85 |
 
-### Yetenek zincirleri (sıralı kilit)
-Her zincirde bir sonraki yetenek için önceki açık olmalı ve seviye şartı sağlanmalı.
-- Şut: Plase, Füze, Röveşata, Serbest vuruş uzmanı (her biri ayrı şut animasyonu)
-- Çalım: Marsilya, Nutmeg, Rabona, Elastico
-- Özel güçler: Turbo, Demir adam, Kaptan lideri, Efsane an (yavaş çekim şut)
-- Mevkiye özel zincir: Kaleci için refleks/plonjon, defans için kayarak müdahale, orta saha için ara pası
+## Stadyum kademeleri
+| Kademe | Lig | Stadyum | Kapasite | Işık | Bot gücü | Maç geliri |
+|---|---|---|---|---|---|---|
+| 1 | Amatör Lig | Mahalle Sahası | 150 | Bulutlu gündüz | 30-40 | 50 |
+| 2 | 3. Lig | İlçe Stadı | 1.800 | Öğleden sonra | 40-52 | 150 |
+| 3 | 2. Lig | Şehir Stadı | 8.500 | Gün batımı | 52-64 | 400 |
+| 4 | 1. Lig | Modern Stadyum | 21.000 | Alacakaranlık | 64-75 | 900 |
+| 5 | Süper Lig | Arena | 34.000 | Gece | 75-86 | 1.800 |
+| 6 | Fenerbahçe | Şükrü Saracoğlu | 47.800 | Gece maçı | 86-95 | 3.500 |
 
-### Seviye ve ödüller (1-10 örnek)
-| Seviye | Ödül |
-|---|---|
-| 2 | +200 bakiye |
-| 3 | Deplasman forması |
-| 4 | +500 bakiye |
-| 5 | Gol sevinci |
-| 6 | Orta lig transfer teklifi |
-| 7 | +1000 bakiye |
-| 8 | Altın krampon |
-| 9 | Üst lig transfer teklifi |
-| 10 | Fenerbahçe teklifi ve kaptan bandı |
+Her kademenin görseli ve özellik listesi panoda.
 
-### Kulüp merdiveni
-Amatör kulüp, 3. lig, 2. lig, 1. lig, Süper Lig takımı, Fenerbahçe. Her basamakta botların gücü artar, maç ödülü artar.
-
-### Dünya sıralaması
-- `OrderedDataStore` ile global liste: Genel güç, mevkiye göre, haftalık gol krallığı
-- Sıralama güncellemesi sunucudan, istemci puan gönderemez
-- Haftalık sıfırlanan sezon tablosu ve ödülü
-
-### Aklıma gelen ek fikirler
-**Oynanış**
-- Maç sırasında "form" göstergesi: iyi oynarsan bir sonraki maçta bonus
-- Sakatlık ve yorgunluk: dinlenme veya fizyoterapi için bakiye harca
-- Kaptanlık ve takım içi moral sistemi
-- Antrenör NPC'si: antrenmanda mini oyunlar (direk-hedef şutu, koni slalomu, penaltı)
-- Penaltı ve serbest vuruş nişan mini oyunu
-
-**İlerleme**
-- Günlük görevler (3 gol at, 2 antrenman yap) ve giriş serisi ödülü
-- Başarımlar (hat-trick, 10 maç yenilmezlik)
-- Transfer pazarlığı: teklifleri karşılaştır, kulüp seç
-- Sezon sistemi: lig tablosu, kupa maçları, Şampiyonlar Ligi
-- Prestij (emeklilik): 10. seviyede sıfırdan başla, kalıcı bonus kazan
-
-**Kozmetik ve para**
-- Forma, krampon, saç, gol sevinçleri (oyun içi bakiyeyle)
-- Robux ile 2x XP geçişi, kozmetik paketleri (güç satın alma yok, adil kalsın)
-- Fenerbahçe temalı stadyum: Ülker Stadyumu - Şükrü Saracoğlu atmosferi, tribün sesleri
-
-**Sosyal (sunucu gerektirmeden)**
-- Profil kartı ve arkadaşlarla karşılaştırma
-- Haftalık sıralama ödülü
-
-**Teknik**
-- Mobil, konsol ve PC kontrolleri
-- Mobilde tek parmak şut, kaydırarak pas
-- Hile önlemi: tüm bakiye, XP ve stat işlemleri sunucuda
-
----
-
-## 2. Claude'a verilecek ana prompt
-
-Aşağıdakini yeni bir oturumda olduğu gibi kullanabilirsin.
-
-```text
-Roblox için "Fener Kariyer" adlı tek oyunculu bir futbol kariyer oyunu geliştiriyoruz. Luau kullan, Rojo proje yapısıyla çalış (src/ServerScriptService, src/ReplicatedStorage, src/StarterPlayer, src/StarterGui). Kodu modüler yaz ve her modülün kısa bir açıklaması olsun.
-
-OYUN
-- Oyuncu futbolcu adı, başlangıç kulübü ve mevki seçer (Kaleci, Defans, Orta Saha, Forvet). Mevki kariyer boyunca ASLA değişmez; sunucu bunu doğrular.
-- Maçlar tek oyunculu, rakip ve takım arkadaşları yapay zekalı botlardır (PathfindingService veya basit durum makinesi: bekle, pres yap, pas ver, şut at).
-- Sunucu yalnızca DataStore kaydı ve OrderedDataStore dünya sıralaması içindir.
+## Futbolcu
+- Kalıcı: isim, mevki (Kaleci, Defans, Orta Saha, Forvet). Mevki asla değişmez.
+- Özelleştirme: boy (165-195 cm), yapı, ten, yüz, saç modeli ve rengi, sakal, krampon, aksesuarlar (kaptan bandı, uzun kol içlik, bileklik, saç bandı, eldiven, tozluk boyu).
 - Özellikler (1-10): koşu hızı, çalım/pas, defans gücü, şut gücü, dayanıklılık.
-- Yetenek zincirleri sıralı kilitlidir: önceki yetenek açılmadan sonraki açılamaz; her yeteneğin seviye ve bakiye şartı vardır.
-- Seviye 1-10, her seviyede ödül. Antrenman ve maçtan bakiye + XP kazanılır.
-- Kulüp merdiveni: amatör -> 3. lig -> 2. lig -> 1. lig -> Süper Lig -> Fenerbahçe.
-- Birden fazla şut animasyonu (plase, füze, röveşata, serbest vuruş) yetenekle açılır.
+- Yetenek zincirleri (sıralı kilit, seviye ve bakiye şartı):
+  - Şut: Normal, Plase, Füze, Röveşata, Serbest vuruş uzmanı
+  - Çalım: Marsilya, Nutmeg, Rabona, Elastico
+  - Özel güç: Turbo, Demir adam, Kaptan lider, Efsane an
+  - Mevkiye özel dördüncü zincir
+- Her şut türünün ayrı animasyonu ve top davranışı var.
 
-GÜVENLİK
-- Bakiye, XP, stat ve yetenek işlemleri sadece sunucuda yapılır; istemci RemoteEvent ile istek gönderir, sunucu doğrular.
-- Tüm RemoteEvent girdilerini tip ve aralık açısından kontrol et. Oyuncu adı için TextService filtresi kullan.
-- DataStore işlemlerini pcall ve yeniden deneme ile yaz, oturum kilidi kullan.
+## Kulüp
+- Ad, 2-3 harfli kısaltma, arma şekli, forma deseni oyuncuya ait. Renkler sarı-lacivert ailesiyle sınırlı.
+- Sezon: 6 takımlı lig, 10 maç, ilk iki yükselir. Yükselince stadyum dönüşüm sinematiği oynar.
 
-ARAYÜZ
-- Fenerbahçe renkleri: lacivert #0b1747 ve sarı #ffe600. Üstte oyuncu çubuğu (rozet, isim, seviye/XP, bakiye), altında sekmeler: Kariyer, Antrenman, Yetenekler, Maç, Sıralama, Ödüller.
-- Mobil, konsol ve PC desteği. Mobilde büyük butonlar.
-- Görsel referans: tasarim/tasarim-panosu.html (17 ekranın görsel tasarımı ve notları), tasarim/gorseller/ (3D sahne görselleri), prototype/prototype-3d.html (3D oynanış, kamera, karakter stili) ve prototype/prototype.html (menü ve arayüz sekmeleri)
+## Fenerbahçe kimliği
+- Renkler: sarı #FFE600, lacivert #0B1747.
+- Arma: yükleme ekranı, lobi zemini, forma, dış cephe, bayraklar, skorbord. Gerçek armayı topluluk Roblox'a yükler; görsellerdeki arma temsilidir.
+- Sözler: 1907, Kadıköy, Sarı Lacivert, Çubuklu, beş yıldız.
+- Mekanlar: Şükrü Saracoğlu, Kariyer Merkezi (lobi), Fenerium (mağaza), antrenman tesisi, kupa müzesi.
+- Tribün: sarı-lacivert seyirci, koreografi, dev bayraklar, tezahürat.
+- Gerçek futbolcu adı veya yüzü kullanılmaz. Telifli marş kaydı kullanılmaz.
 
-ADIM ADIM İLERLE
-1. Proje iskeleti ve veri modeli (PlayerData şeması, DataStore modülü)
-2. Karakter oluşturma ekranı ve mevki kilidi
-3. Stat ve yetenek sistemi (sunucu doğrulamalı)
-4. Antrenman mini oyunları
-5. Maç sistemi: saha, top fiziği, bot yapay zekası, skor, süre
-6. Seviye, ödül ve kulüp teklifleri
-7. Dünya sıralaması (OrderedDataStore)
-8. Cila: ses, efekt, günlük görevler
+## Ekonomi
+- Bakiye: antrenman mini oyunları, maç ve gol ödülleri, günlük görevler. Özellik ve yeteneğe harcanır.
+- Kulüp kasası: maç geliri. Yalnızca tesis modüllerine harcanır.
+- Robux yalnızca görünüm ve 2x XP içindir; güç satılmaz. Bölüm tek ayarla kapatılabilir.
 
-Her adımın sonunda neyi yaptığını, nasıl test edeceğimi ve sıradaki adımı yaz. Belirsiz bir tasarım kararında varsayılanı seç, bir cümleyle belirt ve devam et.
-```
+## Dünya sıralaması
+Genel güç, mevkiye göre, haftalık gol krallığı, en yüksek kulüp kademesi. Lobide dev ekranda görünür.
 
----
-
-## 3. Sonraki adımlar
-1. 3D prototipi (`prototype/prototype-3d.html`) incele, beğenmediğin yerleri söyle.
-2. Kulüp isimlerini, yetenek adlarını ve ödülleri sen belirle.
-3. Fenerbahçe logosu, forma ve stadyum isimleri marka hakkı taşır. Roblox'ta yayınlamadan önce lisans konusunu düşünmek gerekir; güvenli yol "Fener" esintili özgün isim ve tasarımdır.
-4. Onaylarsan 1. adımdan Roblox projesini kurmaya başlarım.
+## Sonraki adım
+`PROMPTLAR.md` içindeki ana geliştirme promptunun ilk adımı: proje iskeleti, veri şeması, karakter ve kulüp oluşturma.
