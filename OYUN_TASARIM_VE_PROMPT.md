@@ -117,7 +117,7 @@ GÜVENLİK
 ARAYÜZ
 - Fenerbahçe renkleri: lacivert #0b1747 ve sarı #ffe600. Üstte oyuncu çubuğu (rozet, isim, seviye/XP, bakiye), altında sekmeler: Kariyer, Antrenman, Yetenekler, Maç, Sıralama, Ödüller.
 - Mobil, konsol ve PC desteği. Mobilde büyük butonlar.
-- Görsel referans: prototype/prototype.html
+- Görsel referans: prototype/prototype-3d.html (3D oynanış, kamera, karakter stili) ve prototype/prototype.html (menü ve arayüz sekmeleri)
 
 ADIM ADIM İLERLE
 1. Proje iskeleti ve veri modeli (PlayerData şeması, DataStore modülü)
@@ -135,7 +135,7 @@ Her adımın sonunda neyi yaptığını, nasıl test edeceğimi ve sıradaki ad�
 ---
 
 ## 3. Sonraki adımlar
-1. Prototipi (`prototype/prototype.html`) incele, beğenmediğin yerleri söyle.
+1. 3D prototipi (`prototype/prototype-3d.html`) incele, beğenmediğin yerleri söyle.
 2. Kulüp isimlerini, yetenek adlarını ve ödülleri sen belirle.
 3. Fenerbahçe logosu, forma ve stadyum isimleri marka hakkı taşır. Roblox'ta yayınlamadan önce lisans konusunu düşünmek gerekir; güvenli yol "Fener" esintili özgün isim ve tasarımdır.
 4. Onaylarsan 1. adımdan Roblox projesini kurmaya başlarım.
