@@ -117,7 +117,7 @@ GÜVENLİK
 ARAYÜZ
 - Fenerbahçe renkleri: lacivert #0b1747 ve sarı #ffe600. Üstte oyuncu çubuğu (rozet, isim, seviye/XP, bakiye), altında sekmeler: Kariyer, Antrenman, Yetenekler, Maç, Sıralama, Ödüller.
 - Mobil, konsol ve PC desteği. Mobilde büyük butonlar.
-- Görsel referans: prototype/prototype-3d.html (3D oynanış, kamera, karakter stili) ve prototype/prototype.html (menü ve arayüz sekmeleri)
+- Görsel referans: tasarim/tasarim-panosu.html (17 ekranın görsel tasarımı ve notları), tasarim/gorseller/ (3D sahne görselleri), prototype/prototype-3d.html (3D oynanış, kamera, karakter stili) ve prototype/prototype.html (menü ve arayüz sekmeleri)
 
 ADIM ADIM İLERLE
 1. Proje iskeleti ve veri modeli (PlayerData şeması, DataStore modülü)
