@@ -5,6 +5,7 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 ## Dosyalar
 - `tasarim/tasarim-panosu.html`: tüm ekranların görsel tasarımı, numaralı notlarla (ana referans)
 - `tasarim/gorseller/`: 23 konsept görsel (6 stadyum kademesi, maç, gol, karakter, lobi, antrenman)
+- `TEK_PROMPT.md`: oyunun tamamını tarif eden tek prompt (maç mekanikleri, animasyon, efekt, arayüz)
 - `PROMPTLAR.md`: geliştirme, görsel üretim ve 3D model promptları
 - `tasarim/render/`: görselleri üreten kaynak kod
 - `prototype/`: önceki oynanabilir denemeler (eski, yalnızca kontrol hissi için)
