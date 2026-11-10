@@ -53,7 +53,7 @@ function DataService.Default()
 			beard = 0,
 			bootModel = 1,
 			bootColor = "101216",
-			accessories = {},
+			accessories = { UzunKol = false, Bileklik = false, SacBandi = false, KisaTozluk = false },
 		},
 		club = {
 			name = "",

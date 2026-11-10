@@ -13,6 +13,7 @@ local TextService = game:GetService("TextService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local DataService = require(script.Parent.DataService)
+local CharacterService = require(script.Parent.CharacterService)
 
 local PlayerService = {}
 
@@ -56,6 +57,42 @@ local function filter(text: string, userId: number): string?
 		return nil
 	end
 	return result
+end
+
+-- Görünüm tablosunu doğrular ve temiz bir kopya döndürür (geçersizse nil)
+local function cleanAppearance(a)
+	local A = Config.Appearance
+	local valid = type(a) == "table"
+		and isInt(a.height, A.HeightMin, A.HeightMax)
+		and inList(a.build, A.Builds)
+		and isInt(a.skin, 1, A.SkinTones)
+		and isInt(a.face, 1, A.Faces)
+		and isInt(a.hairStyle, 1, A.HairStyles)
+		and isHex(a.hairColor)
+		and isInt(a.beard, 0, A.Beards)
+		and isInt(a.bootModel, 1, A.BootModels)
+		and isHex(a.bootColor)
+	if not valid then
+		return nil
+	end
+	local acc = {}
+	if type(a.accessories) == "table" then
+		for _, key in ipairs(Config.Accessories) do
+			acc[key] = a.accessories[key] == true
+		end
+	end
+	return {
+		height = a.height,
+		build = a.build,
+		skin = a.skin,
+		face = a.face,
+		hairStyle = a.hairStyle,
+		hairColor = a.hairColor,
+		beard = a.beard,
+		bootModel = a.bootModel,
+		bootColor = a.bootColor,
+		accessories = acc,
+	}
 end
 
 -- İstemciye gidecek kopya (oturum bilgisi gönderilmez)
@@ -112,8 +149,9 @@ local function onCreateCareer(player: Player, p)
 		return
 	end
 	local A = Config.Appearance
-	local a = p.appearance
-	local valid = isText(p.name, Config.Name.Min, Config.Name.Max)
+	local appearance = cleanAppearance(p.appearance)
+	local valid = appearance ~= nil
+		and isText(p.name, Config.Name.Min, Config.Name.Max)
 		and inList(p.position, Config.Positions)
 		and isInt(p.number, 1, 99)
 		and isText(p.clubName, Config.ClubName.Min, Config.ClubName.Max)
@@ -121,16 +159,6 @@ local function onCreateCareer(player: Player, p)
 		and string.match(p.clubAbbr, "^%u%u%u?$") ~= nil
 		and isInt(p.crestShape, 1, A.CrestShapes)
 		and inList(p.kitPattern, A.KitPatterns)
-		and type(a) == "table"
-		and isInt(a.height, A.HeightMin, A.HeightMax)
-		and inList(a.build, A.Builds)
-		and isInt(a.skin, 1, A.SkinTones)
-		and isInt(a.face, 1, A.Faces)
-		and isInt(a.hairStyle, 1, A.HairStyles)
-		and isHex(a.hairColor)
-		and isInt(a.beard, 0, A.Beards)
-		and isInt(a.bootModel, 1, A.BootModels)
-		and isHex(a.bootColor)
 	if not valid then
 		return notify(player, "error", "Bilgilerde hata var. Lütfen kontrol et.")
 	end
@@ -143,18 +171,7 @@ local function onCreateCareer(player: Player, p)
 	data.number = p.number
 	data.position = p.position -- KİLİT: bundan sonra hiçbir istek bunu değiştirmez
 	data.stats = table.clone(Config.StartStats[p.position])
-	data.appearance = {
-		height = a.height,
-		build = a.build,
-		skin = a.skin,
-		face = a.face,
-		hairStyle = a.hairStyle,
-		hairColor = a.hairColor,
-		beard = a.beard,
-		bootModel = a.bootModel,
-		bootColor = a.bootColor,
-		accessories = {},
-	}
+	data.appearance = appearance
 	data.club.name = clubName
 	data.club.abbr = p.clubAbbr
 	data.club.crestShape = p.crestShape
@@ -168,6 +185,11 @@ local function onCreateCareer(player: Player, p)
 	end
 	data.created = true
 	push(player)
+	CharacterService.Apply(player, CharacterService.LookFromData(data))
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.WalkSpeed = 16
+	end
 	notify(player, "success", "Hoş geldin " .. name .. ". Kariyerin başladı.")
 	task.spawn(DataService.Save, player, false)
 end
@@ -247,7 +269,30 @@ local function onUpgradeFacility(player: Player, id)
 	notify(player, "success", f.Name .. " geliştirildi.")
 end
 
+-- Karakter oluşturma ekranında canlı önizleme. Hiçbir şey kaydedilmez; isim gösterilmez.
+local function onPreview(player: Player, p)
+	local data = DataService.Get(player)
+	if not data or data.created or not allowed(player, "preview") or type(p) ~= "table" then
+		return
+	end
+	local appearance = cleanAppearance(p.appearance)
+	if
+		not appearance
+		or not inList(p.position, Config.Positions)
+		or not inList(p.kitPattern, Config.Appearance.KitPatterns)
+		or not isInt(p.number, 1, 99)
+	then
+		return
+	end
+	local abbr = if type(p.clubAbbr) == "string" and string.match(p.clubAbbr, "^%u%u%u?$") then p.clubAbbr else "FK"
+	CharacterService.Apply(
+		player,
+		{ appearance = appearance, position = p.position, kitPattern = p.kitPattern, number = p.number, name = "", abbr = abbr, level = 1 }
+	)
+end
+
 function PlayerService.Init()
+	Remotes.Get("PreviewAppearance").OnServerEvent:Connect(onPreview)
 	Remotes.Get("CreateCareer").OnServerEvent:Connect(onCreateCareer)
 	Remotes.Get("UpgradeStat").OnServerEvent:Connect(onUpgradeStat)
 	Remotes.Get("UnlockSkill").OnServerEvent:Connect(onUnlockSkill)
@@ -268,6 +313,34 @@ function PlayerService.Init()
 			return
 		end
 		push(player)
+		local function onCharacter(character: Model)
+			local hum = character:WaitForChild("Humanoid", 10)
+			if not hum then
+				return
+			end
+			if not character:IsDescendantOf(workspace) then
+				character.AncestryChanged:Wait()
+			end
+			task.wait(0.2)
+			local d = DataService.Get(player)
+			if not d then
+				return
+			end
+			if d.created then
+				CharacterService.Apply(player, CharacterService.LookFromData(d))
+			else
+				(hum :: Humanoid).WalkSpeed = 0 -- oluşturma ekranında yerinde dursun
+				local look = CharacterService.LookFromData(d)
+				look.position = "Forvet"
+				look.name = ""
+				look.abbr = "FK"
+				CharacterService.Apply(player, look)
+			end
+		end
+		player.CharacterAdded:Connect(onCharacter)
+		if player.Character then
+			task.spawn(onCharacter, player.Character)
+		end
 	end
 	Players.PlayerAdded:Connect(onJoin)
 	for _, player in ipairs(Players:GetPlayers()) do

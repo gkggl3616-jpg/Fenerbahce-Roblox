@@ -157,7 +157,7 @@ end
 --------------------------------------------------------------------------------
 -- LOBİ KATMANI (bileşen vitrini)
 --------------------------------------------------------------------------------
-local state = { data = nil :: any, coinsShown = 0 }
+local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
 local function buildLobby()
@@ -276,11 +276,12 @@ local function buildLobby()
 end
 
 local function render(data)
-	local first = state.data == nil
+	local first = state.data == nil or not state.rendered
 	state.data = data
 	if not refs.name then
 		return
 	end
+	state.rendered = true
 	if data.created then
 		refs.name.Text = Theme.Upper(data.name)
 		refs.sub.Text = Config.PositionNames[data.position] .. " · " .. data.number .. " · " .. data.club.name
@@ -301,35 +302,36 @@ Remotes.Get("Notify").OnClientEvent:Connect(function(kind, text)
 	Components.Toast(kind, text)
 end)
 
+local Creator = require(script.Parent.Screens.Creator)
+
+-- Ekran ölçeği: 1600x900 tasarım ölçüsüne göre küçük ekranlarda arayüz orantılı küçülür
+local uiScale = Instance.new("UIScale")
+uiScale.Parent = gui
+local function fit()
+	local v = workspace.CurrentCamera.ViewportSize
+	uiScale.Scale = math.clamp(math.min(v.X / 1600, v.Y / 900), 0.45, 1.25)
+end
+fit()
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+
 showLoading(function()
-	buildLobby()
 	local data = Remotes.Get("GetData"):InvokeServer()
 	if not data then
-		Components.Toast("error", "Veri alınamadı.")
+		Components.Toast("error", "Veri alınamadı. Oyundan çıkıp tekrar gir.")
 		return
 	end
-	render(data)
-	-- Karakter oluşturma ekranı 3. adımda geliyor. O zamana kadar sınama için örnek kariyer açılır.
-	if not data.created then
-		Remotes.Get("CreateCareer"):FireServer({
-			name = "Emre Kadikoy",
-			position = "Forvet",
-			number = 9,
-			clubName = "Moda Genclik",
-			clubAbbr = "MG",
-			crestShape = 1,
-			kitPattern = "Cubuklu",
-			appearance = {
-				height = 182,
-				build = "Atletik",
-				skin = 2,
-				face = 1,
-				hairStyle = 2,
-				hairColor = "1B1410",
-				beard = 1,
-				bootModel = 1,
-				bootColor = "101216",
-			},
-		})
+	if data.created then
+		buildLobby()
+		render(data)
+	else
+		Creator.Open(gui, function()
+			buildLobby()
+			if state.data then
+				local d = state.data
+				state.data = nil
+				render(d)
+			end
+			Components.Toast("success", "Kariyerin başladı. Mahalle sahasında görüşürüz.")
+		end)
 	end
 end)

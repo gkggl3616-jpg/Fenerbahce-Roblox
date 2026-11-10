@@ -228,6 +228,37 @@ Config.Appearance = {
 	CrestShapes = 4,
 }
 
+-- Ten ve saç renk seçenekleri (istemci bu listeden seçer, sunucu indeks/hex doğrular)
+Config.SkinColors = {
+	Color3.fromRGB(245, 214, 190),
+	Color3.fromRGB(232, 190, 160),
+	Color3.fromRGB(205, 160, 125),
+	Color3.fromRGB(170, 120, 88),
+	Color3.fromRGB(125, 84, 60),
+	Color3.fromRGB(84, 56, 42),
+}
+Config.HairColors = { "1B1410", "2E2118", "0C0C0E", "5A4326", "8A6A3A", "C9B27A" }
+Config.BootColors = { "101216", "F4F4F4", "FFE600", "E33A3A", "22BBDD", "0B1747" }
+Config.HairStyleNames = { "Sıfır", "Kısa", "Hacimli", "Uzun", "Kıvırcık", "Topuz", "Yanlar kısa", "Kel" }
+Config.BeardNames = { [0] = "Yok", "Kirli", "Bıyık", "Tam", "Keçi" }
+Config.BuildNames = { Ince = "İnce", Atletik = "Atletik", Guclu = "Güçlü" }
+Config.KitPatternNames = { Cubuklu = "Çubuklu", Duz = "Düz", Kusakli = "Kuşaklı" }
+Config.Accessories = { "UzunKol", "Bileklik", "SacBandi", "KisaTozluk" }
+Config.AccessoryNames = { UzunKol = "Uzun kol içlik", Bileklik = "Bileklik", SacBandi = "Saç bandı", KisaTozluk = "Kısa tozluk" }
+Config.CaptainBandLevel = 10
+
+-- Gövde ölçekleri (HumanoidDescription). Boy yalnızca görünümdür.
+Config.Body = {
+	HeightScaleMin = 0.94,
+	HeightScaleMax = 1.1,
+	BodyTypeScale = 1, -- 1 = insan oranları
+	ProportionScale = 0.2,
+	HeadScale = 0.95,
+	Width = { Ince = 0.82, Atletik = 0.92, Guclu = 1.03 },
+	-- Topluluk gerçekçi bir gövde paketi yüklerse kimlikleri buraya yazılır (0 = oyuncunun kendi avatarı)
+	Parts = { Head = 0, Torso = 0, LeftArm = 0, RightArm = 0, LeftLeg = 0, RightLeg = 0 },
+}
+
 Config.Name = { Min = 3, Max = 16 }
 Config.ClubName = { Min = 3, Max = 20 }
 Config.Economy = { StartCoins = 100, StartClubFunds = 0 }
