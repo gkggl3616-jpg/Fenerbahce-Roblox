@@ -278,7 +278,7 @@ function Animator:Update(dt: number, ctx)
 	local actPose, mask = nil, "Full"
 	local a = self.Action
 	if a then
-		a.t += dt
+		a.t += dt * (a.def.Rate or 1)
 		for i, ev in ipairs(a.def.Events or {}) do
 			if not a.fired[i] and a.t >= ev[1] then
 				a.fired[i] = true

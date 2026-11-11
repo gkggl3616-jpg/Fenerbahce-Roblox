@@ -368,8 +368,8 @@ Config.Duel = {
 -- Kaleci botu
 Config.Keeper = {
 	Reaction = 0.22, -- şutu fark etme süresi
-	DiveSpeed = 24, -- stud/saniye
-	BaseReach = 3.2, -- yerinden kıpırdamadan uzanabildiği mesafe
+	DiveSpeed = 17, -- stud/saniye
+	BaseReach = 2.8, -- yerinden kıpırdamadan uzanabildiği mesafe
 	ShuffleSpeed = 9, -- çizgi üzerinde kayma hızı
 	FumbleChance = 0.3, -- füze şutunda topu elinden kaçırma olasılığı
 	ErrorChance = 0.1, -- yetişebileceği topu kaçırma olasılığı (kademeyle azalır)

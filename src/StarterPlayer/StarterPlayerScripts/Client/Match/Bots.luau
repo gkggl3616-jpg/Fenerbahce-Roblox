@@ -335,7 +335,8 @@ function Bots.Update(dt: number, ctx)
 				end
 			elseif bot.state == "windup" then
 				bot.t -= dt
-				bot.speed *= 0.9
+				-- hazırlık sırasında topa doğru hamle yapar
+				moveTo(bot, ballFlat, D.DefenderSpeed * 0.7, dt, ballFlat)
 				bot.ring.Transparency = 0.25 + 0.5 * math.abs(math.sin(clock * 22))
 				if bot.t <= 0 then
 					bot.ring.Transparency = 1

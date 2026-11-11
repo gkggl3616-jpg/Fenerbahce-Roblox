@@ -591,7 +591,7 @@ function MatchAI.Update(dt: number, ctx)
 		elseif bot.state == "windup" then
 			-- oyuncuya müdahale hazırlığı (kırmızı halka = çalım penceresi)
 			bot.t -= dt
-			bot.speed *= 0.9
+			moveTo(bot, ballFlat, runSpeed(team) * 0.7, dt, ballFlat) -- topa doğru hamle
 			bot.ring.Transparency = 0.25 + 0.5 * math.abs(math.sin(clock * 22))
 			if bot.t <= 0 then
 				bot.ring.Transparency = 1

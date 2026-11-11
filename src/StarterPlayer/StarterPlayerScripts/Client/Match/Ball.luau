@@ -127,6 +127,7 @@ function Ball.Reset(at: Vector3)
 	vel = Vector3.zero
 	curve = 0
 	inNet = false
+	lastKick = -10 -- yeni top: dokunma beklemesi yok
 	if trail then
 		trail.Enabled = false
 	end

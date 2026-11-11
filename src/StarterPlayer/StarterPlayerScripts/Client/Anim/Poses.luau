@@ -56,6 +56,7 @@ local REST = {}
 Poses.Actions = {
 	-- ŞUTLAR ---------------------------------------------------------------
 	Shoot = {
+		Rate = 1.3, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.62,
 		Mask = "Full",
 		Recover = 0.42,
@@ -110,6 +111,7 @@ Poses.Actions = {
 		},
 	},
 	Plase = {
+		Rate = 1.2, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.52,
 		Mask = "Full",
 		Recover = 0.36,
@@ -351,6 +353,7 @@ Poses.Actions = {
 	},
 	-- PAS ------------------------------------------------------------------
 	Pass = {
+		Rate = 1.35, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.4,
 		Mask = "Full",
 		Recover = 0.26,
@@ -423,6 +426,7 @@ Poses.Actions = {
 		},
 	},
 	Header = {
+		Rate = 1.1, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.85,
 		Mask = "Full",
 		Recover = 0.64,
@@ -545,6 +549,7 @@ Poses.Actions = {
 	},
 	-- ÇALIM ----------------------------------------------------------------
 	VucutCalimi = {
+		Rate = 1.15, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.42,
 		Mask = "Full",
 		Recover = 0.28,
@@ -679,6 +684,7 @@ Poses.Actions = {
 	},
 	-- DEFANS ---------------------------------------------------------------
 	AyaktaMudahale = {
+		Rate = 1.2, -- oynatma hızı: tuşa basış ile temas arasını kısaltır
 		Duration = 0.48,
 		Mask = "Full",
 		Recover = 0.36,
