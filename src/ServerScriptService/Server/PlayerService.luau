@@ -327,7 +327,80 @@ local function onTrainingGoal(player: Player, kind)
 	PlayerService.AddXp(player, R.Xp + bonus)
 end
 
+-- MAÇ: istemci maçı oynatır, sunucu sonucu makullük sınamasından geçirip ödülü verir
+local matchStart: { [number]: number } = {}
+local function onMatchStart(player: Player)
+	local data = DataService.Get(player)
+	if data and data.created and allowed(player, "matchStart") then
+		matchStart[player.UserId] = os.clock()
+	end
+end
+
+local function onMatchEnd(player: Player, r)
+	local data = DataService.Get(player)
+	local MC = Config.Match
+	local started = matchStart[player.UserId]
+	matchStart[player.UserId] = nil
+	if not data or not data.created or not started or type(r) ~= "table" then
+		return
+	end
+	local valid = isInt(r.home, 0, MC.MaxGoals)
+		and isInt(r.away, 0, MC.MaxGoals)
+		and isInt(r.myGoals, 0, MC.MaxGoals)
+		and isInt(r.myHeaderGoals, 0, MC.MaxGoals)
+		and r.myGoals <= r.home
+		and r.myHeaderGoals <= r.myGoals
+	-- maç en az iki devrenin %80'i kadar sürmüş olmalı; yarıda bırakılan maç ödül vermez
+	local long = os.clock() - started >= MC.HalfSeconds * 2 * 0.8
+	if not valid or not long or r.forfeit == true then
+		Remotes.Get("MatchResult"):FireClient(player, { ok = false })
+		return
+	end
+	local outcome = if r.home > r.away then "Win" elseif r.home == r.away then "Draw" else "Loss"
+	local tier = Config.Tiers[data.club.tier]
+	local coins = MC.Reward[outcome] + (r.myGoals - r.myHeaderGoals) * MC.Reward.Goal + r.myHeaderGoals * MC.Reward.HeaderGoal
+	local xp = MC.Reward.Xp[outcome] + r.myGoals * MC.Reward.Xp.Goal
+	data.coins += coins
+	data.club.funds += tier.MatchIncome
+	data.career.matches += 1
+	data.career.goals += r.myGoals
+	data.career.headerGoals += r.myHeaderGoals
+	if outcome == "Win" then
+		data.career.wins += 1
+	end
+	local season = data.club.season
+	season.played += 1
+	season.points += MC.Points[outcome]
+	local promoted, seasonOver = false, false
+	if season.played >= Config.Season.Matches then
+		seasonOver = true
+		if season.points >= MC.PromotePoints and data.club.tier < 5 then
+			data.club.tier += 1
+			promoted = true
+		end
+		season.number += 1
+		season.played = 0
+		season.points = 0
+	end
+	PlayerService.AddXp(player, xp) -- veriyi de istemciye yollar
+	Remotes.Get("MatchResult"):FireClient(player, {
+		ok = true,
+		outcome = outcome,
+		coins = coins,
+		xp = xp,
+		income = tier.MatchIncome,
+		played = season.played,
+		points = season.points,
+		seasonOver = seasonOver,
+		promoted = promoted,
+		tier = data.club.tier,
+	})
+	task.spawn(DataService.Save, player, false)
+end
+
 function PlayerService.Init()
+	Remotes.Get("MatchStart").OnServerEvent:Connect(onMatchStart)
+	Remotes.Get("MatchEnd").OnServerEvent:Connect(onMatchEnd)
 	Remotes.Get("Anim").OnServerEvent:Connect(onAnim)
 	Remotes.Get("TrainingGoal").OnServerEvent:Connect(onTrainingGoal)
 	Remotes.Get("PreviewAppearance").OnServerEvent:Connect(onPreview)
@@ -387,6 +460,7 @@ function PlayerService.Init()
 	Players.PlayerRemoving:Connect(function(player)
 		lastCall[player.UserId] = nil
 		lastTrainingGoal[player.UserId] = nil
+		matchStart[player.UserId] = nil
 		DataService.Save(player, true)
 	end)
 end

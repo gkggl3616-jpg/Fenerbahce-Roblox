@@ -16,6 +16,9 @@ local EVENTS = {
 	"PreviewAppearance",
 	"Anim",
 	"TrainingGoal",
+	"MatchStart",
+	"MatchEnd",
+	"MatchResult",
 }
 local FUNCTIONS = { "GetData" }
 

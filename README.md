@@ -12,7 +12,7 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - Game Settings > Avatar > Avatar Type: **R15** (forma boyama R15 parça adlarına göre çalışır).
 - Game Settings > Security > "Enable Studio Access to API Services": açık.
 
-## Şu an ne var (adım 1-9)
+## Şu an ne var (adım 1-10)
 - `Shared/Config.luau`: bütün ayarlar, kademeler, yetenek zincirleri, görünüm seçenekleri, hareket sayıları, tuşlar
 - `Shared/Kits.luau`: forma tanımları
 - `Server/DataService.luau`: DataStore, oturum kilidi, yeniden deneme, otomatik kayıt, sıralama
@@ -25,6 +25,8 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - `Client/Controllers/PlayerController.luau`: ivmeli hareket, sprint, dayanıklılık, eylem tuşları, dokunmatik butonlar, efektler, saha içi arayüz
 - `Client/Match/Ball.luau`: top fiziği (sekme, sürtünme, falso, direk, kale), sürme, ilk dokunuş, şut, pas, kafa, vole, röveşata, düşüş tahmini
 - `Client/Match/Bots.luau`: savunmacı (kademe, müdahale, sendeleme), kaleci (izleme, plonjon, çelme, elden kaçırma), top süren hücumcu
+- `Client/Match/MatchAI.luau`: 11'e 11 maçın yapay zekası (diziliş, pres, pas, şut, top kapma, iki kaleci)
+- `Client/Match/MatchController.luau`: maç akışı (santra, devreler, gol, taç, korner, aut), skor tabelası, radar, maç sonu ekranı
 - `Client/Match/TimeScale.luau`: yavaş çekim ve vuruş anı duraksaması
 - `Client/Match/RemoteAnim.luau`: diğer oyuncuların karakterlerini de canlandırır
 - `Client/Main.client.luau`: yükleme ekranı, çubuklu perde, lobi katmanı
@@ -76,6 +78,21 @@ Sunucu açılışta beş bot şablonu kurar; ilk girişte botların gelmesi birk
 36. Savunmacıya çarpan şut geri seker.
 37. "Savunma çalışması"na geç: bir hücumcu topu sürerek sana doğru gelir. C ile (sprintteyken kayarak) topa müdahale et: topa değersen "Top sende!", topa değmeden adama girersen "Faul!", arkadan ya da kayarak girersen sarı kart; ikinci sarıda kırmızı kart. Kaçırırsan "Rakip kaçtı" ve yeniden başlar.
 
+### Adım 10: maç
+38. Lobide "Maça çık": perdeyle iki kaleli maç sahasına geçer. Üstte skor tabelası ve dakika, solda radar (sarı biz, kırmızı rakip, beyaz top, büyük sarı nokta sen).
+39. 11'e 11: on takım arkadaşı (sarı-lacivert) ve on bir rakip (beyaz-yeşil). Sen mevkine göre dizilirsin; Forvet ileride, Defans geride başlar.
+40. Üç saniyelik "vs" yazısından sonra "Başla!". Botlar dizilişini korur, top ilerledikçe takım birlikte kayar, topa en yakın oyuncu topa gider.
+41. Takım arkadaşların sana pas verir; sen de E ile onlara pas verebilirsin. Top sendeyken boştaki forvet el kaldırır.
+42. Rakip sana yaklaşınca kırmızı halka yanar: çalım at ya da topu kaptır. Rakip toptayken C ile müdahale et (faul ve kart kuralları geçerli; ikinci sarıda maç senin için biter).
+43. Rakip kaleci şutlarını kurtarmaya çalışır; kendi kalecin de rakibin şutlarını.
+44. Gol: büyük yazı, konfeti, skor tabelası parlar, bildirim düşer, santra yapılır.
+45. Top yandan çıkarsa "Taç", kale çizgisinden çıkarsa "Aut" (kaleci uzun vurur) ya da "Korner" (köşeden orta gelir; bizim kornerimizde top senin önüne düşer, kafa şansı).
+46. 90. dakika (iki devre, her biri 3 gerçek dakika) sonunda maç sonu ekranı: sonuç, şut ve topa sahip olma çubukları, sayarak artan bakiye, XP ve kulüp kasası, sezon durumu.
+47. Maçı "Lobiye dön" ile yarıda bırakırsan ödül verilmez.
+48. Mevkin Kaleci ise kalede başlarsın; rakip şutlarında Z/X ile plonjon yap, top el hizasındaysa "Kurtardın!".
+
+Hızlı denemek için `Config.Match.HalfSeconds` değerini geçici olarak 40 yapabilirsin (sunucu, sürenin %80'i dolmadan biten maça ödül vermez).
+
 Animasyonlar kodla yazıldı ve hiç görülmeden ayarlandı. Bir eklem ters yöne dönüyorsa (örneğin diz öne bükülüyorsa) hangi harekette olduğunu söyle; `Poses.luau` içindeki açının işareti düzeltilir.
 
 Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.DataStoreName` değerini değiştir.
@@ -83,8 +100,10 @@ Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.
 ## Bilinen sınırlar
 - Gövde, oyuncunun kendi Roblox avatarının insan oranlarına ölçeklenmiş halidir. Gerçekçi gövde için bir gövde paketinin kimlikleri `Config.Body.Parts` içine yazılmalı.
 - Saç, başa kaynaklı basit bir hacimdir. Yüz ve sakal seçimi kaydedilir ama görseli yoktur. Bunlar için model/görsel yüklenmesi gerekir.
-- Henüz tam maç yok: takım arkadaşı, 11'e 11, kurallar ve duran toplar 10. adımda. Pas arası ve blok şimdilik yalnızca animasyon.
-- Kırmızı kartın şimdilik cezası yok (maç sistemiyle gelecek). Oyuncu kaleciyse kullanacağı kaleci kontrolü de maç sistemiyle gelecek.
+- Maç sadeleştirmeleri: ofsayt yok; taç, korner ve aut otomatik kullanılır; faulde serbest vuruş yok (oyun devam eder); devre arasında sahalar değişmez; pas arası ve blok yalnızca animasyon.
+- Lig tablosu yok: 10 maçta 19 puan toplayan kulüp lig atlar. Lig atlayınca stadyum henüz değişmiyor (13. adım).
+- Takım arkadaşları hep çubuklu forma giyer; seçtiğin desen yalnızca kendi karakterinde görünür.
+- Maç sahasında tribün yok; kademeli stadyumlar 13. adımda.
 - Top istemcide benzetilir (tek oyunculu maç). Ödüller sunucuda bekleme süresiyle sınırlanır.
 - Yetenek kilitleri yalnızca Studio'da kapalıdır (`Config.Debug.UnlockAllActionsInStudio`); yayınlanan oyunda her zaman çalışır.
 - Yüklenmiş animasyon dosyan olursa kimliğini `Config.Animations` içine yaz; o eylemde kod yerine o oynar.

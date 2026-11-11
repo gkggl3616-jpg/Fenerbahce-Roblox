@@ -15,7 +15,7 @@ local Workspace = game:GetService("Workspace")
 local Config = require(ReplicatedStorage.Shared.Config)
 
 local B = Config.Ball
-local T = Config.TestPitch
+local T: any = Config.TestPitch
 local S = Config.Shooting
 local C = Config.Colors
 
@@ -30,7 +30,10 @@ local inNet = false
 local lastKick = -10
 local lastKind = "Shoot"
 local clock = 0
-local listeners = { goal = {}, post = {}, out = {}, kick = {} }
+local listeners = { goal = {}, post = {}, out = {}, kick = {}, dead = {} }
+
+-- Topa en son dokunan takım: "home" (oyuncunun takımı) ya da "away"
+Ball.LastTeam = "home"
 
 local function fire(name: string, ...)
 	for _, fn in ipairs(listeners[name]) do
@@ -40,6 +43,14 @@ end
 
 function Ball.On(name: string, fn)
 	table.insert(listeners[name], fn)
+end
+
+-- Saha değiştirir (deneme sahası ya da maç sahası)
+function Ball.SetPitch(def)
+	T = def
+end
+function Ball.Pitch()
+	return T
 end
 
 function Ball.Init()
@@ -190,7 +201,31 @@ local function integrate(p: Vector3, v: Vector3, cv: number, h: number, events: 
 			v = Vector3.new(v.X * 0.6 + (if np.X > 0 then 1 else -1) * (ax - w) * 30, v.Y * 0.6, -math.abs(v.Z) * 0.55)
 		end
 	end
+	-- kendi kalemiz (yalnız maç sahasında)
+	if T.GoalZBack and p.Z > T.GoalZBack and np.Z <= T.GoalZBack and not inNet then
+		local ax, w, hgt = math.abs(np.X), T.GoalHalfWidth, T.GoalHeight
+		if ax < w - B.Radius and np.Y < hgt - B.Radius then
+			result = "goalBack"
+		elseif (math.abs(ax - w) < B.Radius + 0.35 and np.Y < hgt + 0.6) or (ax < w + 0.6 and math.abs(np.Y - hgt) < B.Radius + 0.35) then
+			result = "post"
+			np = Vector3.new(np.X, np.Y, T.GoalZBack + 0.05)
+			v = Vector3.new(v.X * 0.6, v.Y * 0.6, math.abs(v.Z) * 0.55)
+		end
+	end
 	-- saha sınırları
+	if T.Walls == false then
+		-- duvar yok: top çizgiyi geçerse oyun durur
+		if events and result == nil and not inNet then
+			if np.X < T.MinX or np.X > T.MaxX then
+				result = "side"
+			elseif np.Z > T.MaxZ then
+				result = "endFront"
+			elseif np.Z < T.MinZ then
+				result = "endBack"
+			end
+		end
+		return np, v, cv, result
+	end
 	if np.X < T.MinX or np.X > T.MaxX then
 		np = Vector3.new(math.clamp(np.X, T.MinX, T.MaxX), np.Y, np.Z)
 		v = Vector3.new(-v.X * B.WallBounce, v.Y, v.Z)
@@ -218,15 +253,29 @@ function Ball.Step(dt: number)
 	for _ = 1, steps do
 		local np, nv, ncv, result = integrate(pos, vel, curve, h, true)
 		pos, vel, curve = np, nv, ncv
-		if result == "goal" then
+		if result == "goal" or result == "goalBack" then
 			inNet = true
 			vel *= 0.18
-			fire("goal", lastKind)
+			fire("goal", lastKind, if result == "goal" then "front" else "back")
+		elseif result == "side" or result == "endFront" or result == "endBack" then
+			inNet = true -- ölü top: yeniden başlatılana kadar kimse oynayamaz
+			vel *= 0.3
+			fire("dead", result, pos)
 		elseif result == "post" then
 			fire("post")
 		elseif result == "out" then
 			inNet = true
 			fire("out")
+		end
+		if inNet and T.GoalZBack then
+			-- maç sahası: top filenin arkasına geçmesin
+			if pos.Z > T.GoalZ + 4.4 then
+				pos = Vector3.new(pos.X, pos.Y, T.GoalZ + 4.4)
+				vel = Vector3.new(vel.X * 0.3, vel.Y, 0)
+			elseif pos.Z < T.GoalZBack - 4.4 then
+				pos = Vector3.new(pos.X, pos.Y, T.GoalZBack - 4.4)
+				vel = Vector3.new(vel.X * 0.3, vel.Y, 0)
+			end
 		end
 		if inNet then
 			-- filenin içinde kalsın
@@ -273,7 +322,8 @@ end
 
 -- Top z düzlemini nerede ve kaç saniyede geçer? (kalecinin kurtarış kararı için)
 function Ball.PredictCross(z: number): (Vector3?, number?)
-	if vel.Z <= 1 or pos.Z >= z then
+	local sign = if z > pos.Z then 1 else -1
+	if vel.Z * sign <= 1 then
 		return nil, nil
 	end
 	local p, v, cv, t = pos, vel, curve, 0
@@ -281,10 +331,10 @@ function Ball.PredictCross(z: number): (Vector3?, number?)
 	for _ = 1, 400 do
 		p, v, cv = integrate(p, v, cv, h, false)
 		t += h
-		if p.Z >= z then
+		if (p.Z - z) * sign >= 0 then
 			return p, t
 		end
-		if v.Z <= 0.5 then
+		if v.Z * sign <= 0.5 then
 			return nil, nil
 		end
 	end
@@ -319,6 +369,7 @@ function Ball.Carry(dt: number, ctx)
 	local sp = vel.Magnitude
 	local moving = ctx.dir.Magnitude > 0.1
 	if sp > 34 then
+		Ball.LastTeam = "home"
 		-- ilk dokunuş: Top Kontrolü yüksekse top ayağa yakın kalır
 		local keep = math.clamp(0.42 - ctx.control * 0.035, 0.06, 0.42)
 		vel = vel * keep + (if moving then ctx.dir * ctx.speed * 0.6 else Vector3.zero)
@@ -334,6 +385,7 @@ function Ball.Carry(dt: number, ctx)
 	-- topun üstüne basma: çok yakındaysa ve geride kaldıysa hafifçe öne it
 	local toBall = Vector3.new(pos.X - ctx.pos.X, 0, pos.Z - ctx.pos.Z)
 	if d < 1.3 or (d < 2.6 and toBall:Dot(ctx.dir) < 0.2) then
+		Ball.LastTeam = "home"
 		local want = ctx.dir * math.max(ctx.speed * 1.05, 8)
 		vel = Vector3.new(want.X, vel.Y, want.Z)
 	end
@@ -353,6 +405,7 @@ function Ball.Touch(ctx): boolean
 	local dir = CFrame.Angles(0, err, 0):VectorToWorldSpace(ctx.dir)
 	vel = Vector3.new(dir.X * push, 0, dir.Z * push)
 	curve = 0
+	Ball.LastTeam = "home"
 	return true
 end
 
@@ -416,6 +469,7 @@ function Ball.Strike(opts): (string, Vector3?)
 	if shot.Curve ~= 0 and math.abs(opts.aimX) > 0.2 then
 		spin = (if opts.aimX > 0 then 1 else -1) * shot.Curve * 0.55
 	end
+	Ball.LastTeam = "home"
 	Ball.Kick(v, spin, opts.kind)
 	return if opts.perfect then "perfect" else "good", target
 end
@@ -443,6 +497,7 @@ function Ball.Pass(from: Vector3, facing: Vector3, power: number, stat: number, 
 	end
 	local err = math.rad(math.max(0.5, 7 - stat * 0.65)) * (math.random() - 0.5) * 2
 	dir = CFrame.Angles(0, err, 0):VectorToWorldSpace(dir)
+	Ball.LastTeam = "home"
 	Ball.Kick(dir * speed + Vector3.new(0, if power > 0.75 then 14 else 0, 0), 0, "Pass")
 	return true
 end

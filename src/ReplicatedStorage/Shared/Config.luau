@@ -389,6 +389,54 @@ Config.TestPitch = {
 	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5 },
 }
 
+-- Maç sahası (iki kaleli). Oyuncunun takımı +Z yönüne hücum eder.
+Config.MatchPitch = {
+	GroundY = -0.02,
+	MinX = -105,
+	MaxX = 105,
+	MinZ = 440,
+	MaxZ = 760,
+	GoalZ = 760, -- rakip kale
+	GoalZBack = 440, -- kendi kalemiz
+	GoalHalfWidth = 12,
+	GoalHeight = 8,
+	Walls = false, -- top dışarı çıkar: taç, korner, aut
+}
+
+Config.Match = {
+	HalfSeconds = 180, -- bir devrenin gerçek süresi
+	IntroTime = 3.2,
+	GoalPause = 3.4,
+	RestartPause = 1.3,
+	-- Bot becerisi 0-1 arası; kademenin bot gücünden hesaplanır
+	BotSpeed = { 13.5, 18.5 }, -- beceri 0 ve 1 için koşu hızı
+	ShootRange = 88,
+	PassMin = 18,
+	PassMax = 115,
+	DecideEvery = 0.45,
+	Reward = { Win = 150, Draw = 70, Loss = 30, Goal = 40, HeaderGoal = 60, Xp = { Win = 90, Draw = 55, Loss = 35, Goal = 25 } },
+	Points = { Win = 3, Draw = 1, Loss = 0 },
+	PromotePoints = 19, -- 10 maçta bu puana ulaşan kulüp lig atlar
+	MaxGoals = 15, -- sunucu bundan büyük skoru kabul etmez
+}
+
+-- Diziliş (4-4-2): { yan konum -1..1, kendi kalesinden uzaklık 0..1 }
+Config.Formation = {
+	{ 0, 0.02 },
+	{ -0.72, 0.2 },
+	{ -0.26, 0.16 },
+	{ 0.26, 0.16 },
+	{ 0.72, 0.2 },
+	{ -0.76, 0.44 },
+	{ -0.26, 0.4 },
+	{ 0.26, 0.42 },
+	{ 0.76, 0.44 },
+	{ -0.2, 0.6 },
+	{ 0.2, 0.64 },
+}
+-- Oyuncunun mevkisine göre dizilişteki yeri
+Config.FormationSlot = { Kaleci = 1, Defans = 3, OrtaSaha = 7, Forvet = 11 }
+
 -- Genel güç (sıralama ve teklif şartı için)
 function Config.Power(stats: { [string]: number }, level: number): number
 	local sum = 0

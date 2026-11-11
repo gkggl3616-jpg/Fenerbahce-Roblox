@@ -76,7 +76,8 @@ local state = {
 	lastMirror = false,
 }
 local SH = Config.Shooting
-local TP = Config.TestPitch
+local TP: any = Config.TestPitch
+local matchApi: any = nil -- maç sürerken MatchController kancaları
 local DU = Config.Duel
 local ui: { [string]: any } = {}
 
@@ -445,6 +446,9 @@ local function onEvent(event: string, action: string)
 			end
 		end
 		local quality, target = Ball.Strike(opts)
+		if quality ~= "miss" and matchApi then
+			matchApi.OnHumanKick()
+		end
 		if quality == "miss" then
 			if near then
 				banner("Iska", C.Bad)
@@ -484,14 +488,17 @@ local function onEvent(event: string, action: string)
 		puff(footPos("Right"), 14)
 	elseif event == "tackle" then
 		ring(footPos("Right") + look * 1.5, C.White, 4)
-		if Bots.Mode() == "Savunma" then
-			local result = Bots.Tackle(hrp.Position - Vector3.new(0, 3, 0), look, action == "Kayma")
+		if matchApi or Bots.Mode() == "Savunma" then
+			local tackle = if matchApi then matchApi.Tackle else Bots.Tackle
+			local result = tackle(hrp.Position - Vector3.new(0, 3, 0), look, action == "Kayma")
 			if result == "win" then
 				banner("Top sende!", C.Good)
 				shake(0.6)
 				ring(Ball.Position(), C.Good, 9)
 				UIMotion.Sound("ConfirmSound")
-				Remotes.Get("TrainingGoal"):FireServer("Tackle")
+				if not matchApi then
+					Remotes.Get("TrainingGoal"):FireServer("Tackle")
+				end
 			elseif result == "foul" then
 				banner("Faul!", C.Bad)
 				UIMotion.Sound("ErrorSound")
@@ -502,6 +509,9 @@ local function onEvent(event: string, action: string)
 				if state.yellow then
 					state.yellow = false
 					showCard(C.Bad, "Kırmızı kart!")
+					if matchApi then
+						task.delay(1.6, matchApi.Forfeit) -- kırmızı kart: maç senin için biter
+					end
 				else
 					state.yellow = true
 					showCard(C.Yellow, "Sarı kart")
@@ -510,15 +520,29 @@ local function onEvent(event: string, action: string)
 		end
 	elseif event == "block" or event == "save" then
 		ring(footPos("Right") + look * 1.5, C.White, 4)
+		if event == "save" and matchApi then
+			-- oyuncu kaleciyse: plonjon yönündeki el hizasında top varsa çeler
+			local side = if state.lastMirror then -1 else 1
+			local hand = hrp.Position + hrp.CFrame.RightVector * side * 3.6 + Vector3.new(0, 0.6, 0)
+			if matchApi.HumanSave(hand) then
+				banner("Kurtardın!", C.Gold)
+				shake(0.9)
+				TimeScale.Set(0.05, SH.HitStop)
+				UIMotion.Sound("RewardSound")
+			end
+		end
 	elseif event == "feint" then
 		ring(hrp.Position - Vector3.new(0, 2.8, 0), C.Yellow, 6)
-		if Bots.Feint(hrp.Position - Vector3.new(0, 3, 0)) then
+		local feint = if matchApi then matchApi.Feint else Bots.Feint
+		if feint(hrp.Position - Vector3.new(0, 3, 0)) then
 			setCombo(state.combo + 1)
 			banner("Çalım!", C.Gold)
 			ring(hrp.Position - Vector3.new(0, 2.8, 0), C.Gold, 12)
 			shake(0.4)
 			UIMotion.Sound("ConfirmSound")
-			Remotes.Get("TrainingGoal"):FireServer("Feint")
+			if not matchApi then
+				Remotes.Get("TrainingGoal"):FireServer("Feint")
+			end
 			if state.combo >= DU.ComboForTurbo then
 				setCombo(0)
 				state.turboUntil = os.clock() + DU.TurboTime
@@ -644,7 +668,12 @@ local function step(dt: number)
 
 	-- top
 	if state.hud then
-		Bots.Update(sdt, { playerPos = hrp.Position - Vector3.new(0, 3, 0) })
+		local ctx = { playerPos = hrp.Position - Vector3.new(0, 3, 0) }
+		if matchApi then
+			matchApi.Update(sdt, ctx)
+		else
+			Bots.Update(sdt, ctx)
+		end
 		Ball.Carry(sdt, {
 			pos = hrp.Position - Vector3.new(0, 3, 0),
 			dir = if moving then dir else Vector3.zero,
@@ -885,8 +914,19 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	ui.banner = bn
 
 	-- Çıkış (sağ üst, bakiyenin altında)
-	local exit =
-		Components.Button({ Text = "Lobiye dön", Style = "Ghost", Size = UDim2.fromOffset(180, 44), TextSize = 16, OnClick = onExit })
+	local exit = Components.Button({
+		Text = "Lobiye dön",
+		Style = "Ghost",
+		Size = UDim2.fromOffset(180, 44),
+		TextSize = 16,
+		OnClick = function()
+			if matchApi then
+				matchApi.Forfeit()
+			else
+				onExit()
+			end
+		end,
+	})
 	exit.AnchorPoint = Vector2.new(1, 0)
 	exit.Position = UDim2.new(1, -20, 0, 96)
 	exit.Parent = root
@@ -944,6 +984,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			Title = "Tuşlar",
 		})
 		hp.Parent = root
+		ui.keysPanel = hp
 		local lines = {
 			{ "Shift", "Sprint" },
 			{ "F", "Şut: basılı tut, yeşilde bırak" },
@@ -1007,6 +1048,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		Accent = false,
 	})
 	gp.Parent = root
+	ui.goalsPanel = gp
 	local gl = Components.Label({
 		Text = "Gol",
 		Size = 12,
@@ -1069,6 +1111,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	modes.Frame.Position = UDim2.new(0.5, 0, 0, 88)
 	modes.Frame.Size = UDim2.fromOffset(400, 34)
 	modes.Frame.Parent = root
+	ui.modesFrame = modes.Frame
 	local ml = modes.Frame:FindFirstChildOfClass("UIListLayout")
 	if ml then
 		ml.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -1095,6 +1138,9 @@ local function bindBall()
 		end)
 	end
 	Ball.On("goal", function(kind)
+		if matchApi then
+			return -- maçta golü MatchController yönetir
+		end
 		state.goals += 1
 		if ui.goals then
 			ui.goals.Text = tostring(state.goals)
@@ -1154,6 +1200,9 @@ local function bindBall()
 		UIMotion.Sound("ErrorSound")
 	end)
 	Ball.On("out", function()
+		if matchApi then
+			return
+		end
 		banner("Aut", C.Muted)
 		if Bots.Mode() == "Hucum" then
 			back(1.4)
@@ -1209,12 +1258,20 @@ function Controller.SetHud(visible: boolean)
 					UIMotion.In(child, Vector2.new(0, 30), 0.05)
 				end
 			end
-			banner("Deneme sahası")
 			Ball.Init()
-			Bots.Start("Hucum")
+			if not matchApi then
+				banner("Deneme sahası")
+				Bots.Start("Hucum")
+			end
 			local hrp = state.hrp
-			if hrp then
+			if hrp and not matchApi then
 				Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 6)
+			end
+			-- yalnızca deneme sahasına ait parçalar maçta gizlenir
+			for _, key in ipairs({ "goalsPanel", "modesFrame", "keysPanel" }) do
+				if ui[key] then
+					ui[key].Visible = matchApi == nil
+				end
 			end
 		end
 		if not visible then
@@ -1229,6 +1286,24 @@ function Controller.SetHud(visible: boolean)
 		if ballPart and ballPart:IsA("BasePart") then
 			ballPart.Transparency = if visible then 0 else 1
 		end
+	end
+end
+
+-- Maç kancaları: api = { Update, Feint, Tackle, HumanSave, OnHumanKick, Forfeit } ya da nil (deneme sahası)
+function Controller.SetMatch(api: any, pitch: any)
+	matchApi = api
+	TP = pitch or Config.TestPitch
+	setCombo(0)
+	state.yellow = false
+	if api then
+		Bots.Clear()
+	end
+end
+
+-- Dışarıdan eylem oynatma (gol sevinci, üzülme)
+function Controller.PlayAction(name: string)
+	if state.animator then
+		state.animator:Play(name)
 	end
 end
 

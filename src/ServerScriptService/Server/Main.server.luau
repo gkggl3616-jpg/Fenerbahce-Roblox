@@ -11,6 +11,7 @@ local PlayerService = require(script.Parent.PlayerService)
 local CharacterService = require(script.Parent.CharacterService)
 
 CharacterService.BuildStudio()
+CharacterService.BuildMatchPitch()
 DataService.Init()
 PlayerService.Init()
 DataService.StartAutoSave()

@@ -354,6 +354,8 @@ function CharacterService.BuildBotTemplates()
 		{ Name = "RivalAttacker", Kit = Kits.Rival, Position = "Forvet", Number = 9, Skin = 5, Hair = 1 },
 		{ Name = "RivalKeeper", Kit = Kits.RivalKeeper, Position = "Kaleci", Number = 1, Skin = 2, Hair = 2 },
 		{ Name = "Mate", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 10, Skin = 4, Hair = 3 },
+		{ Name = "Mate2", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 8, Skin = 2, Hair = 2 },
+		{ Name = "MateKeeper", Kit = Kits.Keeper, Position = "Kaleci", Number = 1, Skin = 3, Hair = 1 },
 	}
 	for i, d in ipairs(defs) do
 		local ok, rig = pcall(function()
@@ -540,6 +542,103 @@ function CharacterService.BuildStudio()
 	spawn.Neutral = true
 	spawn.Duration = 0
 	spawn.Parent = m
+	m.Parent = Workspace
+end
+
+-- İki kaleli maç sahası
+function CharacterService.BuildMatchPitch()
+	if Workspace:FindFirstChild("FK_MatchPitch") then
+		return
+	end
+	local P = Config.MatchPitch
+	local m = Instance.new("Model")
+	m.Name = "FK_MatchPitch"
+	local white = Color3.fromRGB(245, 245, 245)
+	local function part(size: Vector3, cf: CFrame, c: Color3, material: Enum.Material?, collide: boolean?)
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.Size = size
+		p.CFrame = cf
+		p.Color = c
+		p.Material = material or Enum.Material.SmoothPlastic
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.CanCollide = collide ~= false
+		p.Parent = m
+		return p
+	end
+	local midZ, len, wid = (P.MinZ + P.MaxZ) / 2, P.MaxZ - P.MinZ, P.MaxX - P.MinX
+	part(Vector3.new(wid + 60, 1, len + 70), CFrame.new(0, P.GroundY - 0.5, midZ), Color3.fromRGB(47, 143, 67), Enum.Material.Grass)
+	for i = 0, 15 do
+		if i % 2 == 0 then
+			part(
+				Vector3.new(wid, 0.02, len / 16),
+				CFrame.new(0, P.GroundY + 0.01, P.MinZ + (i + 0.5) * len / 16),
+				Color3.fromRGB(56, 158, 78),
+				Enum.Material.Grass,
+				false
+			)
+		end
+	end
+	local y = P.GroundY + 0.03
+	local function line(sx: number, sz: number, x: number, z: number)
+		part(Vector3.new(sx, 0.04, sz), CFrame.new(x, y, z), white, nil, false)
+	end
+	line(wid, 0.4, 0, P.MinZ)
+	line(wid, 0.4, 0, P.MaxZ)
+	line(0.4, len, P.MinX, midZ)
+	line(0.4, len, P.MaxX, midZ)
+	line(wid, 0.4, 0, midZ)
+	-- orta daire (24 parçalı çokgen)
+	for i = 0, 23 do
+		local a = i / 24 * math.pi * 2
+		part(
+			Vector3.new(7.9, 0.04, 0.4),
+			CFrame.new(math.cos(a) * 30, y, midZ + math.sin(a) * 30) * CFrame.Angles(0, -a + math.pi / 2, 0),
+			white,
+			nil,
+			false
+		)
+	end
+	line(1.2, 1.2, 0, midZ)
+	local gw, gh = P.GoalHalfWidth, P.GoalHeight
+	for _, e in ipairs({ { P.MinZ, 1 }, { P.MaxZ, -1 } }) do
+		local gz, d = e[1], e[2] -- d: sahanın içine doğru yön
+		line(132, 0.4, 0, gz + d * 54)
+		line(0.4, 54, -66, gz + d * 27)
+		line(0.4, 54, 66, gz + d * 27)
+		line(60, 0.4, 0, gz + d * 18)
+		line(0.4, 18, -30, gz + d * 9)
+		line(0.4, 18, 30, gz + d * 9)
+		line(1, 1, 0, gz + d * 36)
+		for _, x in ipairs({ -gw, gw }) do
+			local p =
+				part(Vector3.new(gh, 0.5, 0.5), CFrame.new(x, gh / 2, gz) * CFrame.Angles(0, 0, math.rad(90)), white, Enum.Material.Metal)
+			p.Shape = Enum.PartType.Cylinder
+		end
+		local bar = part(Vector3.new(gw * 2 + 0.5, 0.5, 0.5), CFrame.new(0, gh, gz), white, Enum.Material.Metal)
+		bar.Shape = Enum.PartType.Cylinder
+		local function net(size: Vector3, cf: CFrame)
+			local n = part(size, cf, white, Enum.Material.ForceField, false)
+			n.Name = "Net"
+			n.Transparency = 0.6
+		end
+		net(Vector3.new(gw * 2, gh, 0.1), CFrame.new(0, gh / 2, gz - d * 5))
+		net(Vector3.new(0.1, gh, 5), CFrame.new(-gw, gh / 2, gz - d * 2.5))
+		net(Vector3.new(0.1, gh, 5), CFrame.new(gw, gh / 2, gz - d * 2.5))
+		net(Vector3.new(gw * 2, 0.1, 5), CFrame.new(0, gh, gz - d * 2.5))
+	end
+	-- saha kenarı reklam panoları (sarı-lacivert)
+	for i = -4, 4 do
+		for _, sx in ipairs({ -1, 1 }) do
+			part(
+				Vector3.new(0.6, 3, 30),
+				CFrame.new(sx * (P.MaxX + 12), 1.5, midZ + i * 34),
+				if (i + (if sx > 0 then 1 else 0)) % 2 == 0 then C.Yellow else C.Navy,
+				nil,
+				false
+			)
+		end
+	end
 	m.Parent = Workspace
 end
 

@@ -161,6 +161,7 @@ local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
 local enterPitch: () -> ()
+local enterMatch: () -> ()
 
 local function buildLobby()
 	-- Oyuncu kartı (sol üst)
@@ -206,7 +207,7 @@ local function buildLobby()
 	-- Menü (sol)
 	local menu, mc = Components.Panel({
 		Name = "Menu",
-		Size = UDim2.fromOffset(280, 356),
+		Size = UDim2.fromOffset(280, 416),
 		Position = UDim2.fromOffset(20, 140),
 		Title = "Kariyer Merkezi",
 	})
@@ -224,10 +225,13 @@ local function buildLobby()
 		b.Parent = holder
 		table.insert(buttons, b)
 	end
-	add("Deneme sahası", "Primary", nil, function()
+	add("Maça çık", "Primary", nil, function()
+		enterMatch()
+	end)
+	add("Deneme sahası", "Secondary", nil, function()
 		enterPitch()
 	end)
-	add("Pası geliştir", "Secondary", nil, function()
+	add("Pası geliştir", "Ghost", nil, function()
 		Remotes.Get("UpgradeStat"):FireServer("Pas")
 	end)
 	add("Plase aç", "Secondary", nil, function()
@@ -332,6 +336,24 @@ enterPitch = function()
 			hrp.CFrame = CFrame.lookAt(Vector3.new(0, 4, 70), Vector3.new(0, 4, 140))
 		end
 		PlayerController.SetHud(true)
+	end)
+end
+
+-- Maç: lobi menüleri kapanır, maç bitince geri gelir
+local MatchController = require(script.Parent.Match.MatchController)
+enterMatch = function()
+	if not state.data or not state.data.created then
+		return
+	end
+	UIMotion.Wipe(function()
+		refs.menu.Visible = false
+		refs.tasks.Visible = false
+		MatchController.Start(gui, state.data, function()
+			refs.menu.Visible = true
+			refs.tasks.Visible = true
+			UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
+			UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
+		end)
 	end)
 end
 
