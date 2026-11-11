@@ -229,7 +229,7 @@ local function onUnlockSkill(player: Player, chainId)
 		return notify(player, "error", "Bu zincir senin mevkine ait değil.")
 	end
 	-- Sıralı kilit: yalnızca sıradaki yetenek açılabilir
-	local nextIndex = (data.skills[chainId] or 0) + 1
+	local nextIndex = Config.SkillLevel(data.skills, chainId) + 1
 	local skill = chain.Skills[nextIndex]
 	if not skill then
 		return notify(player, "error", "Bu zincirdeki bütün yetenekler açık.")

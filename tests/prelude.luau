@@ -739,7 +739,7 @@ local rs = service("ReplicatedStorage")
 local shared = folder("Shared", rs)
 moduleNode("Config", SRC .. "ReplicatedStorage/Shared/Config.luau", shared)
 moduleNode("Kits", SRC .. "ReplicatedStorage/Shared/Kits.luau", shared)
-moduleNode("Stadium", SRC .. "ReplicatedStorage/Shared/Stadium.luau", shared)
+moduleNode("Squads", SRC .. "ReplicatedStorage/Shared/Squads.luau", shared)
 moduleNode("Remotes", SRC .. "ReplicatedStorage/Shared/Remotes.luau", shared)
 local uiF = folder("UI", rs)
 for _, n in ipairs({ "Theme", "UIMotion", "Components", "Forms" }) do
@@ -764,6 +764,8 @@ local controllers = folder("Controllers", client)
 moduleNode("PlayerController", CL .. "Controllers/PlayerController.luau", controllers)
 local screens = folder("Screens", client)
 moduleNode("Creator", CL .. "Screens/Creator.luau", screens)
+moduleNode("SkillTree", CL .. "Screens/SkillTree.luau", screens)
+moduleNode("Lineup", CL .. "Screens/Lineup.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 
 -- R15 iskeletli sahte karakter (animasyon ve bot sınamaları için)

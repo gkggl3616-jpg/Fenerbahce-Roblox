@@ -188,6 +188,54 @@ local function hair(character: Model, head: BasePart, style: number, c: Color3)
 	end
 end
 
+-- Yüz: gözler, kaşlar, ağız ve sakal başın ön yüzüne çizilir
+local function paintFace(head: BasePart, face: number, beard: number, hairColor: Color3, skin: Color3)
+	local sg = Instance.new("SurfaceGui")
+	sg.Name = "FK_Kit"
+	sg.Face = Enum.NormalId.Front
+	sg.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+	sg.CanvasSize = Vector2.new(200, 200)
+	sg.LightInfluence = 1
+	sg.Parent = head
+	local function shape(size: UDim2, pos: UDim2, c: Color3, round: number, rot: number?, tr: number?): Frame
+		local f = Instance.new("Frame")
+		f.AnchorPoint = Vector2.new(0.5, 0.5)
+		f.Size = size
+		f.Position = pos
+		f.BackgroundColor3 = c
+		f.BackgroundTransparency = tr or 0
+		f.BorderSizePixel = 0
+		f.Rotation = rot or 0
+		local u = Instance.new("UICorner")
+		u.CornerRadius = UDim.new(round, 0)
+		u.Parent = f
+		f.Parent = sg
+		return f
+	end
+	local dark = Color3.fromRGB(26, 22, 20)
+	local v = (math.max(1, face) - 1) % 6
+	-- sakal önce çizilir (ağız üstte kalsın)
+	if beard >= 1 then
+		local tr = if beard == 1 then 0.55 elseif beard == 2 then 0.25 else 0.05
+		shape(UDim2.fromScale(0.74, 0.34), UDim2.fromScale(0.5, 0.84), hairColor, 0.45, 0, tr)
+		if beard >= 2 then
+			shape(UDim2.fromScale(0.36, 0.07), UDim2.fromScale(0.5, 0.63), hairColor, 0.5, 0, tr) -- bıyık
+		end
+	end
+	local browTilt = ({ 0, 8, -6, 12, 4, -10 })[v + 1]
+	local eyeH = ({ 0.1, 0.085, 0.11, 0.075, 0.095, 0.1 })[v + 1]
+	for _, sx in ipairs({ -1, 1 }) do
+		local x = 0.5 + sx * 0.17
+		shape(UDim2.fromScale(0.17, eyeH), UDim2.fromScale(x, 0.43), Color3.fromRGB(246, 246, 240), 0.5)
+		shape(UDim2.fromScale(0.075, eyeH * 0.92), UDim2.fromScale(x + sx * 0.005, 0.43), dark, 0.5)
+		shape(UDim2.fromScale(0.2, 0.035), UDim2.fromScale(x, 0.43 - eyeH * 0.5 - 0.04), hairColor:Lerp(dark, 0.5), 0.5, sx * browTilt)
+	end
+	-- burun gölgesi ve ağız
+	shape(UDim2.fromScale(0.05, 0.12), UDim2.fromScale(0.5, 0.53), skin:Lerp(dark, 0.22), 0.5)
+	local mouthW = ({ 0.24, 0.2, 0.28, 0.18, 0.26, 0.22 })[v + 1]
+	shape(UDim2.fromScale(mouthW, 0.03), UDim2.fromScale(0.5, 0.71), Color3.fromRGB(120, 60, 52), 0.5)
+end
+
 --[[
 	look = {
 		appearance = {...}, position, kitPattern, number, name, abbr, atFenerbahce, level
@@ -202,21 +250,9 @@ local function dress(character: Model?, look)
 	local B = Config.Body
 	local skin = Config.SkinColors[a.skin] or Config.SkinColors[2]
 
-	local desc = hum:GetAppliedDescription()
-	desc.Shirt = 0
-	desc.Pants = 0
-	desc.GraphicTShirt = 0
-	desc.HatAccessory = ""
-	desc.HairAccessory = ""
-	desc.FaceAccessory = ""
-	desc.NeckAccessory = ""
-	desc.ShouldersAccessory = ""
-	desc.FrontAccessory = ""
-	desc.BackAccessory = ""
-	desc.WaistAccessory = ""
-	pcall(function()
-		desc:SetAccessories({}, true)
-	end)
+	-- Herkes aynı varsayılan gövdeyle başlar: oyuncunun kendi Roblox avatarı (paket gövdeler,
+	-- şapkalar, kıyafetler) kullanılmaz. Boş tanım, standart R15 gövdesini verir.
+	local desc = Instance.new("HumanoidDescription")
 	for key, id in pairs(B.Parts) do
 		if id ~= 0 then
 			(desc :: any)[key] = id
@@ -244,6 +280,14 @@ local function dress(character: Model?, look)
 
 	clear(character, "FK_Extra")
 	clear(character, "FK_Kit")
+	-- avatardan kalan her şeyi temizle
+	for _, d in ipairs(character:GetDescendants()) do
+		if d:IsA("Accessory") or d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("CharacterMesh") then
+			d:Destroy()
+		elseif d:IsA("Decal") and d.Parent and d.Parent.Name == "Head" then
+			d:Destroy() -- hazır yüz çıkartması; yüzü kendimiz çiziyoruz
+		end
+	end
 
 	local kit = look.kit or Kits.For(look.position, look.kitPattern, look.atFenerbahce)
 	local acc = a.accessories or {}
@@ -265,6 +309,7 @@ local function dress(character: Model?, look)
 
 	local head = character:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
+		paintFace(head, a.face or 1, a.beard or 0, hex(a.hairColor), skin)
 		hair(character, head, a.hairStyle, hex(a.hairColor))
 		if acc.SacBandi then
 			local s = head.Size
@@ -329,6 +374,38 @@ local function dress(character: Model?, look)
 				Vector3.new(ua.Size.X * 1.12, ua.Size.Y * 0.2, ua.Size.Z * 1.12),
 				CFrame.new(0, -ua.Size.Y * 0.1, 0),
 				C.Gold
+			)
+		end
+	end
+	-- yaka ve krampon tabanı
+	if torso and torso:IsA("BasePart") then
+		local ts = torso.Size
+		weldPart(character, torso, Vector3.new(ts.X * 0.46, ts.Y * 0.08, ts.Z * 1.04), CFrame.new(0, ts.Y * 0.47, 0), kit.Trim)
+	end
+	for _, n in ipairs({ "LeftFoot", "RightFoot" }) do
+		local foot = character:FindFirstChild(n)
+		if foot and foot:IsA("BasePart") then
+			local fs = foot.Size
+			weldPart(
+				character,
+				foot,
+				Vector3.new(fs.X * 1.04, fs.Y * 0.22, fs.Z * 1.06),
+				CFrame.new(0, -fs.Y * 0.42, 0),
+				Color3.fromRGB(240, 240, 240)
+			)
+			weldPart(character, foot, Vector3.new(fs.X * 0.3, fs.Y * 0.2, fs.Z * 0.7), CFrame.new(0, fs.Y * 0.42, -fs.Z * 0.1), C.Yellow)
+		end
+	end
+	-- şort kenar şeridi
+	for _, n in ipairs({ "LeftUpperLeg", "RightUpperLeg" }) do
+		local leg = character:FindFirstChild(n)
+		if leg and leg:IsA("BasePart") then
+			weldPart(
+				character,
+				leg,
+				Vector3.new(leg.Size.X * 1.07, leg.Size.Y * 0.1, leg.Size.Z * 1.07),
+				CFrame.new(0, -leg.Size.Y * 0.36, 0),
+				kit.Trim
 			)
 		end
 	end

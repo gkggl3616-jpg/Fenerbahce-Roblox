@@ -14,7 +14,11 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
-local Stadium = require(ReplicatedStorage.Shared.Stadium)
+-- Stat modülü isteğe bağlıdır: yoksa maç sade sahada oynanır
+local stadiumModule = ReplicatedStorage.Shared:FindFirstChild("Stadium")
+local Stadium = if stadiumModule
+	then require(stadiumModule) :: any
+	else { Build = function() end, Clear = function() end, Cheer = function() end, Score = function() end, Screen = function() end }
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Theme = require(ReplicatedStorage.UI.Theme)
 local UIMotion = require(ReplicatedStorage.UI.UIMotion)
@@ -682,7 +686,7 @@ end
 	Maçı başlatır.
 	gui: ScreenGui, data: oyuncu verisi, onDone: lobiye dönüldüğünde çağrılır
 ]]
-function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
+function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: any?)
 	if M then
 		return
 	end
@@ -701,8 +705,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
 		myHeaderGoals = 0,
 		lastHumanKick = nil,
 		position = data.position,
-		homeName = if data.club.abbr ~= "" then data.club.abbr else "EV",
-		awayName = "RKP",
+		homeName = if fixture then fixture.home.club.Abbr elseif data.club.abbr ~= "" then data.club.abbr else "EV",
+		awayName = if fixture then fixture.away.club.Abbr else "RKP",
 	}
 	Remotes.Get("MatchStart"):FireServer()
 	Stadium.Build(if data.career and data.career.atFenerbahce then 6 else data.club.tier, {
@@ -715,6 +719,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
 	Ball.Init()
 	MatchAI.Start({
 		position = data.position,
+		fixture = fixture,
 		awaySkill = (avg - 28) / 70,
 		homeSkill = (avg - 28) / 70 + 0.04 + ((data.power or 30) - avg) / 200,
 	})

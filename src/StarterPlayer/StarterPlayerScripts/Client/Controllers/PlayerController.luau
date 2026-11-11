@@ -34,24 +34,6 @@ local Controller = {}
 
 local SHOTS = { "Shoot", "Plase", "Fuze", "Asirtma", "Vole", "Rovesata" }
 -- Eylemin hangi yetenekle açıldığı: { zincir, sıra }
-local REQUIRES = {
-	Shoot = { "Sut", 1 },
-	Plase = { "Sut", 2 },
-	Fuze = { "Sut", 3 },
-	Asirtma = { "Sut", 4 },
-	Vole = { "Sut", 5 },
-	Rovesata = { "Sut", 6 },
-	VucutCalimi = { "Calim", 1 },
-	Marsilya = { "Calim", 3 },
-	Elastico = { "Calim", 5 },
-	Jump = { "Hava", 1 },
-	Header = { "Hava", 2 },
-	UcanKafa = { "Hava", 4 },
-	AyaktaMudahale = { "Defans", 1 },
-	Kayma = { "Defans", 4 },
-	Blok = { "Defans", 5 },
-	Plonjon = { "Kaleci", 1 },
-}
 
 local state = {
 	animator = nil :: any,
@@ -239,12 +221,22 @@ local function unlocked(action: string): boolean
 	if Config.Debug.UnlockAllActionsInStudio and RunService:IsStudio() then
 		return true
 	end
-	local req = REQUIRES[action]
 	local data = state.getData and state.getData()
-	if not req or not data then
+	if not data then
 		return true
 	end
-	return (data.skills[req[1]] or 0) >= req[2]
+	return Config.ActionUnlocked(data.skills, action)
+end
+
+-- Bir zincirde verilen hareketlerden açık olan en üsttekini seçer (liste alttan üste sıralıdır)
+local function best(list: { string }): string
+	local pick = list[1]
+	for _, a in ipairs(list) do
+		if unlocked(a) then
+			pick = a
+		end
+	end
+	return pick
 end
 
 local function paintShots()
@@ -279,7 +271,7 @@ local function play(action: string, opts: any?)
 		return
 	end
 	if not unlocked(action) then
-		return Components.Toast("error", Poses.Names[action] .. " henüz açılmadı.")
+		return Components.Toast("error", (Poses.Names[action] or action) .. " henüz açılmadı. Yetenek ağacından aç.")
 	end
 	local def = Poses.Actions[action]
 	if def.Mask == "Full" and state.hum and state.hum.FloorMaterial == Enum.Material.Air and action ~= "Vole" and action ~= "Rovesata" then
@@ -344,14 +336,29 @@ local function fetchBall()
 		Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 5)
 	end
 end
+-- Tek tuş, açılan en üst hareket: yetenek ağacında ilerledikçe aynı tuş daha gösterişli hareketi yapar
 local function doTackle()
-	play(if state.speed > M.Run + 2 then "Kayma" else "AyaktaMudahale")
+	if state.speed > M.Run + 2 and unlocked("Kayma") then
+		play("Kayma")
+	else
+		play(best({ "AyaktaMudahale", "Omuz" }))
+	end
+end
+local function doDribble()
+	play(best({ "VucutCalimi", "Bisiklet", "Marsilya", "Elastico", "Gokkusagi" }), { Mirror = math.random() < 0.5 })
+end
+local function doBlock()
+	play(best({ "AyaktaMudahale", "Blok", "UcanBlok" }))
 end
 local function doCelebrate()
 	play(if state.speed > 8 then "DizKaymasi" else "Sevinc")
 end
 local function doJump()
-	play(if state.speed > M.Run + 2 then "UcanKafa" else "Header")
+	if state.speed > M.Run + 2 and unlocked("UcanKafa") then
+		play(best({ "UcanKafa", "Makas" }))
+	else
+		play(best({ "Jump", "Header", "GucluKafa" }))
+	end
 end
 
 local KEYMAP: { [Enum.KeyCode]: () -> () } = {
@@ -359,20 +366,13 @@ local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Pass] = passDown,
 	[Enum.KeyCode.B] = cross,
 	[Enum.KeyCode.N] = fetchBall,
-	[Config.Keys.Dribble] = function()
-		play("VucutCalimi", { Mirror = math.random() < 0.5 })
-	end,
+	[Config.Keys.Dribble] = doDribble,
 	[Config.Keys.Special] = function()
-		play("Marsilya")
-	end,
-	[Enum.KeyCode.T] = function()
-		play("Elastico")
+		play("VucutCalimi", { Mirror = math.random() < 0.5 }) -- hızlı, sade çalım her zaman elde
 	end,
 	[Config.Keys.Jump] = doJump,
 	[Config.Keys.Tackle] = doTackle,
-	[Enum.KeyCode.V] = function()
-		play("Blok")
-	end,
+	[Enum.KeyCode.V] = doBlock,
 	[Config.Keys.Celebrate] = doCelebrate,
 	[Enum.KeyCode.H] = function()
 		play("TopIste")
@@ -422,6 +422,8 @@ local function onEvent(event: string, action: string)
 			UcanKafa = { 1.6, 6.8, 5.4, 4 },
 			Vole = { 1.3, 5.2, 4, 3 },
 			Rovesata = { 2.4, 9.5, 4.4, 6 },
+			GucluKafa = { 3.4, 10, 4.8, 6.4 },
+			Makas = { 1.6, 7.2, 5.2, 3.6 },
 		}
 		local win = WINDOW[action]
 		local pending = state.pending or { power = 0.7, perfect = false, aimX = aimInput() }
@@ -441,7 +443,7 @@ local function onEvent(event: string, action: string)
 			opts.power = 0.85
 			opts.aimX = aimInput()
 			opts.perfect = math.abs(h - win[4]) < 1.3 -- top tam ideal yükseklikteyken vurulduysa
-			if action == "Header" or action == "UcanKafa" then
+			if action == "Header" or action == "UcanKafa" or action == "GucluKafa" then
 				opts.stat = stat("Fizik")
 			end
 		end
@@ -471,11 +473,11 @@ local function onEvent(event: string, action: string)
 				banner("Fazla tuttun", C.Bad)
 			end
 		end
-		if action == "Rovesata" or action == "UcanKafa" then
+		if action == "Rovesata" or action == "UcanKafa" or action == "Makas" then
 			task.delay(SH.HitStop + 0.02, function()
 				TimeScale.Set(SH.SlowMo, SH.SlowMoTime) -- yavaş çekim
 			end)
-			banner(if action == "Rovesata" then "Röveşata!" else "Uçan kafa!", C.Gold)
+			banner((Poses.Names[action] or action) .. "!", C.Gold)
 		end
 		if target and ui.aim then
 			ui.aimHold = os.clock() + 0.8
@@ -518,8 +520,27 @@ local function onEvent(event: string, action: string)
 				end
 			end
 		end
+	elseif event == "flick" then
+		-- Gökkuşağı: top ayaktaysa topukla öne ve yukarı aşırılır
+		local feet = hrp.Position - Vector3.new(0, 3, 0)
+		if (Ball.Position() - feet).Magnitude < SH.Reach + 1.5 then
+			Ball.Kick(look * 34 + Vector3.new(0, 44, 0))
+			ring(Ball.Position(), C.Gold, 7)
+			UIMotion.Sound("ConfirmSound")
+		end
 	elseif event == "block" or event == "save" then
 		ring(footPos("Right") + look * 1.5, C.White, 4)
+		if event == "block" then
+			-- önümüzden hızlı geçen top gövdeye çarpar
+			local bp, bv = Ball.Position(), Ball.Velocity()
+			local reach = if action == "UcanBlok" then 7 else 4.5
+			if (bp - hrp.Position).Magnitude < reach and bv.Magnitude > 30 and bv:Dot(look) < 0 then
+				Ball.Deflect(-bv * 0.35 + Vector3.new(0, 12, 0))
+				banner("Blok!", C.Good)
+				shake(0.6)
+				UIMotion.Sound("ConfirmSound")
+			end
+		end
 		if event == "save" and matchApi then
 			-- oyuncu kaleciyse: plonjon yönündeki el hizasında top varsa çeler
 			local side = if state.lastMirror then -1 else 1
@@ -594,20 +615,34 @@ local function step(dt: number)
 		Controller.Rebind()
 		return
 	end
+	-- Roblox'un kendi animasyonları eklemleri ezmesin
+	if os.clock() - (ui.lastTrackSweep or 0) > 0.5 then
+		ui.lastTrackSweep = os.clock()
+		local animator = hum:FindFirstChildOfClass("Animator")
+		if animator then
+			for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+				if not track:GetAttribute("FK") then
+					track:Stop(0)
+				end
+			end
+		end
+	end
 	local dir = hum.MoveDirection
 	local moving = dir.Magnitude > 0.1
 	local wantSprint = state.sprintHeld and moving and not state.tired and state.stamina > 0
 
 	-- dayanıklılık
 	if wantSprint then
-		state.stamina = math.max(0, state.stamina - M.SprintDrain * dt)
+		-- Fizik özelliği dayanıklılığı artırır (her seviye %5 daha az harcar)
+		state.stamina = math.max(0, state.stamina - M.SprintDrain * (1 - (stat("Fizik") - 1) * 0.05) * dt)
 		if state.stamina <= 0 then
 			state.tired = true
 			banner("Yoruldun", C.Bad)
 		end
 	else
 		state.stamina = math.min(M.StaminaMax, state.stamina + M.Regen * dt * (if moving then 0.6 else 1))
-		if state.tired and state.stamina >= M.TiredUntil then
+		-- Yorgunluk, sprint tuşu bırakılmadan geçmez: tuş basılıyken hız gidip gelmesin
+		if state.tired and state.stamina >= M.TiredUntil and not state.sprintHeld then
 			state.tired = false
 		end
 	end
@@ -615,7 +650,8 @@ local function step(dt: number)
 	-- hedef hız ve ivme
 	local target = 0
 	if moving then
-		target = if wantSprint then M.Sprint else M.Run
+		-- Hız özelliği koşu ve sprint hızını artırır (her seviye %2)
+		target = (if wantSprint then M.Sprint else M.Run) * (1 + (stat("Hiz") - 1) * 0.02)
 		if state.tired then
 			target *= M.TiredFactor
 		end
@@ -957,23 +993,11 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			232,
 			0
 		)
-		place(
-			roundButton("Çalım", 88, false, function()
-				play("VucutCalimi", { Mirror = math.random() < 0.5 })
-			end),
-			16,
-			132
-		)
+		place(roundButton("Çalım", 88, false, doDribble), 16, 132)
 		place(roundButton("Zıpla", 88, false, doJump), 116, 104)
 		place(roundButton("Müdahale", 88, false, doTackle), 216, 104)
 		place(roundButton("Sevinç", 76, false, doCelebrate), 60, 232)
-		place(
-			roundButton("Marsilya", 76, false, function()
-				play("Marsilya")
-			end),
-			150,
-			208
-		)
+		place(roundButton("Blok", 76, false, doBlock), 150, 208)
 	else
 		-- Tuş ipuçları (sağ alt)
 		local hp, hc = Components.Panel({
@@ -990,7 +1014,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			{ "F", "Şut: basılı tut, yeşilde bırak" },
 			{ "E", "Pas (uzun bas: sert)" },
 			{ "B / N", "Orta aç / Topu getir" },
-			{ "Q / R / T", "Çalım (kırmızı halka yanınca)" },
+			{ "Q / R", "Çalım (en üst hareket) / sade çalım" },
 			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
 			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
 			{ "Z / X", "Plonjon sol / sağ" },

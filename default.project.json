@@ -4,31 +4,52 @@
     "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Shared": { "$path": "src/ReplicatedStorage/Shared" },
-      "UI": { "$path": "src/ReplicatedStorage/UI" }
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "UI": {
+        "$path": "src/ReplicatedStorage/UI"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "Server": { "$path": "src/ServerScriptService/Server" }
+      "Server": {
+        "$path": "src/ServerScriptService/Server"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "Client": { "$path": "src/StarterPlayer/StarterPlayerScripts/Client" }
+        "Client": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/Client"
+        }
+      },
+      "$properties": {
+        "LoadCharacterAppearance": false
+      },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "src/StarterPlayer/StarterCharacterScripts"
       }
     },
     "StarterGui": {
       "$className": "StarterGui",
-      "$properties": { "ScreenOrientation": "LandscapeSensor" }
+      "$properties": {
+        "ScreenOrientation": "LandscapeSensor"
+      }
     },
     "Workspace": {
       "$className": "Workspace",
-      "$properties": { "StreamingEnabled": false }
+      "$properties": {
+        "StreamingEnabled": false
+      }
     },
     "Lighting": {
       "$className": "Lighting",
-      "$properties": { "Technology": "Future" }
+      "$properties": {
+        "Technology": "Future"
+      }
     }
   }
 }

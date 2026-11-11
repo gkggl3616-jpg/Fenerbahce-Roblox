@@ -144,6 +144,7 @@ function Animator:_track(name: string, assetId: string)
 	end)
 	if ok then
 		track.Priority = Enum.AnimationPriority.Action
+		track:SetAttribute("FK", true)
 		self.Tracks[name] = track
 		return track
 	end

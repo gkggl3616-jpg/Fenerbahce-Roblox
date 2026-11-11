@@ -751,9 +751,9 @@ frames(10)
 check("deneme sahasında top hazır", Ball2.Position().Z > 70)
 -- koş: hız yarım saniyede koşu hızına çıkar
 hum.MoveDirection = Vector3.new(0, 0, 1)
-frames(15)
+frames(6)
 local early = hum.WalkSpeed
-frames(45)
+frames(54)
 check(
 	"ivmelenme: hız kademeli artar",
 	early < hum.WalkSpeed and math.abs(hum.WalkSpeed - Config.Movement.Run) < 1.5,
@@ -763,8 +763,9 @@ check(
 UIS.InputBegan:Fire({ KeyCode = Config.Keys.Sprint, UserInputType = Enum.UserInputType.Keyboard }, false)
 frames(60)
 check("sprint hızı", hum.WalkSpeed > Config.Movement.Run + 4, hum.WalkSpeed)
-frames(60 * 6)
-check("dayanıklılık bitince yavaşlar", hum.WalkSpeed < Config.Movement.Run, hum.WalkSpeed)
+frames(60 * 10)
+-- yorulunca sprint biter ama koşu hızının altına düşmez (hız dalgalanmasın)
+check("dayanıklılık bitince sprint biter, koşu hızı kalır", math.abs(hum.WalkSpeed - Config.Movement.Run) < 1.5, hum.WalkSpeed)
 UIS.InputEnded:Fire({ KeyCode = Config.Keys.Sprint, UserInputType = Enum.UserInputType.Keyboard }, false)
 hum.MoveDirection = Vector3.zero
 frames(60 * 4)
@@ -833,37 +834,113 @@ check("röveşata akışı hatasız", true)
 PC.SetHud(false)
 frames(30)
 
-section("Stadyum (altı kademe kurulur, ışık ayarlanır, ekran ve seyirci çalışır)")
+section("Yetenek ağacı, kadrolar ve maç öncesi ekranı")
 do
-	local Stadium = require(__tree.Shared.Stadium)
-	local Lighting = game:GetService("Lighting")
-	local last = 0
-	for tier = 1, 6 do
-		local model = Stadium.Build(tier, { club = "Moda Gençlik", abbr = "MOD", facilities = { TribunEki = 1, Aydinlatma = 1 } })
-		local n, seats = 0, 0
-		for _, d in ipairs(model:GetDescendants()) do
-			if d:IsA("BasePart") then
-				n += 1
-				if d.Name == "Seats" then
-					seats += 1
-				end
-			end
+	local Poses = require(__tree.Anim.Poses)
+	for id, chain in pairs(Config.SkillChains) do
+		check(id .. " zincirinde en az bir hareket var", #chain.Skills >= 1)
+		if not chain.OnlyPosition then
+			check(id .. " zincirinde 5 ya da daha çok hareket var", #chain.Skills >= 5, #chain.Skills)
 		end
-		check("kademe " .. tier .. ": parça sayısı makul (" .. n .. ")", n > 80 and n < 2500)
-		check("kademe " .. tier .. ": tribün var (" .. seats .. ")", seats >= 2)
-		check("kademe " .. tier .. ": tribün önceki kademeden küçük değil", seats >= last)
-		last = seats
-		check("kademe " .. tier .. ": dev ekran yalnızca en büyük üç statta", Stadium.HasScreen() == (tier >= 4))
-		Stadium.Score("MOD", "RKP", 2, 1, 55)
-		Stadium.Screen("GOL!", "MOD 55'", nil, 1)
-		Stadium.Cheer()
+		for _, sk in ipairs(chain.Skills) do
+			check(sk.Id .. " hareketinin animasyonu tanımlı", Poses.Actions[sk.Id] ~= nil)
+			check(sk.Id .. " hareketinin adı tanımlı", Poses.Names[sk.Id] ~= nil)
+		end
 	end
-	check("gece maçında saha aydınlık (parlaklık " .. Lighting.Brightness .. ")", Lighting.Brightness >= 3)
-	Stadium.Clear()
-	check("stat kaldırıldı", workspace:FindFirstChild("FK_Stadium") == nil)
-	check("lobi ışığı gündüz", Lighting.ClockTime > 12 and Lighting.ClockTime < 16)
-	Stadium.Lobby()
-	check("lobi çevresi kuruldu", workspace:FindFirstChild("FK_LobbyWorld") ~= nil)
+	check("ilk çalım baştan açık", Config.ActionUnlocked({}, "VucutCalimi"))
+	check("gökkuşağı baştan kilitli", not Config.ActionUnlocked({}, "Gokkusagi"))
+	check("röveşata baştan kilitli", not Config.ActionUnlocked({ Sut = 1 }, "Rovesata"))
+	check("çalım 5 olunca gökkuşağı açık", Config.ActionUnlocked({ Calim = 5 }, "Gokkusagi"))
+	check("zincirde olmayan hareket (pas) her zaman açık", Config.ActionUnlocked({}, "Pass"))
+
+	local Squads = require(__tree.Shared.Squads)
+	local d = {
+		name = "Deneme",
+		number = 9,
+		position = "Forvet",
+		power = 44,
+		level = 3,
+		coins = 500,
+		stats = { Hiz = 3, TopKontrolu = 2, Pas = 1, Sut = 3, Defans = 1, Fizik = 1 },
+		skills = { Sut = 1 },
+		club = { name = "Moda Gençlik", abbr = "MOD", tier = 1, crestShape = 2, season = { number = 1, played = 0, points = 0 } },
+		career = { atFenerbahce = false },
+	}
+	local fx = Squads.Fixture(d)
+	check("iki takımda 11'er oyuncu", #fx.home.players == 11 and #fx.away.players == 11)
+	check("oyuncu kendi kadrosunda", fx.home.players[11].human == true and fx.home.players[11].name == "Deneme")
+	check("rakibin teknik direktörü var", #fx.away.club.Coach > 3)
+	local numbers, distinct = {}, true
+	for _, p in ipairs(fx.home.players) do
+		if numbers[p.number] then
+			distinct = false
+		end
+		numbers[p.number] = true
+		check("oyuncunun 6 özelliği var: " .. p.name, #p.stats == 6 and p.rating >= 1 and p.rating <= 99)
+	end
+	check("forma numaraları farklı", distinct)
+	local fx2 = Squads.Fixture(d)
+	check("aynı kulüp aynı kadroyu verir", fx2.away.players[5].name == fx.away.players[5].name)
+	d.club.season.played = 1
+	check("sonraki maçta rakip değişir", Squads.Fixture(d).away.club.Name ~= fx.away.club.Name)
+	local different = false
+	for i = 2, 11 do
+		if fx.away.players[i].stats[1] ~= fx.away.players[1].stats[1] then
+			different = true
+		end
+	end
+	check("oyuncuların özellikleri birbirinden farklı", different)
+
+	local sg = Instance.new("ScreenGui")
+	local Lineup = require(__tree.Screens.Lineup)
+	local started = false
+	local root = Lineup.Show(sg, fx, function()
+		started = true
+	end)
+	local rows = 0
+	for _, t in ipairs(root:GetDescendants()) do
+		if t.ClassName == "TextLabel" and string.find(t.Text, "(SEN)", 1, true) then
+			rows += 1
+		end
+	end
+	check("kadro ekranında oyuncunun satırı işaretli", rows == 1)
+	for _, b in ipairs(root:GetDescendants()) do
+		if b.ClassName == "TextButton" then
+			b.Activated:Fire()
+			break
+		end
+	end
+	frames(60)
+	check("maça çık düğmesi maçı başlatır", started)
+
+	local SkillTree = require(__tree.Screens.SkillTree)
+	SkillTree.Open(sg, function()
+		return d
+	end)
+	local panel = sg:FindFirstChild("SkillTree")
+	check("yetenek ağacı açıldı", panel ~= nil)
+	local nodes, statButtons = 0, 0
+	for _, t in ipairs(panel:GetDescendants()) do
+		if
+			t.ClassName == "TextLabel"
+			and (
+				t.Text == "AÇIK"
+				or string.find(t.Text, "KİLİTLİ", 1, true)
+				or string.find(t.Text, "AÇ  ·", 1, true)
+				or string.find(t.Text, "GEREKLİ", 1, true)
+			)
+		then
+			nodes += 1
+		elseif t.ClassName == "TextLabel" and string.sub(t.Text, 1, 2) == "+ " then
+			statButtons += 1
+		end
+	end
+	check("forvet için 4 zincir, 21 hareket düğümü", nodes == 21, nodes)
+	check("6 özellik yükseltme düğmesi", statButtons == 6, statButtons)
+	d.skills.Calim = 3
+	SkillTree.Refresh()
+	SkillTree.Close()
+	frames(30)
 end
 
 section("Maç akışı (kısaltılmış maç: santra, devre arası, maç sonu, ödül)")

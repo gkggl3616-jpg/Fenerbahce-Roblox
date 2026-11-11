@@ -85,73 +85,81 @@ end
 
 -- Yetenek zincirleri: sırayla açılır. { ad, seviye şartı, bakiye }
 Config.SkillChains = {
+	-- Her zincirde yetenekler sırayla açılır; aynı tuş, açılan en üst hareketi oynatır.
 	Sut = {
 		Name = "Şut",
+		Hint = "1-6 tuşlarıyla şut türü seçilir",
 		Skills = {
-			{ Id = "Normal", Name = "Normal şut", Level = 1, Cost = 0 },
-			{ Id = "Plase", Name = "Plase", Level = 2, Cost = 150 },
-			{ Id = "Fuze", Name = "Füze", Level = 5, Cost = 400 },
-			{ Id = "Asirtma", Name = "Aşırtma", Level = 8, Cost = 700 },
-			{ Id = "Vole", Name = "Vole", Level = 11, Cost = 1100 },
-			{ Id = "Rovesata", Name = "Röveşata", Level = 15, Cost = 1800 },
-			{ Id = "SerbestVurus", Name = "Serbest vuruş ustası", Level = 20, Cost = 2800 },
+			{ Id = "Shoot", Name = "Normal şut", Level = 1, Cost = 0, Info = "Dengeli, güvenilir vuruş" },
+			{ Id = "Plase", Name = "Plase", Level = 2, Cost = 150, Info = "İç ayakla köşeye, isabetli" },
+			{ Id = "Fuze", Name = "Füze", Level = 5, Cost = 400, Info = "Uzun gerilme, çok sert şut" },
+			{ Id = "Asirtma", Name = "Aşırtma", Level = 8, Cost = 700, Info = "Kalecinin üstünden" },
+			{ Id = "Vole", Name = "Vole", Level = 11, Cost = 1100, Info = "Havadaki topa gelişine" },
+			{ Id = "Rovesata", Name = "Röveşata", Level = 15, Cost = 1800, Info = "Sırt üstü makas vuruşu" },
 		},
 	},
 	Calim = {
 		Name = "Çalım",
+		Hint = "Q: açık olan en üst çalım",
 		Skills = {
-			{ Id = "VucutCalimi", Name = "Vücut çalımı", Level = 1, Cost = 0 },
-			{ Id = "TopSurukleme", Name = "Top sürükleme", Level = 3, Cost = 200 },
-			{ Id = "Marsilya", Name = "Marsilya", Level = 6, Cost = 450 },
-			{ Id = "Nutmeg", Name = "Nutmeg", Level = 9, Cost = 800 },
-			{ Id = "Elastico", Name = "Elastico", Level = 13, Cost = 1300 },
-			{ Id = "Rabona", Name = "Rabona", Level = 17, Cost = 2000 },
-			{ Id = "Gokkusagi", Name = "Gökkuşağı", Level = 22, Cost = 3000 },
+			{ Id = "VucutCalimi", Name = "Vücut çalımı", Level = 1, Cost = 0, Info = "Omuz ve kalça sahtesi" },
+			{ Id = "Bisiklet", Name = "Bisiklet", Level = 3, Cost = 200, Info = "Topun üstünden çift ayak geçişi" },
+			{ Id = "Marsilya", Name = "Marsilya", Level = 6, Cost = 450, Info = "Topla birlikte tam tur dönüş" },
+			{ Id = "Elastico", Name = "Elastico", Level = 10, Cost = 900, Info = "Dış-iç ayak ani yön değişimi" },
+			{ Id = "Gokkusagi", Name = "Gökkuşağı", Level = 15, Cost = 1800, Info = "Topu topukla rakibin üstünden aşır" },
 		},
 	},
 	Hava = {
 		Name = "Hava",
+		Hint = "Boşluk: açık olan en üst hava hareketi",
 		Skills = {
-			{ Id = "Ziplama", Name = "Zıplama", Level = 1, Cost = 0 },
-			{ Id = "Kafa", Name = "Kafa vuruşu", Level = 3, Cost = 200 },
-			{ Id = "GucluKafa", Name = "Güçlü kafa", Level = 7, Cost = 600 },
-			{ Id = "UcanKafa", Name = "Uçan kafa", Level = 12, Cost = 1200 },
-			{ Id = "Makas", Name = "Makas vuruşu", Level = 18, Cost = 2200 },
+			{ Id = "Jump", Name = "Zıplama", Level = 1, Cost = 0, Info = "Yerinde yükselme" },
+			{ Id = "Header", Name = "Kafa vuruşu", Level = 2, Cost = 150, Info = "Havadaki topa kafa" },
+			{ Id = "GucluKafa", Name = "Güçlü kafa", Level = 6, Cost = 500, Info = "Gövdeyi yay gibi gerip sert kafa" },
+			{ Id = "UcanKafa", Name = "Uçan kafa", Level = 10, Cost = 1000, Info = "Koşarken balıklama kafa" },
+			{ Id = "Makas", Name = "Makas vuruşu", Level = 16, Cost = 2000, Info = "Koşarken havada yan makas" },
 		},
 	},
 	Defans = {
 		Name = "Defans",
+		Hint = "C: müdahale · V: blok",
 		Skills = {
-			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0 },
-			{ Id = "PasArasi", Name = "Pas arası", Level = 3, Cost = 200 },
-			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 6, Cost = 450 },
-			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 9, Cost = 800 },
-			{ Id = "Blok", Name = "Blok", Level = 13, Cost = 1300 },
-			{ Id = "SonAdam", Name = "Son adam", Level = 18, Cost = 2200 },
-		},
-	},
-	OzelGuc = {
-		Name = "Özel güç",
-		Skills = {
-			{ Id = "Turbo", Name = "Turbo", Level = 4, Cost = 300 },
-			{ Id = "DemirAdam", Name = "Demir adam", Level = 10, Cost = 900 },
-			{ Id = "KaptanLider", Name = "Kaptan lider", Level = 16, Cost = 1800 },
-			{ Id = "EfsaneAn", Name = "Efsane an", Level = 25, Cost = 4000 },
+			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0, Info = "Ayağı uzatıp topu çelme" },
+			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 3, Cost = 200, Info = "Omuzla dengesini boz, topu al" },
+			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
+			{ Id = "Blok", Name = "Blok", Level = 10, Cost = 900, Info = "Şutun önüne gövdeyle gir" },
+			{ Id = "UcanBlok", Name = "Uçan blok", Level = 15, Cost = 1800, Info = "Şuta doğru atlayarak kapat" },
 		},
 	},
 	Kaleci = {
 		Name = "Kaleci",
 		OnlyPosition = "Kaleci",
+		Hint = "Z / X: sola / sağa plonjon",
 		Skills = {
-			{ Id = "Plonjon", Name = "Plonjon", Level = 1, Cost = 0 },
-			{ Id = "Yumruk", Name = "Yumruk", Level = 4, Cost = 300 },
-			{ Id = "BireBir", Name = "Bire bir çıkış", Level = 8, Cost = 700 },
-			{ Id = "UzunDegaj", Name = "Uzun degaj", Level = 12, Cost = 1200 },
-			{ Id = "PenaltiUzmani", Name = "Penaltı uzmanı", Level = 18, Cost = 2200 },
+			{ Id = "Plonjon", Name = "Plonjon", Level = 1, Cost = 0, Info = "Köşeye uzanma" },
 		},
 	},
 }
-Config.SkillChainOrder = { "Sut", "Calim", "Hava", "Defans", "OzelGuc", "Kaleci" }
+Config.SkillChainOrder = { "Sut", "Calim", "Hava", "Defans", "Kaleci" }
+
+-- Bir zincirde açık olan son yeteneğin sırası (ilk yetenek ücretsizse baştan açıktır)
+function Config.SkillLevel(skills, chainId: string): number
+	local chain = Config.SkillChains[chainId]
+	local base = if chain and chain.Skills[1] and chain.Skills[1].Cost == 0 then 1 else 0
+	return math.max(base, (skills and skills[chainId]) or 0)
+end
+
+-- Bir hareket açık mı? (hareket hiçbir zincirde yoksa her zaman açıktır)
+function Config.ActionUnlocked(skills, action: string): boolean
+	for id, chain in pairs(Config.SkillChains) do
+		for i, sk in ipairs(chain.Skills) do
+			if sk.Id == action then
+				return Config.SkillLevel(skills, id) >= i
+			end
+		end
+	end
+	return true
+end
 
 -- Kulüp kademeleri
 Config.Tiers = {
@@ -270,14 +278,14 @@ Config.Data = { AutoSave = 90, Retries = 4, LockTimeout = 600 }
 Config.Movement = {
 	Run = 17,
 	Sprint = 25,
-	AccelTime = 0.45, -- 0'dan tam hıza
+	AccelTime = 0.3, -- 0'dan tam hıza
 	DecelTime = 0.25,
-	TurnLoss = 0.5, -- ani dönüşte kalan hız oranı
+	TurnLoss = 0.8, -- ani dönüşte kalan hız oranı
 	TurnDot = -0.25, -- bu değerin altındaki yön değişimi "ani dönüş" sayılır
 	StaminaMax = 100,
-	SprintDrain = 20, -- saniyede
-	Regen = 13,
-	TiredFactor = 0.75, -- dayanıklılık bitince hız çarpanı
+	SprintDrain = 12, -- saniyede
+	Regen = 16,
+	TiredFactor = 1, -- dayanıklılık bitince hız çarpanı
 	TiredUntil = 25, -- bu değere dolana kadar yorgun kalır
 	FovBase = 70,
 	FovSprint = 75,
@@ -299,7 +307,7 @@ Config.Keys = {
 -- Geliştirme ayarları. Yayından önce UnlockAllActions kapatılır.
 Config.Debug = {
 	-- Yalnızca Roblox Studio'da geçerlidir; yayınlanan oyunda yetenek kilitleri her zaman çalışır
-	UnlockAllActionsInStudio = true,
+	UnlockAllActionsInStudio = false,
 }
 
 -- Yüklenmiş animasyon dosyaları (isteğe bağlı). Bir eylemin kimliği yazılırsa kodla üretilen poz yerine o oynar.
@@ -328,18 +336,20 @@ Config.Shots = {
 	Rovesata = { Speed = 108, Error = 1.2, Curve = 0, Lift = 1.1 },
 	Header = { Speed = 74, Error = 0.9, Curve = 0, Lift = 0.35 },
 	UcanKafa = { Speed = 92, Error = 1.1, Curve = 0, Lift = 0.4 },
+	GucluKafa = { Speed = 98, Error = 0.8, Curve = 0, Lift = 0.35 },
+	Makas = { Speed = 120, Error = 1.1, Curve = 0, Lift = 0.9 },
 }
 Config.Shooting = {
 	ChargeTime = 0.9, -- barın dolma süresi
-	PerfectFrom = 0.8, -- yeşil pencere başlangıcı (0-1)
-	PerfectTo = 0.93,
+	PerfectFrom = 0.7, -- yeşil pencere başlangıcı (0-1)
+	PerfectTo = 0.96,
 	OverFrom = 1.0, -- bunun üstü topu havaya diker
 	MaxCharge = 1.18,
 	BaseError = 0.12, -- radyan; Şut özelliği 1 iken
 	ErrorPerStat = 0.009,
 	PerfectErrorFactor = 0.3,
 	PerfectSpeedBonus = 1.12,
-	Reach = 3.6, -- topa vurabilme mesafesi
+	Reach = 4.6, -- topa vurabilme mesafesi
 	PassSpeed = { 52, 88 }, -- kısa ve uzun basış
 	SlowMo = 0.35,
 	SlowMoTime = 0.9,
@@ -616,228 +626,166 @@ end
 
 return Remotes
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Stadium</string><ProtectedString name="Source"><![CDATA[--[[
-	Stadium
-	Kulübün kademesine göre maç sahasının çevresini kurar: tribünler, seyirci, çatı,
-	projektörler, LED panolar, dev ekran, şehir ve ağaçlar. Işık ve atmosfer de buradan ayarlanır.
-
-	Her şey istemcide kurulur (tek kişilik maç): her oyuncu kendi kulübünün stadını görür.
-	Model yüklemeden, yalnızca parçalarla ve yüzey arayüzleriyle çalışır.
-
-	Stadium.Build(tier, info)   -> stadı kurar, ışığı ayarlar
-	Stadium.Clear()             -> stadı kaldırır, lobi ışığına döner
-	Stadium.Lobby()             -> lobi/deneme sahası ışığı ve çevresi
-	Stadium.Cheer()             -> seyirci zıplar
-	Stadium.Screen(title, text, color, hold) -> dev ekranda olay gösterir (ekranı olan statlarda)
-	Stadium.Score(home, away, homeGoals, awayGoals, minute) -> skor tabelası / dev ekran
+<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Squads</string><ProtectedString name="Source"><![CDATA[--[[
+	Squads
+	Kulüpler, teknik direktörler ve kadrolar. Rakip kulüplerin adı, renkleri ve arması hazırdır;
+	oyuncunun kulübü kendi adını ve renklerini kullanır. Her futbolcunun kendi özellikleri vardır.
+	Bütün adlar kurgudur; aynı kulüp her zaman aynı kadroyu verir (tohumlu üretim).
 ]]
 
-local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
-local Workspace = game:GetService("Workspace")
-
 local Config = require(ReplicatedStorage.Shared.Config)
-local Theme = require(ReplicatedStorage.UI.Theme)
 
-local Stadium = {}
+local Squads = {}
 
-local C = Config.Colors
 local rgb = Color3.fromRGB
-local FONT = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy)
-local MONO = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Bold)
 
-local CONCRETE = rgb(150, 154, 162)
-local DARK = rgb(52, 57, 72)
-local SKIN = rgb(226, 184, 150)
-
-local current: Model? = nil
-local crowdLayers: { Frame } = {}
-local screens: { { title: TextLabel, text: TextLabel, score: TextLabel, bar: Frame } } = {}
-local boards: { TextLabel } = {}
-local screenToken = 0
-
---------------------------------------------------------------------------------
--- Işık ve atmosfer
---------------------------------------------------------------------------------
-local MOODS = {
-	Lobi = {
-		Clock = 14.2,
-		Brightness = 3,
-		Ambient = rgb(120, 126, 150),
-		Outdoor = rgb(150, 155, 170),
-		Top = rgb(255, 244, 220),
-		Exposure = 0.15,
-		Density = 0.28,
-		Haze = 1.2,
-		Air = rgb(205, 220, 245),
-		Decay = rgb(120, 150, 200),
-		Bloom = 0.35,
-		Saturation = 0.12,
-		Contrast = 0.06,
-		Tint = rgb(255, 255, 255),
-		Rays = 0.08,
+-- Kademe başına 5 rakip kulüp (lig 6 takımlı). Crest: 1 kalkan, 2 daire, 3 altıgen, 4 flama, 5 elmas
+Squads.Clubs = {
+	{
+		{ Name = "Yeldeğirmeni Spor", Abbr = "YLD", Coach = "Rıfat Karaduman", A = rgb(196, 48, 48), B = rgb(250, 250, 250), Crest = 2 },
+		{ Name = "Kuşdili Gücü", Abbr = "KŞD", Coach = "Sabri Yılmazer", A = rgb(34, 139, 90), B = rgb(20, 20, 24), Crest = 1 },
+		{ Name = "Hasanpaşa İdman", Abbr = "HSP", Coach = "Nevzat Oktay", A = rgb(240, 140, 30), B = rgb(30, 30, 80), Crest = 4 },
+		{ Name = "Acıbadem Gençlik", Abbr = "ACB", Coach = "Cemil Aydoğdu", A = rgb(120, 60, 160), B = rgb(245, 245, 245), Crest = 3 },
+		{ Name = "Rasimpaşa SK", Abbr = "RSM", Coach = "Halit Erçetin", A = rgb(60, 140, 210), B = rgb(250, 250, 250), Crest = 5 },
 	},
-	BulutluGunduz = {
-		Clock = 13,
-		Brightness = 2.2,
-		Ambient = rgb(140, 144, 150),
-		Outdoor = rgb(165, 168, 172),
-		Top = rgb(235, 238, 245),
-		Exposure = 0.1,
-		Density = 0.42,
-		Haze = 2.4,
-		Air = rgb(200, 205, 212),
-		Decay = rgb(150, 156, 165),
-		Bloom = 0.2,
-		Saturation = -0.04,
-		Contrast = 0.04,
-		Tint = rgb(246, 248, 255),
-		Rays = 0.02,
+	{
+		{ Name = "Karşıyaka Yıldızı", Abbr = "KYY", Coach = "Orhan Denizli", A = rgb(200, 40, 60), B = rgb(20, 110, 60), Crest = 1 },
+		{ Name = "Bozkır Belediye", Abbr = "BZK", Coach = "Mümtaz Akın", A = rgb(230, 190, 40), B = rgb(140, 30, 30), Crest = 3 },
+		{ Name = "Kıyı Demirspor", Abbr = "KDS", Coach = "Selahattin Uçar", A = rgb(40, 60, 130), B = rgb(160, 200, 240), Crest = 2 },
+		{ Name = "Yayla Kartalları", Abbr = "YYK", Coach = "Bekir Tunalı", A = rgb(20, 20, 24), B = rgb(250, 250, 250), Crest = 4 },
+		{ Name = "Ova Şekerspor", Abbr = "OVŞ", Coach = "İlhami Sezgin", A = rgb(30, 150, 110), B = rgb(250, 250, 250), Crest = 5 },
 	},
-	OgledenSonra = {
-		Clock = 15.4,
-		Brightness = 3.2,
-		Ambient = rgb(118, 122, 140),
-		Outdoor = rgb(150, 152, 160),
-		Top = rgb(255, 238, 205),
-		Exposure = 0.12,
-		Density = 0.3,
-		Haze = 1.4,
-		Air = rgb(210, 222, 240),
-		Decay = rgb(140, 160, 200),
-		Bloom = 0.3,
-		Saturation = 0.14,
-		Contrast = 0.07,
-		Tint = rgb(255, 252, 244),
-		Rays = 0.1,
+	{
+		{ Name = "Ege Limanspor", Abbr = "EGL", Coach = "Tayfun Özbek", A = rgb(30, 110, 190), B = rgb(250, 220, 60), Crest = 1 },
+		{ Name = "Toros Şimşekleri", Abbr = "TRŞ", Coach = "Kenan Bozdağ", A = rgb(230, 90, 30), B = rgb(20, 20, 24), Crest = 5 },
+		{ Name = "Kapadokya FK", Abbr = "KPD", Coach = "Adnan Güleryüz", A = rgb(170, 60, 80), B = rgb(250, 240, 220), Crest = 3 },
+		{ Name = "Marmara Atletik", Abbr = "MRM", Coach = "Levent Soylu", A = rgb(20, 130, 130), B = rgb(250, 250, 250), Crest = 2 },
+		{ Name = "Trakya Rüzgarı", Abbr = "TRK", Coach = "Ziya Kocabaş", A = rgb(90, 50, 140), B = rgb(240, 200, 60), Crest = 4 },
 	},
-	GunBatimi = {
-		Clock = 17.55,
-		Brightness = 2.8,
-		Ambient = rgb(128, 112, 120),
-		Outdoor = rgb(160, 138, 130),
-		Top = rgb(255, 196, 130),
-		Exposure = 0.2,
-		Density = 0.34,
-		Haze = 2,
-		Air = rgb(255, 205, 160),
-		Decay = rgb(240, 130, 70),
-		Bloom = 0.5,
-		Saturation = 0.18,
-		Contrast = 0.08,
-		Tint = rgb(255, 244, 232),
-		Rays = 0.18,
+	{
+		{ Name = "Anadolu Kaplanları", Abbr = "AKP", Coach = "Ferit Aksoylu", A = rgb(230, 120, 20), B = rgb(20, 20, 24), Crest = 1 },
+		{ Name = "Karadeniz Fırtına", Abbr = "KRF", Coach = "Temel Hacıoğlu", A = rgb(120, 20, 50), B = rgb(100, 180, 230), Crest = 3 },
+		{ Name = "Başkent Birliği", Abbr = "BŞB", Coach = "Ercüment Sayın", A = rgb(200, 30, 40), B = rgb(250, 250, 250), Crest = 2 },
+		{ Name = "Akdeniz Yelkenspor", Abbr = "AKY", Coach = "Bülent Karaca", A = rgb(20, 150, 200), B = rgb(250, 250, 250), Crest = 5 },
+		{
+			Name = "Güney Yıldırım",
+			Abbr = "GNY",
+			Coach = "Şükrü Altıntaş",
+			A = rgb(30, 120, 60),
+			B = rgb(240, 210, 60),
+			Crest = 4,
+		},
 	},
-	Alacakaranlik = {
-		Clock = 18.25,
-		Brightness = 2.2,
-		Ambient = rgb(128, 128, 150),
-		Outdoor = rgb(150, 150, 172),
-		Top = rgb(255, 214, 180),
-		Exposure = 0.35,
-		Density = 0.32,
-		Haze = 1.8,
-		Air = rgb(170, 170, 215),
-		Decay = rgb(200, 110, 110),
-		Bloom = 0.65,
-		Saturation = 0.16,
-		Contrast = 0.08,
-		Tint = rgb(246, 244, 255),
-		Rays = 0.06,
-	},
-	-- Gece: ay tepeye yakın tutulur ve güçlendirilir; saha projektör altındaymış gibi aydınlık kalır
-	Gece = {
-		Clock = 0.4,
-		Brightness = 3.4,
-		Ambient = rgb(118, 124, 150),
-		Outdoor = rgb(132, 138, 165),
-		Top = rgb(232, 240, 255),
-		Exposure = 0.45,
-		Density = 0.3,
-		Haze = 1.6,
-		Air = rgb(70, 84, 130),
-		Decay = rgb(30, 40, 80),
-		Bloom = 0.8,
-		Saturation = 0.2,
-		Contrast = 0.1,
-		Tint = rgb(244, 247, 255),
-		Rays = 0,
-	},
-	GeceMaci = {
-		Clock = 0.2,
-		Brightness = 3.8,
-		Ambient = rgb(124, 130, 158),
-		Outdoor = rgb(140, 146, 176),
-		Top = rgb(238, 244, 255),
-		Exposure = 0.5,
-		Density = 0.33,
-		Haze = 1.9,
-		Air = rgb(60, 76, 140),
-		Decay = rgb(24, 34, 86),
-		Bloom = 0.95,
-		Saturation = 0.24,
-		Contrast = 0.12,
-		Tint = rgb(246, 248, 255),
-		Rays = 0,
+	{
+		{ Name = "Boğaziçi Kartal", Abbr = "BĞK", Coach = "Tuncay Sarıoğlu", A = rgb(24, 24, 28), B = rgb(250, 250, 250), Crest = 1 },
+		{ Name = "Haliç Aslanları", Abbr = "HLÇ", Coach = "Fikret Uzunoğlu", A = rgb(190, 30, 40), B = rgb(250, 190, 40), Crest = 2 },
+		{ Name = "Kuzey Fırtınası", Abbr = "KZF", Coach = "Şenol Akçay", A = rgb(110, 20, 50), B = rgb(90, 170, 230), Crest = 3 },
+		{ Name = "İpekyolu FK", Abbr = "İPK", Coach = "Aykut Demirel", A = rgb(230, 110, 30), B = rgb(30, 60, 140), Crest = 5 },
+		{
+			Name = "Başakşehir Yıldızı",
+			Abbr = "BŞY",
+			Coach = "Abdullah Turan",
+			A = rgb(240, 120, 30),
+			B = rgb(20, 30, 70),
+			Crest = 4,
+		},
 	},
 }
+Squads.Clubs[6] = Squads.Clubs[5]
 
-local function effect(class: string): Instance
-	local name = "FK_" .. class
-	local e = Lighting:FindFirstChild(name)
-	if not e then
-		e = Instance.new(class)
-		e.Name = name
-		e.Parent = Lighting
-	end
-	return e
-end
+local FIRST = {
+	"Ahmet",
+	"Mehmet",
+	"Emre",
+	"Burak",
+	"Can",
+	"Deniz",
+	"Efe",
+	"Furkan",
+	"Gökhan",
+	"Hakan",
+	"İsmail",
+	"Kerem",
+	"Levent",
+	"Mert",
+	"Onur",
+	"Ozan",
+	"Polat",
+	"Rüzgar",
+	"Serkan",
+	"Tolga",
+	"Umut",
+	"Volkan",
+	"Yiğit",
+	"Zafer",
+	"Barış",
+	"Çağan",
+	"Doruk",
+	"Eren",
+	"Kaan",
+	"Tuna",
+	"Alper",
+	"Berk",
+	"Sinan",
+	"Taylan",
+	"Koray",
+	"Batuhan",
+}
+local LAST = {
+	"Yıldırım",
+	"Kaya",
+	"Demirci",
+	"Aslan",
+	"Çelik",
+	"Şahin",
+	"Öztürk",
+	"Aydın",
+	"Arslan",
+	"Doğan",
+	"Kılıç",
+	"Çetin",
+	"Koç",
+	"Kurt",
+	"Özkan",
+	"Şimşek",
+	"Polat",
+	"Korkmaz",
+	"Erdem",
+	"Güneş",
+	"Aktaş",
+	"Bulut",
+	"Yavuz",
+	"Tekin",
+	"Bozkurt",
+	"Karaca",
+	"Uysal",
+	"Sönmez",
+	"Ateş",
+	"Duman",
+	"Tuncer",
+	"Eroğlu",
+	"Akgül",
+	"Savaş",
+	"Ünal",
+	"Toprak",
+}
 
-local function mood(name: string)
-	local m = MOODS[name] or MOODS.Lobi
-	Lighting.ClockTime = m.Clock
-	Lighting.GeographicLatitude = 28
-	Lighting.Brightness = m.Brightness
-	Lighting.Ambient = m.Ambient
-	Lighting.OutdoorAmbient = m.Outdoor
-	Lighting.ColorShift_Top = m.Top
-	Lighting.ColorShift_Bottom = rgb(40, 60, 40)
-	Lighting.ExposureCompensation = m.Exposure
-	Lighting.EnvironmentDiffuseScale = 1
-	Lighting.EnvironmentSpecularScale = 1
-	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.25
-	Lighting.FogEnd = 100000
+Squads.Roles = { "KL", "SLB", "STP", "STP", "SĞB", "SLO", "MO", "MO", "SĞO", "SF", "SF" }
+local NUMBERS = { 1, 2, 4, 5, 3, 7, 6, 8, 11, 9, 10 }
+-- Mevkiye göre özellik eğilimi: Hız, Şut, Pas, Top, Defans, Fizik
+local BIAS = {
+	KL = { -8, -30, -6, -10, 6, 6 },
+	SLB = { 6, -12, 2, 0, 4, 0 },
+	["SĞB"] = { 6, -12, 2, 0, 4, 0 },
+	STP = { -4, -16, -4, -6, 10, 8 },
+	SLO = { 8, 0, 4, 6, -8, -4 },
+	["SĞO"] = { 8, 0, 4, 6, -8, -4 },
+	MO = { 0, -2, 8, 6, 0, 0 },
+	SF = { 4, 10, -2, 4, -16, 2 },
+}
+Squads.StatOrder = { "Hız", "Şut", "Pas", "Top", "Def", "Fiz" }
 
-	local a = effect("Atmosphere") :: any
-	a.Density = m.Density
-	a.Offset = 0.1
-	a.Haze = m.Haze
-	a.Glare = 0.2
-	a.Color = m.Air
-	a.Decay = m.Decay
-
-	local b = effect("BloomEffect") :: any
-	b.Intensity = m.Bloom
-	b.Size = 28
-	b.Threshold = 1.6
-
-	local cc = effect("ColorCorrectionEffect") :: any
-	cc.Saturation = m.Saturation
-	cc.Contrast = m.Contrast
-	cc.Brightness = 0.02
-	cc.TintColor = m.Tint
-
-	local r = effect("SunRaysEffect") :: any
-	r.Intensity = m.Rays
-	r.Spread = 0.6
-end
-
---------------------------------------------------------------------------------
--- Yardımcılar
---------------------------------------------------------------------------------
--- Aynı kademe her zaman aynı stadı versin diye kendi sayı üretecimiz
 local function rng(seed: number): () -> number
 	local s = seed % 2147483647
 	if s <= 0 then
@@ -849,772 +797,94 @@ local function rng(seed: number): () -> number
 	end
 end
 
-local function builder(model: Model)
-	return function(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, shadow: boolean?): Part
-		local p = Instance.new("Part")
-		p.Anchored = true
-		p.CanCollide = false
-		p.CanQuery = false
-		p.CanTouch = false
-		p.CastShadow = shadow == true
-		p.Size = size
-		p.CFrame = cf
-		p.Color = color
-		p.Material = material or Enum.Material.SmoothPlastic
-		p.TopSurface = Enum.SurfaceType.Smooth
-		p.BottomSurface = Enum.SurfaceType.Smooth
-		p.Parent = model
-		return p
+local function hash(text: string): number
+	local h = 7
+	for i = 1, #text do
+		h = (h * 31 + string.byte(text, i)) % 2147483647
 	end
+	return h
 end
 
-local function surface(part: BasePart, pps: number, bright: number?): SurfaceGui
-	local g = Instance.new("SurfaceGui")
-	g.Face = Enum.NormalId.Front
-	g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	g.PixelsPerStud = pps
-	g.LightInfluence = if bright then 0 else 1
-	g.Brightness = bright or 1
-	g.ResetOnSpawn = false
-	g.Parent = part
-	return g
+-- Bir kulübün 11'i. avg: ortalama güç (0-99)
+function Squads.Build(club, avg: number)
+	local R = rng(hash(club.Name) + 17)
+	local players = {}
+	for slot = 1, 11 do
+		local role = Squads.Roles[slot]
+		local rating = math.clamp(math.floor(avg + (R() - 0.5) * 12 + 0.5), 20, 99)
+		local stats = {}
+		local bias = BIAS[role]
+		for i = 1, 6 do
+			stats[i] = math.clamp(math.floor(rating + bias[i] + (R() - 0.5) * 10 + 0.5), 10, 99)
+		end
+		players[slot] = {
+			slot = slot,
+			number = NUMBERS[slot],
+			name = string.sub(FIRST[1 + math.floor(R() * #FIRST)], 1, 1) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
+			full = "",
+			role = role,
+			rating = rating,
+			stats = stats,
+			pace = math.clamp(1 + (stats[1] - avg) / 120, 0.9, 1.1), -- takım ortalamasına göre hız çarpanı
+		}
+	end
+	return players
 end
 
-local function label(parent: Instance, text: string, color: Color3, size: UDim2?, pos: UDim2?): TextLabel
-	local t = Instance.new("TextLabel")
-	t.BackgroundTransparency = 1
-	t.Size = size or UDim2.fromScale(1, 1)
-	t.Position = pos or UDim2.fromScale(0, 0)
-	t.FontFace = FONT
-	t.Text = text
-	t.TextColor3 = color
-	t.TextScaled = true
-	t.Parent = parent
-	return t
+-- Sıradaki rakip: sezon içindeki maç sırasına göre döner
+function Squads.Opponent(tier: number, seasonNumber: number, played: number)
+	local list = Squads.Clubs[math.clamp(tier, 1, #Squads.Clubs)]
+	return list[1 + (played + seasonNumber * 2) % #list]
 end
 
---------------------------------------------------------------------------------
--- Stat kurucu
---------------------------------------------------------------------------------
-type Info = { club: string?, abbr: string?, facilities: { [string]: number }?, stadium: string? }
-
-local function build(model: Model, tier: number, info: Info, pitch, withMood: boolean)
-	local part = builder(model)
-	local R = rng(tier * 7919 + 13)
-	local night = tier >= 5
-	local dusk = tier == 4
-	local midZ = (pitch.MinZ + pitch.MaxZ) / 2
-	local hx, hz = (pitch.MaxX - pitch.MinX) / 2, (pitch.MaxZ - pitch.MinZ) / 2
-	local gy = pitch.GroundY
-	local fac = info.facilities or {}
-	local clubName = if info.club and info.club ~= "" then Theme.Upper(info.club) else "FENER KARİYER"
-
-	-- Tribün çerçeveleri: yerel +Z sahadan dışarı bakar, başlangıç noktası çizginin ortasıdır
-	local FR = {
-		N = CFrame.new(0, gy, midZ + hz),
-		S = CFrame.new(0, gy, midZ - hz) * CFrame.Angles(0, math.pi, 0),
-		E = CFrame.new(hx, gy, midZ) * CFrame.Angles(0, math.pi / 2, 0),
-		W = CFrame.new(-hx, gy, midZ) * CFrame.Angles(0, -math.pi / 2, 0),
+-- Maç eşleşmesi: iki kulüp, kadrolar ve teknik direktörler
+function Squads.Fixture(data)
+	local tierId = if data.career and data.career.atFenerbahce then 6 else data.club.tier
+	local tier = Config.Tiers[tierId]
+	local avg = (tier.BotPower[1] + tier.BotPower[2]) / 2
+	local season = data.club.season or { number = 1, played = 0 }
+	local oppDef = Squads.Opponent(tierId, season.number, season.played)
+	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
+	local homeDef = {
+		Name = homeName,
+		Abbr = if tierId == 6 then "FB" elseif data.club.abbr ~= "" then data.club.abbr else "EV",
+		Coach = "",
+		A = Config.Colors.Yellow,
+		B = Config.Colors.Navy,
+		Crest = data.club.crestShape or 1,
 	}
-	local HALF = { N = hx, S = hx, E = hz, W = hz }
-	local function corner(sx: number, sz: number): CFrame
-		return CFrame.new(sx * hx, gy, midZ + sz * hz) * CFrame.Angles(0, math.atan2(sx, sz), 0)
+	local R = rng(hash(homeName) + 99)
+	homeDef.Coach = FIRST[1 + math.floor(R() * #FIRST)] .. " " .. LAST[1 + math.floor(R() * #LAST)]
+	local home = Squads.Build(homeDef, avg + 1)
+	local slot = Config.FormationSlot[data.position] or 11
+	local me = home[slot]
+	me.name = data.name
+	me.number = data.number or me.number
+	me.rating = math.clamp(data.power or 30, 1, 99)
+	me.human = true
+	local s = data.stats or {}
+	local function pct(key: string): number
+		return math.clamp(math.floor(25 + (s[key] or 1) / Config.StatMax * 70 + 0.5), 1, 99)
 	end
-
-	local seatA = if tier >= 6 then C.Navy elseif tier >= 4 then rgb(24, 40, 110) else rgb(70, 82, 110)
-	local seatB = if tier >= 6 then C.Yellow elseif tier >= 4 then rgb(230, 205, 30) else rgb(96, 104, 124)
-	local wallC = if tier >= 6 then rgb(22, 30, 78) elseif tier >= 4 then rgb(70, 76, 96) else CONCRETE
-	local shirts = { C.Yellow, C.Navy, rgb(245, 245, 245) }
-
-	-- Seyirci: eğimli koltuk yüzeyine noktalarla çizilir (gövde + baş), iki katman şaşırtmalı
-	local function crowd(slab: Part, lenPx: number, heightPx: number, density: number)
-		local g = surface(slab, 10)
-		local ts = 38
-		local cols = math.max(4, math.floor(lenPx / (ts * 0.6)))
-		local rows = math.max(1, math.floor(heightPx / (ts * 1.32)))
-		for layer = 0, 1 do
-			local holder = Instance.new("Frame")
-			holder.BackgroundTransparency = 1
-			holder.Size = UDim2.fromScale(1, 1)
-			holder.Position = UDim2.fromOffset(layer * ts * 0.3, layer * ts * 0.66)
-			holder.Parent = g
-			local body = { {}, {}, {} }
-			local head = {}
-			for _ = 1, rows do
-				local line = { {}, {}, {} }
-				local hl = {}
-				for c = 1, cols do
-					local who = 0
-					if R() < density then
-						local r = R()
-						who = if r < 0.5 then 1 elseif r < 0.82 then 2 else 3
-					end
-					for k = 1, 3 do
-						line[k][c] = if who == k then "•" else " "
-					end
-					hl[c] = if who > 0 then "•" else " "
-				end
-				for k = 1, 3 do
-					table.insert(body[k], table.concat(line[k]))
-				end
-				table.insert(head, table.concat(hl))
-			end
-			local function dots(lines: { string }, color: Color3, dy: number)
-				local t = Instance.new("TextLabel")
-				t.BackgroundTransparency = 1
-				t.Size = UDim2.fromScale(1, 1)
-				t.Position = UDim2.fromOffset(0, dy)
-				t.FontFace = MONO
-				t.TextSize = ts
-				t.TextColor3 = color
-				t.TextXAlignment = Enum.TextXAlignment.Left
-				t.TextYAlignment = Enum.TextYAlignment.Top
-				t.Text = table.concat(lines, "\n")
-				t.Parent = holder
-			end
-			for k = 1, 3 do
-				dots(body[k], shirts[k], 0)
-			end
-			dots(head, SKIN, -ts * 0.24)
-			table.insert(crowdLayers, holder)
+	me.stats = { pct("Hiz"), pct("Sut"), pct("Pas"), pct("TopKontrolu"), pct("Defans"), pct("Fizik") }
+	-- aynı forma numarası iki kişide olmasın
+	for _, p in ipairs(home) do
+		if p ~= me and p.number == me.number then
+			p.number = NUMBERS[slot]
 		end
 	end
-
-	--[[ Bir tribün bloğu.
-		len: uzunluk, margin: çizgiden uzaklık, depth: derinlik, y0: ön yükseklik, rise: yükselme,
-		density: doluluk (0-1), solid: altı dolu mu, offset: uzunluk ekseninde kaydırma ]]
-	local function stand(frame: CFrame, o)
-		local len, margin, depth, y0, rise = o.len, o.margin, o.depth, o.y0, o.rise
-		local off = o.offset or 0
-		local a = math.atan2(rise, depth)
-		local slope = math.sqrt(depth * depth + rise * rise)
-		local segs = math.max(1, math.ceil(len / 100))
-		local segLen = len / segs
-		for i = 1, segs do
-			local x = off - len / 2 + (i - 0.5) * segLen
-			local slab = part(
-				Vector3.new(segLen, slope, 0.6),
-				frame * CFrame.new(x, y0 + rise / 2, margin + depth / 2) * CFrame.Angles(math.pi / 2 - a, 0, 0),
-				if (i + (o.flip or 0)) % 2 == 0 then seatA else seatB,
-				Enum.Material.SmoothPlastic,
-				true
-			)
-			slab.Name = "Seats"
-			if o.density and o.density > 0 then
-				crowd(slab, segLen * 10, slope * 10, o.density)
-			end
-		end
-		-- ön duvar
-		part(Vector3.new(len, y0 + 1.2, 1), frame * CFrame.new(off, (y0 + 1.2) / 2, margin - 0.5), wallC, Enum.Material.Concrete, true)
-		if o.solid ~= false then
-			-- altını dolduran basamaklı gövde
-			for k = 1, 3 do
-				local h = y0 + rise * k / 4 - 0.8
-				if h > 0.5 then
-					part(
-						Vector3.new(len, h, depth / 4),
-						frame * CFrame.new(off, h / 2, margin + depth * (k + 0.5) / 4),
-						wallC,
-						Enum.Material.Concrete,
-						false
-					)
-				end
-			end
-		else
-			-- üst kat: alt yüzey ve kirişler
-			part(
-				Vector3.new(len, slope, 1.6),
-				frame * CFrame.new(off, y0 + rise / 2 - 1.3, margin + depth / 2 + 0.6) * CFrame.Angles(math.pi / 2 - a, 0, 0),
-				DARK,
-				Enum.Material.Concrete,
-				true
-			)
-			part(Vector3.new(len, 2.6, 1.2), frame * CFrame.new(off, y0 - 0.2, margin - 0.4), if tier >= 6 then C.Yellow else wallC)
-		end
-		-- arka duvar
-		local top = y0 + rise
-		part(
-			Vector3.new(len, top + 4, 1.4),
-			frame * CFrame.new(off, (top + 4) / 2, margin + depth + 0.7),
-			wallC,
-			Enum.Material.Concrete,
-			true
-		)
-		return top, margin + depth
-	end
-
-	-- Çatı: arkadan öne uzanan konsol, ön kenarında sarı şerit
-	local function roof(frame: CFrame, len: number, zFront: number, zBack: number, y: number, glow: boolean)
-		local span = zBack - zFront + 4
-		local tilt = math.rad(5)
-		local cf = frame * CFrame.new(0, y, (zFront + zBack) / 2 + 2) * CFrame.Angles(-tilt, 0, 0)
-		part(Vector3.new(len, 1.2, span), cf, if tier >= 5 then rgb(176, 184, 204) else rgb(140, 146, 158), Enum.Material.Metal, true)
-		local edge = part(
-			Vector3.new(len, 2.2, 0.8),
-			cf * CFrame.new(0, -0.5, -span / 2),
-			C.Yellow,
-			if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic
-		)
-		edge.Name = "RoofEdge"
-		if glow then
-			-- çatı altı ışık hattı
-			part(Vector3.new(len * 0.96, 0.5, 1.6), cf * CFrame.new(0, -1, -span / 2 + 3), rgb(255, 250, 235), Enum.Material.Neon)
-		end
-		local n = math.max(2, math.floor(len / 60))
-		for i = 0, n do
-			local x = -len / 2 + 3 + (len - 6) * i / n
-			part(Vector3.new(1.6, y, 1.6), frame * CFrame.new(x, y / 2, zBack + 3), DARK, Enum.Material.Metal, true)
-			-- çapraz kiriş
-			part(Vector3.new(0.8, 0.8, span * 0.7), cf * CFrame.new(x, -1.2, span * 0.12), DARK, Enum.Material.Metal)
-		end
-	end
-
-	-- Projektör direği
-	local function tower(x: number, z: number, h: number, head: number, on: boolean)
-		local pos = Vector3.new(x, gy, midZ + z)
-		local look = CFrame.lookAt(pos + Vector3.new(0, h, 0), Vector3.new(0, gy + h * 0.2, midZ))
-		local pole = part(
-			Vector3.new(h, 2.2, 2.2),
-			CFrame.new(pos + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, 0, math.pi / 2),
-			DARK,
-			Enum.Material.Metal,
-			true
-		)
-		pole.Shape = Enum.PartType.Cylinder
-		part(Vector3.new(head * 1.5, head, 1.2), look, rgb(40, 44, 54), Enum.Material.Metal, true)
-		local lamp = part(
-			Vector3.new(head * 1.5 - 1, head - 1, 0.4),
-			look * CFrame.new(0, 0, -0.7),
-			if on then rgb(255, 250, 232) else rgb(200, 205, 212),
-			if on then Enum.Material.Neon else Enum.Material.Glass
-		)
-		if on then
-			local l = Instance.new("SpotLight")
-			l.Face = Enum.NormalId.Front
-			l.Angle = 70
-			l.Range = 60
-			l.Brightness = 3
-			l.Color = rgb(255, 248, 230)
-			l.Parent = lamp
-		end
-	end
-
-	-- Sahaya bakan tabela (yazı önden okunur)
-	local function sign(cf: CFrame, w: number, h: number, text: string, fg: Color3, bg: Color3, glow: boolean?): TextLabel
-		local p = part(Vector3.new(w, h, 0.5), cf, bg, if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic)
-		local g = surface(p, math.clamp(1200 / w, 4, 30), if glow then 1.6 else nil)
-		return label(g, text, fg, UDim2.fromScale(0.94, 0.8), UDim2.fromScale(0.03, 0.1))
-	end
-
-	-- Dev ekran / skor tabelası
-	local function screen(cf: CFrame, w: number, h: number, big: boolean)
-		part(Vector3.new(w + 3, h + 3, 1.4), cf * CFrame.new(0, 0, 0.9), rgb(18, 20, 28), Enum.Material.Metal, true)
-		local p = part(Vector3.new(w, h, 0.4), cf, rgb(6, 10, 30), Enum.Material.SmoothPlastic)
-		local g = surface(p, math.clamp(1100 / w, 5, 24), 1.8)
-		local bg = Instance.new("Frame")
-		bg.Size = UDim2.fromScale(1, 1)
-		bg.BackgroundColor3 = rgb(8, 14, 46)
-		bg.BorderSizePixel = 0
-		bg.Parent = g
-		local grad = Instance.new("UIGradient")
-		grad.Rotation = 90
-		grad.Color = ColorSequence.new(rgb(20, 34, 104), rgb(5, 9, 30))
-		grad.Parent = bg
-		local bar = Instance.new("Frame")
-		bar.Size = UDim2.fromScale(1, 0.05)
-		bar.BackgroundColor3 = C.Yellow
-		bar.BorderSizePixel = 0
-		bar.Parent = bg
-		local title = label(bg, if big then clubName else "SKOR", C.Yellow, UDim2.fromScale(0.9, 0.2), UDim2.fromScale(0.05, 0.08))
-		local score = label(bg, "0 - 0", C.White, UDim2.fromScale(0.9, 0.42), UDim2.fromScale(0.05, 0.3))
-		local text = label(bg, "", rgb(200, 210, 245), UDim2.fromScale(0.9, 0.18), UDim2.fromScale(0.05, 0.76))
-		if big then
-			table.insert(screens, { title = title, text = text, score = score, bar = bar })
-		else
-			table.insert(boards, score)
-			title.Text = clubName
-			text.Text = info.stadium or ""
-		end
-	end
-
-	-- Çevre: bina, ağaç, çit
-	local function city(n: number, rmin: number, rmax: number, hmin: number, hmax: number)
-		local tones = { rgb(196, 188, 172), rgb(168, 172, 180), rgb(206, 196, 178), rgb(150, 156, 170), rgb(182, 164, 150) }
-		for _ = 1, n do
-			local a = R() * math.pi * 2
-			local r = rmin + R() * (rmax - rmin)
-			local w, d, h = 26 + R() * 34, 26 + R() * 30, hmin + R() * (hmax - hmin)
-			local cf = CFrame.new(math.cos(a) * r, gy, midZ + math.sin(a) * r * 1.15)
-				* CFrame.Angles(0, math.floor(R() * 4) * math.pi / 2 + (R() - 0.5) * 0.3, 0)
-			local tone = tones[1 + math.floor(R() * #tones)]
-			part(
-				Vector3.new(w, h, d),
-				cf * CFrame.new(0, h / 2, 0),
-				if night then tone:Lerp(rgb(30, 36, 60), 0.55) else tone,
-				Enum.Material.Concrete,
-				not night
-			)
-			part(Vector3.new(w + 1.5, 1.2, d + 1.5), cf * CFrame.new(0, h + 0.6, 0), DARK, Enum.Material.Concrete)
-			-- pencere şeritleri
-			local floors = math.min(5, math.floor(h / 14))
-			for f = 1, floors do
-				local lit = (night or dusk) and R() < 0.7
-				local wc = if lit then rgb(255, 214, 140) else rgb(70, 88, 120)
-				local y = h * f / (floors + 1)
-				local s = part(
-					Vector3.new(w + 0.3, 3.2, d + 0.3),
-					cf * CFrame.new(0, y, 0),
-					wc,
-					if lit then Enum.Material.Neon else Enum.Material.Glass
-				)
-				s.Transparency = if lit then 0.15 else 0
-			end
-		end
-	end
-
-	local function trees(n: number, rmin: number, rmax: number)
-		for _ = 1, n do
-			local a = R() * math.pi * 2
-			local r = rmin + R() * (rmax - rmin)
-			local x, z = math.cos(a) * r, midZ + math.sin(a) * r * 1.2
-			local h = 16 + R() * 12
-			local trunk = part(
-				Vector3.new(h, 2.4, 2.4),
-				CFrame.new(x, gy + h / 2, z) * CFrame.Angles(0, 0, math.pi / 2),
-				rgb(92, 66, 44),
-				Enum.Material.Wood,
-				true
-			)
-			trunk.Shape = Enum.PartType.Cylinder
-			local g = if night then rgb(28, 62, 44) else rgb(52 + R() * 24, 122 + R() * 30, 58)
-			for k = 0, 2 do
-				local s = (15 - k * 3) + R() * 4
-				local leaf = part(
-					Vector3.new(s, s, s),
-					CFrame.new(x + (R() - 0.5) * 5, gy + h + k * 5 - 2, z + (R() - 0.5) * 5),
-					g,
-					Enum.Material.Grass,
-					true
-				)
-				leaf.Shape = Enum.PartType.Ball
-			end
-		end
-	end
-
-	local function fence(mx: number, mz: number, h: number)
-		local c = rgb(120, 126, 132)
-		for _, sx in ipairs({ -1, 1 }) do
-			local f = part(Vector3.new(0.3, h, (hz + mz) * 2), CFrame.new(sx * (hx + mx), gy + h / 2, midZ), c, Enum.Material.DiamondPlate)
-			f.Transparency = 0.55
-		end
-		for _, sz in ipairs({ -1, 1 }) do
-			local f =
-				part(Vector3.new((hx + mx) * 2, h, 0.3), CFrame.new(0, gy + h / 2, midZ + sz * (hz + mz)), c, Enum.Material.DiamondPlate)
-			f.Transparency = 0.55
-		end
-		local n = 14
-		for i = 0, n do
-			for _, sx in ipairs({ -1, 1 }) do
-				part(
-					Vector3.new(0.6, h + 1, 0.6),
-					CFrame.new(sx * (hx + mx), gy + (h + 1) / 2, midZ - hz - mz + (hz + mz) * 2 * i / n),
-					DARK,
-					Enum.Material.Metal
-				)
-			end
-		end
-	end
-
-	-- LED pano hattı (kademe 3 ve üstü): parlayan şeritler ve kayan yazı
-	local function led(frame: CFrame, len: number, margin: number)
-		local words = { clubName, "FENER KARİYER", "SARI LACİVERT", Theme.Upper(info.stadium or "STADYUM"), "1907" }
-		local n = math.max(2, math.floor(len / 52))
-		local w = len / n
-		for i = 1, n do
-			local x = -len / 2 + (i - 0.5) * w
-			local yellow = i % 2 == 0
-			sign(
-				frame * CFrame.new(x, 2, margin),
-				w - 0.6,
-				3.4,
-				words[1 + (i % #words)],
-				if yellow then C.Navy else C.Yellow,
-				if yellow then C.Yellow else rgb(14, 26, 92),
-				true
-			)
-		end
-	end
-
-	------------------------------------------------------------------ zemin
-	local groundC = if tier == 1 then rgb(122, 116, 96) elseif tier <= 3 then rgb(92, 122, 78) else rgb(56, 60, 70)
-	part(
-		Vector3.new(2400, 1, 2400),
-		CFrame.new(0, gy - 1.2, midZ),
-		groundC,
-		if tier <= 3 then Enum.Material.Grass else Enum.Material.Asphalt
-	)
-	if tier >= 2 then
-		-- saha çevresi koşu yolu / beton
-		part(
-			Vector3.new(hx * 2 + 56, 0.2, hz * 2 + 66),
-			CFrame.new(0, gy - 0.12, midZ),
-			if tier >= 4 then rgb(64, 70, 84) else rgb(150, 92, 74),
-			Enum.Material.Concrete
-		)
-	end
-
-	if tier == 1 then
-		-- yıpranmış çim: kale önleri ve orta saha toprak
-		local dirt = rgb(132, 110, 76)
-		for _, s in ipairs({ { 0, -hz + 14, 34, 22 }, { 0, hz - 14, 34, 22 }, { 0, 0, 22, 22 }, { -50, 60, 26, 16 }, { 56, -70, 30, 18 } }) do
-			local d = part(
-				Vector3.new(0.05, s[4] * 2, s[3] * 2),
-				CFrame.new(s[1], gy + 0.02, midZ + s[2]) * CFrame.Angles(0, 0, math.pi / 2),
-				dirt,
-				Enum.Material.Ground
-			)
-			d.Shape = Enum.PartType.Cylinder
-			d.Transparency = 0.35
-		end
-	end
-
-	------------------------------------------------------------------ kademeler
-	local ext = 60 -- stadın en dış yarıçapı için pay
-	local glow = night
-	if tier == 1 then
-		-- Mahalle sahası: tek küçük tribün, tel örgü, kulüp binası
-		stand(FR.W, { len = 110, margin = 22, depth = 12, y0 = 2, rise = 6, density = 0.22 })
-		if (fac.TribunEki or 0) >= 1 then
-			stand(FR.E, { len = 80 + 40 * fac.TribunEki, margin = 22, depth = 10, y0 = 2, rise = 5, density = 0.2 })
-		end
-		fence(18, 20, 9)
-		-- kulüp binası
-		local hut = CFrame.new(-hx - 52, gy, midZ - 96)
-		part(Vector3.new(36, 13, 50), hut * CFrame.new(0, 6.5, 0), rgb(214, 206, 188), Enum.Material.Concrete, true)
-		part(Vector3.new(40, 1.4, 54), hut * CFrame.new(0, 13.7, 0), rgb(140, 62, 50), Enum.Material.Slate, true)
-		sign(hut * CFrame.new(18.4, 9, 0) * CFrame.Angles(0, -math.pi / 2, 0), 40, 5, clubName, C.Yellow, C.Navy)
-		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			tower(c[1] * (hx + 26), c[2] * (hz + 6), 42, 5, (fac.Aydinlatma or 0) >= 1)
-		end
-		screen(FR.N * CFrame.new(60, 13, 26), 26, 12, false)
-		ext = 60
-	elseif tier == 2 then
-		local top, back = stand(FR.W, { len = 230, margin = 22, depth = 26, y0 = 3, rise = 13, density = 0.5 })
-		roof(FR.W, 230, 26, back, top + 13, false)
-		stand(FR.E, { len = 150 + 40 * (fac.TribunEki or 0), margin = 22, depth = 14, y0 = 3, rise = 7, density = 0.4 })
-		fence(20, 24, 8)
-		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			tower(c[1] * (hx + 46), c[2] * (hz + 10), 62, 8, false)
-		end
-		screen(FR.N * CFrame.new(0, 16, 30), 40, 16, false)
-		ext = 80
-	elseif tier == 3 then
-		for _, s in ipairs({ "W", "E" }) do
-			local top, back =
-				stand(FR[s], { len = 300, margin = 22, depth = 34, y0 = 3, rise = 18, density = 0.68, flip = if s == "E" then 1 else 0 })
-			roof(FR[s], 300, 30, back, top + 14, false)
-		end
-		stand(FR.N, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.6 })
-		stand(FR.S, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.55 })
-		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			tower(c[1] * (hx + 64), c[2] * (hz + 44), 96, 12, false)
-		end
-		screen(FR.N * CFrame.new(0, 26, 52), 56, 22, false)
-		ext = 110
-	else
-		-- Kapalı çanak: dört tribün + köşeler; 5 ve 6'da çift kat
-		local depth = if tier == 4 then 44 else 40
-		local rise = if tier == 4 then 26 else 20
-		local dens = if tier == 4 then 0.8 elseif tier == 5 then 0.9 else 0.97
-		local margin = 22
-		local upperD, upperR = if tier == 6 then 44 else 38, if tier == 6 then 34 else 28
-		local outer = margin + depth
-		local roofY = 0
-		local i = 0
-		for name, frame in pairs(FR) do
-			i += 1
-			local len = HALF[name] * 2 + margin * 2
-			local top, back = stand(frame, { len = len, margin = margin, depth = depth, y0 = 3.5, rise = rise, density = dens, flip = i })
-			if tier >= 5 then
-				local um = margin + depth * 0.72
-				top, back = stand(frame, {
-					len = len + (um - margin) * 2,
-					margin = um,
-					depth = upperD,
-					y0 = top + 7,
-					rise = upperR,
-					density = dens,
-					solid = false,
-					flip = i + 1,
-				})
-				part(
-					Vector3.new(len + 40, top + 4, 3),
-					frame * CFrame.new(0, (top + 4) / 2, back + 2.5),
-					wallC,
-					Enum.Material.Concrete,
-					true
-				)
-			end
-			roofY = top + 16
-			outer = back
-			roof(frame, len + (back - margin - depth) * 2, back - (if tier >= 5 then 46 else 30), back, roofY, glow)
-		end
-		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			local frame = corner(c[1], c[2])
-			local m = margin * 1.42
-			local top, back =
-				stand(frame, { len = depth * 1.5, margin = m, depth = depth * 1.05, y0 = 3.5, rise = rise, density = dens, flip = 1 })
-			if tier >= 5 then
-				top, back = stand(frame, {
-					len = (depth + upperD) * 1.55,
-					margin = m + depth * 0.8,
-					depth = upperD * 1.05,
-					y0 = top + 7,
-					rise = upperR,
-					density = dens,
-					solid = false,
-				})
-			end
-			-- köşe çatısı ve dış kule
-			part(
-				Vector3.new((back - m) * 1.9, 1.2, back - m + 10),
-				frame * CFrame.new(0, roofY - 1.5, (m + back) / 2 + 12),
-				if tier >= 5 then rgb(176, 184, 204) else rgb(140, 146, 158),
-				Enum.Material.Metal,
-				true
-			)
-			part(Vector3.new(16, roofY + 6, 16), frame * CFrame.new(0, (roofY + 6) / 2, back + 16), wallC, Enum.Material.Concrete, true)
-			if tier == 4 then
-				tower(c[1] * (hx + outer + 26), c[2] * (hz + outer + 26), roofY + 60, 16, true)
-			end
-		end
-		-- dış cephe: sarı-lacivert dikmeler ve stat adı
-		for name, frame in pairs(FR) do
-			local len = HALF[name] * 2 + (outer + 4) * 2
-			local n = math.floor(len / 22)
-			for k = 0, n do
-				local x = -len / 2 + len * k / n
-				part(
-					Vector3.new(2.4, roofY + 2, 2.4),
-					frame * CFrame.new(x, (roofY + 2) / 2, outer + 6),
-					if tier >= 6 then (if k % 2 == 0 then C.Yellow else C.Navy) else rgb(110, 118, 140),
-					Enum.Material.Metal,
-					true
-				)
-			end
-			sign(
-				frame * CFrame.new(0, roofY * 0.62, outer + 7.6) * CFrame.Angles(0, math.pi, 0),
-				math.min(len * 0.6, 260),
-				roofY * 0.2,
-				if tier >= 6 then "FENERBAHÇE" else Theme.Upper(info.stadium or "STADYUM"),
-				C.Yellow,
-				C.Navy,
-				night
-			)
-		end
-		-- dev ekranlar: kale arkası üst köşelerde
-		local sw, sh = if tier == 6 then 84 else 66, if tier == 6 then 34 else 27
-		local sy = roofY - sh / 2 - 6
-		screen(FR.N * CFrame.new(0, sy, outer - 8), sw, sh, true)
-		screen(FR.S * CFrame.new(0, sy, outer - 8), sw, sh, true)
-		ext = outer + 40
-	end
-
-	if tier >= 3 then
-		led(FR.N, hx * 2 - 20, 15)
-		led(FR.S, hx * 2 - 20, 15)
-		led(FR.E, hz * 2 - 10, 17)
-		led(FR.W, hz * 2 - 10, 17)
-	end
-	-- yedek kulübeleri
-	if tier >= 2 then
-		for _, z in ipairs({ -44, 44 }) do
-			local f = FR.W * CFrame.new(z, 0, 9)
-			part(Vector3.new(30, 0.8, 5), f * CFrame.new(0, 0.4, 0), DARK, Enum.Material.Concrete)
-			part(Vector3.new(28, 1.6, 2), f * CFrame.new(0, 1.6, 1), C.Navy)
-			local glass = part(Vector3.new(30, 6, 0.4), f * CFrame.new(0, 3.6, 2.8), rgb(160, 200, 235), Enum.Material.Glass)
-			glass.Transparency = 0.55
-			local top = part(Vector3.new(30, 0.4, 5.6), f * CFrame.new(0, 6.6, 0.4), rgb(160, 200, 235), Enum.Material.Glass, true)
-			top.Transparency = 0.45
-		end
-	end
-
-	------------------------------------------------------------------ çevre
-	local r0 = math.sqrt((hx + ext) ^ 2 + (hz + ext) ^ 2) * 0.86
-	if tier == 1 then
-		trees(34, r0 + 10, r0 + 170)
-		city(16, r0 + 70, r0 + 330, 28, 56)
-	elseif tier == 2 then
-		trees(40, r0 + 20, r0 + 200)
-		city(20, r0 + 90, r0 + 380, 30, 70)
-	elseif tier == 3 then
-		trees(34, r0 + 20, r0 + 190)
-		city(26, r0 + 90, r0 + 420, 36, 96)
-	else
-		trees(22, r0 + 30, r0 + 150)
-		city(if tier == 6 then 44 else 34, r0 + 80, r0 + 520, 50, if tier == 6 then 190 else 140)
-	end
-
-	if withMood then
-		mood(Config.Tiers[tier].Light)
-	end
+	return {
+		tier = tierId,
+		league = tier.League,
+		stadium = tier.Stadium,
+		avg = avg,
+		matchNo = (season.played or 0) + 1,
+		home = { club = homeDef, players = home },
+		away = { club = oppDef, players = Squads.Build(oppDef, avg) },
+	}
 end
 
---------------------------------------------------------------------------------
--- Dış arayüz
---------------------------------------------------------------------------------
-function Stadium.Clear()
-	if current then
-		current:Destroy()
-		current = nil
-	end
-	crowdLayers = {}
-	screens = {}
-	boards = {}
-	screenToken += 1
-	mood("Lobi")
-end
-
--- info: { club, abbr, facilities, atFenerbahce }
-function Stadium.Build(tier: number, info: Info?)
-	Stadium.Clear()
-	tier = math.clamp(tier, 1, #Config.Tiers)
-	local model = Instance.new("Model")
-	model.Name = "FK_Stadium"
-	local i: Info = info or {}
-	i.stadium = i.stadium or Config.Tiers[tier].Stadium
-	build(model, tier, i, Config.MatchPitch, true)
-	model.Parent = Workspace
-	current = model
-	return model
-end
-
--- Lobi ve deneme sahası: ışık + çevre (bir kez kurulur)
-local lobbyBuilt = false
-function Stadium.Lobby()
-	mood("Lobi")
-	if lobbyBuilt then
-		return
-	end
-	lobbyBuilt = true
-	local model = Instance.new("Model")
-	model.Name = "FK_LobbyWorld"
-	local part = builder(model)
-	local R = rng(4242)
-	local T = Config.TestPitch
-	local cz = (T.MinZ + T.MaxZ) / 2
-	part(Vector3.new(2000, 1, 2000), CFrame.new(0, T.GroundY - 1.3, cz), rgb(96, 128, 82), Enum.Material.Grass)
-	-- antrenman tesisi: çit, küçük tribün, binalar, ağaçlar
-	for _, sx in ipairs({ -1, 1 }) do
-		local f = part(Vector3.new(0.3, 10, 200), CFrame.new(sx * 128, 5, cz), rgb(120, 126, 132), Enum.Material.DiamondPlate)
-		f.Transparency = 0.55
-		for i = 0, 8 do
-			part(Vector3.new(0.7, 11, 0.7), CFrame.new(sx * 128, 5.5, cz - 100 + i * 25), DARK, Enum.Material.Metal)
-		end
-	end
-	local back = part(Vector3.new(256, 10, 0.3), CFrame.new(0, 5, T.MaxZ + 22), rgb(120, 126, 132), Enum.Material.DiamondPlate)
-	back.Transparency = 0.55
-	for i = 0, 5 do
-		local a = R() * 0.2
-		local x = -330 + i * 132
-		local h = 40 + R() * 50
-		local cf = CFrame.new(x, 0, T.MaxZ + 190 + R() * 80) * CFrame.Angles(0, a, 0)
-		part(Vector3.new(60, h, 44), cf * CFrame.new(0, h / 2, 0), rgb(200, 192, 176), Enum.Material.Concrete, true)
-		for f = 1, 3 do
-			part(Vector3.new(60.4, 3.4, 44.4), cf * CFrame.new(0, h * f / 4, 0), rgb(70, 88, 120), Enum.Material.Glass)
-		end
-	end
-	for _ = 1, 46 do
-		local a = R() * math.pi * 2
-		local r = 190 + R() * 240
-		local x, z = math.cos(a) * r, cz + math.sin(a) * r
-		if z > 30 or math.abs(x) > 70 then
-			local h = 16 + R() * 12
-			local trunk = part(
-				Vector3.new(h, 2.4, 2.4),
-				CFrame.new(x, h / 2, z) * CFrame.Angles(0, 0, math.pi / 2),
-				rgb(92, 66, 44),
-				Enum.Material.Wood,
-				true
-			)
-			trunk.Shape = Enum.PartType.Cylinder
-			for k = 0, 2 do
-				local s = (15 - k * 3) + R() * 4
-				local leaf = part(
-					Vector3.new(s, s, s),
-					CFrame.new(x + (R() - 0.5) * 5, h + k * 5 - 2, z + (R() - 0.5) * 5),
-					rgb(52 + R() * 24, 122 + R() * 30, 58),
-					Enum.Material.Grass,
-					true
-				)
-				leaf.Shape = Enum.PartType.Ball
-			end
-		end
-	end
-	-- tesis tabelası
-	local p = part(Vector3.new(120, 14, 1), CFrame.new(0, 16, T.MaxZ + 24), C.Navy)
-	local g = surface(p, 10)
-	label(g, "FENER KARİYER  •  ANTRENMAN TESİSİ", C.Yellow, UDim2.fromScale(0.94, 0.7), UDim2.fromScale(0.03, 0.15))
-	for _, x in ipairs({ -58, 58 }) do
-		part(Vector3.new(2, 24, 2), CFrame.new(x, 12, T.MaxZ + 24.5), DARK, Enum.Material.Metal, true)
-	end
-	model.Parent = Workspace
-end
-
--- Seyirci zıplaması (golde)
-function Stadium.Cheer()
-	for i, holder in ipairs(crowdLayers) do
-		local base = holder.Position
-		local up = UDim2.new(base.X.Scale, base.X.Offset, base.Y.Scale, base.Y.Offset - 9)
-		local tw = TweenService:Create(
-			holder,
-			TweenInfo.new(0.16 + (i % 3) * 0.02, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 7, true),
-			{ Position = up }
-		)
-		tw:Play()
-	end
-end
-
--- Dev ekranda olay: başlık + açıklama; süre bitince skora döner
-function Stadium.Screen(title: string, text: string, color: Color3?, hold: number?)
-	screenToken += 1
-	local token = screenToken
-	for _, s in ipairs(screens) do
-		s.title.Text = title
-		s.title.TextColor3 = color or C.Yellow
-		s.bar.BackgroundColor3 = color or C.Yellow
-		s.text.Text = text
-	end
-	task.delay(hold or 5, function()
-		if token ~= screenToken then
-			return
-		end
-		for _, s in ipairs(screens) do
-			s.title.TextColor3 = C.Yellow
-			s.bar.BackgroundColor3 = C.Yellow
-			s.text.Text = ""
-		end
-	end)
-end
-
-function Stadium.HasScreen(): boolean
-	return #screens > 0
-end
-
-function Stadium.Score(home: string, away: string, hg: number, ag: number, minute: number?)
-	local line = string.format("%s  %d - %d  %s", home, hg, ag, away)
-	for _, s in ipairs(screens) do
-		s.score.Text = line
-		if s.text.Text == "" or string.sub(s.text.Text, -1) == "'" then
-			s.text.Text = if minute then tostring(minute) .. "'" else ""
-		end
-	end
-	for _, b in ipairs(boards) do
-		b.Text = string.format("%d - %d", hg, ag)
-	end
-end
-
-return Stadium
+return Squads
 ]]></ProtectedString></Properties></Item>
 </Item>
 <Item class="Folder" referent="RBX10"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">Components</string><ProtectedString name="Source"><![CDATA[--[[
@@ -3161,6 +2431,54 @@ local function hair(character: Model, head: BasePart, style: number, c: Color3)
 	end
 end
 
+-- Yüz: gözler, kaşlar, ağız ve sakal başın ön yüzüne çizilir
+local function paintFace(head: BasePart, face: number, beard: number, hairColor: Color3, skin: Color3)
+	local sg = Instance.new("SurfaceGui")
+	sg.Name = "FK_Kit"
+	sg.Face = Enum.NormalId.Front
+	sg.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+	sg.CanvasSize = Vector2.new(200, 200)
+	sg.LightInfluence = 1
+	sg.Parent = head
+	local function shape(size: UDim2, pos: UDim2, c: Color3, round: number, rot: number?, tr: number?): Frame
+		local f = Instance.new("Frame")
+		f.AnchorPoint = Vector2.new(0.5, 0.5)
+		f.Size = size
+		f.Position = pos
+		f.BackgroundColor3 = c
+		f.BackgroundTransparency = tr or 0
+		f.BorderSizePixel = 0
+		f.Rotation = rot or 0
+		local u = Instance.new("UICorner")
+		u.CornerRadius = UDim.new(round, 0)
+		u.Parent = f
+		f.Parent = sg
+		return f
+	end
+	local dark = Color3.fromRGB(26, 22, 20)
+	local v = (math.max(1, face) - 1) % 6
+	-- sakal önce çizilir (ağız üstte kalsın)
+	if beard >= 1 then
+		local tr = if beard == 1 then 0.55 elseif beard == 2 then 0.25 else 0.05
+		shape(UDim2.fromScale(0.74, 0.34), UDim2.fromScale(0.5, 0.84), hairColor, 0.45, 0, tr)
+		if beard >= 2 then
+			shape(UDim2.fromScale(0.36, 0.07), UDim2.fromScale(0.5, 0.63), hairColor, 0.5, 0, tr) -- bıyık
+		end
+	end
+	local browTilt = ({ 0, 8, -6, 12, 4, -10 })[v + 1]
+	local eyeH = ({ 0.1, 0.085, 0.11, 0.075, 0.095, 0.1 })[v + 1]
+	for _, sx in ipairs({ -1, 1 }) do
+		local x = 0.5 + sx * 0.17
+		shape(UDim2.fromScale(0.17, eyeH), UDim2.fromScale(x, 0.43), Color3.fromRGB(246, 246, 240), 0.5)
+		shape(UDim2.fromScale(0.075, eyeH * 0.92), UDim2.fromScale(x + sx * 0.005, 0.43), dark, 0.5)
+		shape(UDim2.fromScale(0.2, 0.035), UDim2.fromScale(x, 0.43 - eyeH * 0.5 - 0.04), hairColor:Lerp(dark, 0.5), 0.5, sx * browTilt)
+	end
+	-- burun gölgesi ve ağız
+	shape(UDim2.fromScale(0.05, 0.12), UDim2.fromScale(0.5, 0.53), skin:Lerp(dark, 0.22), 0.5)
+	local mouthW = ({ 0.24, 0.2, 0.28, 0.18, 0.26, 0.22 })[v + 1]
+	shape(UDim2.fromScale(mouthW, 0.03), UDim2.fromScale(0.5, 0.71), Color3.fromRGB(120, 60, 52), 0.5)
+end
+
 --[[
 	look = {
 		appearance = {...}, position, kitPattern, number, name, abbr, atFenerbahce, level
@@ -3175,21 +2493,9 @@ local function dress(character: Model?, look)
 	local B = Config.Body
 	local skin = Config.SkinColors[a.skin] or Config.SkinColors[2]
 
-	local desc = hum:GetAppliedDescription()
-	desc.Shirt = 0
-	desc.Pants = 0
-	desc.GraphicTShirt = 0
-	desc.HatAccessory = ""
-	desc.HairAccessory = ""
-	desc.FaceAccessory = ""
-	desc.NeckAccessory = ""
-	desc.ShouldersAccessory = ""
-	desc.FrontAccessory = ""
-	desc.BackAccessory = ""
-	desc.WaistAccessory = ""
-	pcall(function()
-		desc:SetAccessories({}, true)
-	end)
+	-- Herkes aynı varsayılan gövdeyle başlar: oyuncunun kendi Roblox avatarı (paket gövdeler,
+	-- şapkalar, kıyafetler) kullanılmaz. Boş tanım, standart R15 gövdesini verir.
+	local desc = Instance.new("HumanoidDescription")
 	for key, id in pairs(B.Parts) do
 		if id ~= 0 then
 			(desc :: any)[key] = id
@@ -3217,6 +2523,14 @@ local function dress(character: Model?, look)
 
 	clear(character, "FK_Extra")
 	clear(character, "FK_Kit")
+	-- avatardan kalan her şeyi temizle
+	for _, d in ipairs(character:GetDescendants()) do
+		if d:IsA("Accessory") or d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("CharacterMesh") then
+			d:Destroy()
+		elseif d:IsA("Decal") and d.Parent and d.Parent.Name == "Head" then
+			d:Destroy() -- hazır yüz çıkartması; yüzü kendimiz çiziyoruz
+		end
+	end
 
 	local kit = look.kit or Kits.For(look.position, look.kitPattern, look.atFenerbahce)
 	local acc = a.accessories or {}
@@ -3238,6 +2552,7 @@ local function dress(character: Model?, look)
 
 	local head = character:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
+		paintFace(head, a.face or 1, a.beard or 0, hex(a.hairColor), skin)
 		hair(character, head, a.hairStyle, hex(a.hairColor))
 		if acc.SacBandi then
 			local s = head.Size
@@ -3302,6 +2617,38 @@ local function dress(character: Model?, look)
 				Vector3.new(ua.Size.X * 1.12, ua.Size.Y * 0.2, ua.Size.Z * 1.12),
 				CFrame.new(0, -ua.Size.Y * 0.1, 0),
 				C.Gold
+			)
+		end
+	end
+	-- yaka ve krampon tabanı
+	if torso and torso:IsA("BasePart") then
+		local ts = torso.Size
+		weldPart(character, torso, Vector3.new(ts.X * 0.46, ts.Y * 0.08, ts.Z * 1.04), CFrame.new(0, ts.Y * 0.47, 0), kit.Trim)
+	end
+	for _, n in ipairs({ "LeftFoot", "RightFoot" }) do
+		local foot = character:FindFirstChild(n)
+		if foot and foot:IsA("BasePart") then
+			local fs = foot.Size
+			weldPart(
+				character,
+				foot,
+				Vector3.new(fs.X * 1.04, fs.Y * 0.22, fs.Z * 1.06),
+				CFrame.new(0, -fs.Y * 0.42, 0),
+				Color3.fromRGB(240, 240, 240)
+			)
+			weldPart(character, foot, Vector3.new(fs.X * 0.3, fs.Y * 0.2, fs.Z * 0.7), CFrame.new(0, fs.Y * 0.42, -fs.Z * 0.1), C.Yellow)
+		end
+	end
+	-- şort kenar şeridi
+	for _, n in ipairs({ "LeftUpperLeg", "RightUpperLeg" }) do
+		local leg = character:FindFirstChild(n)
+		if leg and leg:IsA("BasePart") then
+			weldPart(
+				character,
+				leg,
+				Vector3.new(leg.Size.X * 1.07, leg.Size.Y * 0.1, leg.Size.Z * 1.07),
+				CFrame.new(0, -leg.Size.Y * 0.36, 0),
+				kit.Trim
 			)
 		end
 	end
@@ -3849,6 +3196,9 @@ local DataService = require(script.Parent.DataService)
 local PlayerService = require(script.Parent.PlayerService)
 local CharacterService = require(script.Parent.CharacterService)
 
+-- Herkes varsayılan gövdeyle doğar; kendi Roblox avatarı yüklenmez
+game:GetService("StarterPlayer").LoadCharacterAppearance = false
+
 CharacterService.BuildStudio()
 CharacterService.BuildMatchPitch()
 DataService.Init()
@@ -4090,7 +3440,7 @@ local function onUnlockSkill(player: Player, chainId)
 		return notify(player, "error", "Bu zincir senin mevkine ait değil.")
 	end
 	-- Sıralı kilit: yalnızca sıradaki yetenek açılabilir
-	local nextIndex = (data.skills[chainId] or 0) + 1
+	local nextIndex = Config.SkillLevel(data.skills, chainId) + 1
 	local skill = chain.Skills[nextIndex]
 	if not skill then
 		return notify(player, "error", "Bu zincirdeki bütün yetenekler açık.")
@@ -4330,7 +3680,7 @@ return PlayerService
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX35"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX34"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX33"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX20"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterPlayer" referent="RBX39"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX36"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX35"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX20"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
 	Animator
 	Kodla çalışan katmanlı animasyon motoru (R15).
 	- Alt katman: duruş ve koşu döngüsü hızdan üretilir (yürüyüşten sprinte kesintisiz).
@@ -4476,6 +3826,7 @@ function Animator:_track(name: string, assetId: string)
 	end)
 	if ok then
 		track.Priority = Enum.AnimationPriority.Action
+		track:SetAttribute("FK", true)
 		self.Tracks[name] = track
 		return track
 	end
@@ -5545,6 +4896,347 @@ Poses.Actions = {
 		EndShift = V(5.4, 0, 0), -- eylem bitince karakter gerçekten buraya taşınır
 	},
 	-- TEPKİ VE SEVİNÇ ------------------------------------------------------
+	-- YETENEK AĞACININ ÜST HAREKETLERİ -------------------------------------------
+	Bisiklet = { -- topun üstünden önce sağ, sonra sol ayak döner
+		Rate = 1.1,
+		Duration = 0.62,
+		Mask = "Full",
+		Recover = 0.46,
+		Speed = 0.85,
+		Events = { { 0.34, "feint" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.1,
+				{
+					Root = V(-8, 0, 10),
+					RightHip = V(48, 0, 32),
+					RightKnee = V(-34, 0, 0),
+					LeftKnee = V(-22, 0, 0),
+					RightShoulder = V(0, 0, 42),
+					LeftShoulder = V(10, 0, -30),
+				},
+			},
+			{
+				0.2,
+				{ Root = V(-8, 0, 0), Waist = V(0, -12, 0), RightHip = V(30, 0, -26), RightKnee = V(-16, 0, 0), LeftKnee = V(-18, 0, 0) },
+			},
+			{
+				0.32,
+				{
+					Root = V(-8, 0, -10),
+					LeftHip = V(48, 0, -32),
+					LeftKnee = V(-34, 0, 0),
+					RightKnee = V(-22, 0, 0),
+					LeftShoulder = V(0, 0, -42),
+					RightShoulder = V(10, 0, 30),
+				},
+			},
+			{
+				0.46,
+				{
+					Root = V(-10, 0, -20),
+					Waist = V(0, 12, 0),
+					LeftHip = V(30, 0, 26),
+					LeftKnee = V(-16, 0, 0),
+					RightHip = V(14, 0, 24),
+					RightKnee = V(-30, 0, 0),
+				},
+			},
+			{ 0.62, REST },
+		},
+	},
+	Gokkusagi = { -- top iki ayak arasında sıkıştırılır, topukla baş üstünden aşırılır
+		Duration = 0.84,
+		Mask = "Full",
+		Recover = 0.66,
+		Speed = 0.8,
+		Events = { { 0.3, "flick" }, { 0.44, "feint" }, { 0.64, "land" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.14,
+				{
+					RootPos = V(0, -0.3, 0),
+					Root = V(-18, 0, 0),
+					LeftHip = V(22, 0, 0),
+					LeftKnee = V(-42, 0, 0),
+					RightHip = V(-10, 0, 0),
+					RightKnee = V(-30, 0, 0),
+					LeftShoulder = V(-20, 0, -22),
+					RightShoulder = V(-20, 0, 22),
+				},
+			},
+			{
+				0.3,
+				{
+					Root = V(-32, 0, 0),
+					Neck = V(22, 0, 0),
+					RightHip = V(-36, 0, 0),
+					RightKnee = V(-112, 0, 0),
+					LeftHip = V(26, 0, 0),
+					LeftKnee = V(-14, 0, 0),
+					LeftShoulder = V(44, 0, -32),
+					RightShoulder = V(-44, 0, 32),
+				},
+			},
+			{
+				0.46,
+				{
+					RootPos = V(0, 0.55, 0),
+					Root = V(-10, 0, 0),
+					Neck = V(-24, 0, 0),
+					RightHip = V(-8, 0, 0),
+					RightKnee = V(-70, 0, 0),
+					LeftHip = V(-4, 0, 0),
+					LeftKnee = V(-52, 0, 0),
+					LeftShoulder = V(-34, 0, -54),
+					RightShoulder = V(-34, 0, 54),
+				},
+			},
+			{
+				0.64,
+				{
+					RootPos = V(0, -0.22, 0),
+					Root = V(-6, 0, 0),
+					LeftHip = V(32, 0, 0),
+					LeftKnee = V(-42, 0, 0),
+					RightHip = V(-14, 0, 0),
+					RightKnee = V(-22, 0, 0),
+				},
+			},
+			{ 0.84, REST },
+		},
+	},
+	GucluKafa = { -- gövde yay gibi geriye gerilir, sonra öne kırılır
+		Duration = 0.95,
+		Mask = "Full",
+		Recover = 0.74,
+		Speed = 0.65,
+		Events = { { 0.12, "jump" }, { 0.5, "strike" }, { 0.84, "land" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.12,
+				{
+					RootPos = V(0, -0.55, 0),
+					Root = V(-12, 0, 0),
+					LeftHip = V(52, 0, 0),
+					LeftKnee = V(-86, 0, 0),
+					RightHip = V(52, 0, 0),
+					RightKnee = V(-86, 0, 0),
+					LeftShoulder = V(-60, 0, -12),
+					RightShoulder = V(-60, 0, 12),
+				},
+			},
+			{
+				0.36,
+				{
+					Root = V(24, 0, 0),
+					Waist = V(30, 0, 0),
+					Neck = V(24, 0, 0),
+					LeftHip = V(-34, 0, 0),
+					RightHip = V(-34, 0, 0),
+					LeftKnee = V(-70, 0, 0),
+					RightKnee = V(-70, 0, 0),
+					LeftShoulder = V(80, 0, -85),
+					RightShoulder = V(80, 0, 85),
+					LeftElbow = V(70, 0, 0),
+					RightElbow = V(70, 0, 0),
+				},
+			},
+			{
+				0.5,
+				{
+					Root = V(-22, 0, 0),
+					Waist = V(-40, 0, 0),
+					Neck = V(-34, 0, 0),
+					LeftHip = V(36, 0, 0),
+					RightHip = V(36, 0, 0),
+					LeftKnee = V(-20, 0, 0),
+					RightKnee = V(-20, 0, 0),
+					LeftShoulder = V(-50, 0, -60),
+					RightShoulder = V(-50, 0, 60),
+				},
+			},
+			{
+				0.84,
+				{
+					RootPos = V(0, -0.35, 0),
+					LeftHip = V(34, 0, 0),
+					LeftKnee = V(-56, 0, 0),
+					RightHip = V(34, 0, 0),
+					RightKnee = V(-56, 0, 0),
+				},
+			},
+			{ 0.95, REST },
+		},
+	},
+	Makas = { -- koşarken havada yana yatıp bacakları makaslar
+		Duration = 1.0,
+		Mask = "Full",
+		Recover = 0.84,
+		Speed = 0.35,
+		Events = { { 0.1, "jump" }, { 0.38, "strike" }, { 0.78, "land" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.1,
+				{
+					RootPos = V(0, -0.5, 0),
+					Root = V(-10, 0, 0),
+					LeftHip = V(46, 0, 0),
+					LeftKnee = V(-80, 0, 0),
+					RightHip = V(30, 0, 0),
+					RightKnee = V(-60, 0, 0),
+					LeftShoulder = V(-40, 0, -20),
+					RightShoulder = V(-40, 0, 20),
+				},
+			},
+			{
+				0.26,
+				{
+					RootPos = V(0, 0.4, 0),
+					Root = V(10, 0, -58),
+					Waist = V(0, 20, 0),
+					LeftHip = V(70, 0, 0),
+					LeftKnee = V(-30, 0, 0),
+					RightHip = V(-40, 0, 0),
+					RightKnee = V(-70, 0, 0),
+					LeftShoulder = V(20, 0, -110),
+					RightShoulder = V(40, 0, 70),
+				},
+			},
+			{
+				0.38,
+				{
+					RootPos = V(0, 0.5, 0),
+					Root = V(6, 0, -78),
+					Waist = V(0, -24, 0),
+					RightHip = V(96, 0, 0),
+					RightKnee = V(-6, 0, 0),
+					LeftHip = V(-30, 0, 0),
+					LeftKnee = V(-50, 0, 0),
+					LeftShoulder = V(10, 0, -120),
+					RightShoulder = V(-30, 0, 60),
+				},
+			},
+			{
+				0.6,
+				{
+					RootPos = V(0, -0.6, 0),
+					Root = V(0, 0, -50),
+					RightHip = V(40, 0, 0),
+					RightKnee = V(-40, 0, 0),
+					LeftHip = V(10, 0, 0),
+					LeftKnee = V(-60, 0, 0),
+				},
+			},
+			{
+				0.78,
+				{
+					RootPos = V(0, -0.9, 0),
+					Root = V(-20, 0, -16),
+					LeftHip = V(60, 0, 0),
+					LeftKnee = V(-96, 0, 0),
+					RightHip = V(50, 0, 0),
+					RightKnee = V(-80, 0, 0),
+				},
+			},
+			{ 1.0, REST },
+		},
+	},
+	Omuz = { -- omuzla yaslanıp ayağı topa sokar
+		Rate = 1.15,
+		Duration = 0.5,
+		Mask = "Full",
+		Recover = 0.36,
+		Speed = 0.8,
+		Events = { { 0.18, "tackle" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.18,
+				{
+					Root = V(-12, 20, -16),
+					Waist = V(0, 14, -10),
+					Neck = V(0, -20, 0),
+					RightShoulder = V(-20, 0, 12),
+					RightElbow = V(80, 0, 0),
+					LeftShoulder = V(30, 0, -40),
+					RightHip = V(40, 0, 10),
+					RightKnee = V(-20, 0, 0),
+					LeftHip = V(-24, 0, 0),
+					LeftKnee = V(-34, 0, 0),
+				},
+			},
+			{
+				0.32,
+				{
+					Root = V(-8, 10, -8),
+					RightHip = V(24, 0, 0),
+					RightKnee = V(-30, 0, 0),
+					LeftKnee = V(-26, 0, 0),
+					RightElbow = V(50, 0, 0),
+				},
+			},
+			{ 0.5, REST },
+		},
+	},
+	UcanBlok = { -- şuta doğru atlayıp gövdeyi ve bacağı açar
+		Duration = 0.8,
+		Mask = "Full",
+		Recover = 0.62,
+		Speed = 0.3,
+		Events = { { 0.08, "jump" }, { 0.2, "block" }, { 0.62, "land" } },
+		Keys = {
+			{ 0, REST },
+			{
+				0.08,
+				{
+					RootPos = V(0, -0.4, 0),
+					LeftHip = V(40, 0, 0),
+					LeftKnee = V(-70, 0, 0),
+					RightHip = V(40, 0, 0),
+					RightKnee = V(-70, 0, 0),
+				},
+			},
+			{
+				0.24,
+				{
+					Root = V(8, 26, 0),
+					Neck = V(0, -26, 0),
+					LeftHip = V(10, 0, -46),
+					RightHip = V(30, 0, 50),
+					LeftKnee = V(-20, 0, 0),
+					RightKnee = V(-10, 0, 0),
+					LeftShoulder = V(20, 0, -110),
+					RightShoulder = V(20, 0, 110),
+				},
+			},
+			{
+				0.45,
+				{
+					Root = V(4, 26, 0),
+					LeftHip = V(6, 0, -36),
+					RightHip = V(20, 0, 40),
+					LeftShoulder = V(10, 0, -80),
+					RightShoulder = V(10, 0, 80),
+				},
+			},
+			{
+				0.62,
+				{
+					RootPos = V(0, -0.3, 0),
+					LeftHip = V(30, 0, 0),
+					LeftKnee = V(-50, 0, 0),
+					RightHip = V(30, 0, 0),
+					RightKnee = V(-50, 0, 0),
+				},
+			},
+			{ 0.8, REST },
+		},
+	},
 	Fren = {
 		Duration = 0.3,
 		Mask = "Full",
@@ -5692,6 +5384,12 @@ Poses.Names = {
 	VucutCalimi = "Vücut çalımı",
 	Marsilya = "Marsilya",
 	Elastico = "Elastico",
+	Bisiklet = "Bisiklet",
+	Gokkusagi = "Gökkuşağı",
+	GucluKafa = "Güçlü kafa",
+	Makas = "Makas vuruşu",
+	Omuz = "Omuz mücadelesi",
+	UcanBlok = "Uçan blok",
 	AyaktaMudahale = "Müdahale",
 	Kayma = "Kayarak müdahale",
 	Blok = "Blok",
@@ -5741,24 +5439,6 @@ local Controller = {}
 
 local SHOTS = { "Shoot", "Plase", "Fuze", "Asirtma", "Vole", "Rovesata" }
 -- Eylemin hangi yetenekle açıldığı: { zincir, sıra }
-local REQUIRES = {
-	Shoot = { "Sut", 1 },
-	Plase = { "Sut", 2 },
-	Fuze = { "Sut", 3 },
-	Asirtma = { "Sut", 4 },
-	Vole = { "Sut", 5 },
-	Rovesata = { "Sut", 6 },
-	VucutCalimi = { "Calim", 1 },
-	Marsilya = { "Calim", 3 },
-	Elastico = { "Calim", 5 },
-	Jump = { "Hava", 1 },
-	Header = { "Hava", 2 },
-	UcanKafa = { "Hava", 4 },
-	AyaktaMudahale = { "Defans", 1 },
-	Kayma = { "Defans", 4 },
-	Blok = { "Defans", 5 },
-	Plonjon = { "Kaleci", 1 },
-}
 
 local state = {
 	animator = nil :: any,
@@ -5946,12 +5626,22 @@ local function unlocked(action: string): boolean
 	if Config.Debug.UnlockAllActionsInStudio and RunService:IsStudio() then
 		return true
 	end
-	local req = REQUIRES[action]
 	local data = state.getData and state.getData()
-	if not req or not data then
+	if not data then
 		return true
 	end
-	return (data.skills[req[1]] or 0) >= req[2]
+	return Config.ActionUnlocked(data.skills, action)
+end
+
+-- Bir zincirde verilen hareketlerden açık olan en üsttekini seçer (liste alttan üste sıralıdır)
+local function best(list: { string }): string
+	local pick = list[1]
+	for _, a in ipairs(list) do
+		if unlocked(a) then
+			pick = a
+		end
+	end
+	return pick
 end
 
 local function paintShots()
@@ -5986,7 +5676,7 @@ local function play(action: string, opts: any?)
 		return
 	end
 	if not unlocked(action) then
-		return Components.Toast("error", Poses.Names[action] .. " henüz açılmadı.")
+		return Components.Toast("error", (Poses.Names[action] or action) .. " henüz açılmadı. Yetenek ağacından aç.")
 	end
 	local def = Poses.Actions[action]
 	if def.Mask == "Full" and state.hum and state.hum.FloorMaterial == Enum.Material.Air and action ~= "Vole" and action ~= "Rovesata" then
@@ -6051,14 +5741,29 @@ local function fetchBall()
 		Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 5)
 	end
 end
+-- Tek tuş, açılan en üst hareket: yetenek ağacında ilerledikçe aynı tuş daha gösterişli hareketi yapar
 local function doTackle()
-	play(if state.speed > M.Run + 2 then "Kayma" else "AyaktaMudahale")
+	if state.speed > M.Run + 2 and unlocked("Kayma") then
+		play("Kayma")
+	else
+		play(best({ "AyaktaMudahale", "Omuz" }))
+	end
+end
+local function doDribble()
+	play(best({ "VucutCalimi", "Bisiklet", "Marsilya", "Elastico", "Gokkusagi" }), { Mirror = math.random() < 0.5 })
+end
+local function doBlock()
+	play(best({ "AyaktaMudahale", "Blok", "UcanBlok" }))
 end
 local function doCelebrate()
 	play(if state.speed > 8 then "DizKaymasi" else "Sevinc")
 end
 local function doJump()
-	play(if state.speed > M.Run + 2 then "UcanKafa" else "Header")
+	if state.speed > M.Run + 2 and unlocked("UcanKafa") then
+		play(best({ "UcanKafa", "Makas" }))
+	else
+		play(best({ "Jump", "Header", "GucluKafa" }))
+	end
 end
 
 local KEYMAP: { [Enum.KeyCode]: () -> () } = {
@@ -6066,20 +5771,13 @@ local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Pass] = passDown,
 	[Enum.KeyCode.B] = cross,
 	[Enum.KeyCode.N] = fetchBall,
-	[Config.Keys.Dribble] = function()
-		play("VucutCalimi", { Mirror = math.random() < 0.5 })
-	end,
+	[Config.Keys.Dribble] = doDribble,
 	[Config.Keys.Special] = function()
-		play("Marsilya")
-	end,
-	[Enum.KeyCode.T] = function()
-		play("Elastico")
+		play("VucutCalimi", { Mirror = math.random() < 0.5 }) -- hızlı, sade çalım her zaman elde
 	end,
 	[Config.Keys.Jump] = doJump,
 	[Config.Keys.Tackle] = doTackle,
-	[Enum.KeyCode.V] = function()
-		play("Blok")
-	end,
+	[Enum.KeyCode.V] = doBlock,
 	[Config.Keys.Celebrate] = doCelebrate,
 	[Enum.KeyCode.H] = function()
 		play("TopIste")
@@ -6129,6 +5827,8 @@ local function onEvent(event: string, action: string)
 			UcanKafa = { 1.6, 6.8, 5.4, 4 },
 			Vole = { 1.3, 5.2, 4, 3 },
 			Rovesata = { 2.4, 9.5, 4.4, 6 },
+			GucluKafa = { 3.4, 10, 4.8, 6.4 },
+			Makas = { 1.6, 7.2, 5.2, 3.6 },
 		}
 		local win = WINDOW[action]
 		local pending = state.pending or { power = 0.7, perfect = false, aimX = aimInput() }
@@ -6148,7 +5848,7 @@ local function onEvent(event: string, action: string)
 			opts.power = 0.85
 			opts.aimX = aimInput()
 			opts.perfect = math.abs(h - win[4]) < 1.3 -- top tam ideal yükseklikteyken vurulduysa
-			if action == "Header" or action == "UcanKafa" then
+			if action == "Header" or action == "UcanKafa" or action == "GucluKafa" then
 				opts.stat = stat("Fizik")
 			end
 		end
@@ -6178,11 +5878,11 @@ local function onEvent(event: string, action: string)
 				banner("Fazla tuttun", C.Bad)
 			end
 		end
-		if action == "Rovesata" or action == "UcanKafa" then
+		if action == "Rovesata" or action == "UcanKafa" or action == "Makas" then
 			task.delay(SH.HitStop + 0.02, function()
 				TimeScale.Set(SH.SlowMo, SH.SlowMoTime) -- yavaş çekim
 			end)
-			banner(if action == "Rovesata" then "Röveşata!" else "Uçan kafa!", C.Gold)
+			banner((Poses.Names[action] or action) .. "!", C.Gold)
 		end
 		if target and ui.aim then
 			ui.aimHold = os.clock() + 0.8
@@ -6225,8 +5925,27 @@ local function onEvent(event: string, action: string)
 				end
 			end
 		end
+	elseif event == "flick" then
+		-- Gökkuşağı: top ayaktaysa topukla öne ve yukarı aşırılır
+		local feet = hrp.Position - Vector3.new(0, 3, 0)
+		if (Ball.Position() - feet).Magnitude < SH.Reach + 1.5 then
+			Ball.Kick(look * 34 + Vector3.new(0, 44, 0))
+			ring(Ball.Position(), C.Gold, 7)
+			UIMotion.Sound("ConfirmSound")
+		end
 	elseif event == "block" or event == "save" then
 		ring(footPos("Right") + look * 1.5, C.White, 4)
+		if event == "block" then
+			-- önümüzden hızlı geçen top gövdeye çarpar
+			local bp, bv = Ball.Position(), Ball.Velocity()
+			local reach = if action == "UcanBlok" then 7 else 4.5
+			if (bp - hrp.Position).Magnitude < reach and bv.Magnitude > 30 and bv:Dot(look) < 0 then
+				Ball.Deflect(-bv * 0.35 + Vector3.new(0, 12, 0))
+				banner("Blok!", C.Good)
+				shake(0.6)
+				UIMotion.Sound("ConfirmSound")
+			end
+		end
 		if event == "save" and matchApi then
 			-- oyuncu kaleciyse: plonjon yönündeki el hizasında top varsa çeler
 			local side = if state.lastMirror then -1 else 1
@@ -6301,20 +6020,34 @@ local function step(dt: number)
 		Controller.Rebind()
 		return
 	end
+	-- Roblox'un kendi animasyonları eklemleri ezmesin
+	if os.clock() - (ui.lastTrackSweep or 0) > 0.5 then
+		ui.lastTrackSweep = os.clock()
+		local animator = hum:FindFirstChildOfClass("Animator")
+		if animator then
+			for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+				if not track:GetAttribute("FK") then
+					track:Stop(0)
+				end
+			end
+		end
+	end
 	local dir = hum.MoveDirection
 	local moving = dir.Magnitude > 0.1
 	local wantSprint = state.sprintHeld and moving and not state.tired and state.stamina > 0
 
 	-- dayanıklılık
 	if wantSprint then
-		state.stamina = math.max(0, state.stamina - M.SprintDrain * dt)
+		-- Fizik özelliği dayanıklılığı artırır (her seviye %5 daha az harcar)
+		state.stamina = math.max(0, state.stamina - M.SprintDrain * (1 - (stat("Fizik") - 1) * 0.05) * dt)
 		if state.stamina <= 0 then
 			state.tired = true
 			banner("Yoruldun", C.Bad)
 		end
 	else
 		state.stamina = math.min(M.StaminaMax, state.stamina + M.Regen * dt * (if moving then 0.6 else 1))
-		if state.tired and state.stamina >= M.TiredUntil then
+		-- Yorgunluk, sprint tuşu bırakılmadan geçmez: tuş basılıyken hız gidip gelmesin
+		if state.tired and state.stamina >= M.TiredUntil and not state.sprintHeld then
 			state.tired = false
 		end
 	end
@@ -6322,7 +6055,8 @@ local function step(dt: number)
 	-- hedef hız ve ivme
 	local target = 0
 	if moving then
-		target = if wantSprint then M.Sprint else M.Run
+		-- Hız özelliği koşu ve sprint hızını artırır (her seviye %2)
+		target = (if wantSprint then M.Sprint else M.Run) * (1 + (stat("Hiz") - 1) * 0.02)
 		if state.tired then
 			target *= M.TiredFactor
 		end
@@ -6664,23 +6398,11 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			232,
 			0
 		)
-		place(
-			roundButton("Çalım", 88, false, function()
-				play("VucutCalimi", { Mirror = math.random() < 0.5 })
-			end),
-			16,
-			132
-		)
+		place(roundButton("Çalım", 88, false, doDribble), 16, 132)
 		place(roundButton("Zıpla", 88, false, doJump), 116, 104)
 		place(roundButton("Müdahale", 88, false, doTackle), 216, 104)
 		place(roundButton("Sevinç", 76, false, doCelebrate), 60, 232)
-		place(
-			roundButton("Marsilya", 76, false, function()
-				play("Marsilya")
-			end),
-			150,
-			208
-		)
+		place(roundButton("Blok", 76, false, doBlock), 150, 208)
 	else
 		-- Tuş ipuçları (sağ alt)
 		local hp, hc = Components.Panel({
@@ -6697,7 +6419,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			{ "F", "Şut: basılı tut, yeşilde bırak" },
 			{ "E", "Pas (uzun bas: sert)" },
 			{ "B / N", "Orta aç / Topu getir" },
-			{ "Q / R / T", "Çalım (kırmızı halka yanınca)" },
+			{ "Q / R", "Çalım (en üst hareket) / sade çalım" },
 			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
 			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
 			{ "Z / X", "Plonjon sol / sağ" },
@@ -7236,6 +6958,7 @@ end
 --------------------------------------------------------------------------------
 -- LOBİ KATMANI (bileşen vitrini)
 --------------------------------------------------------------------------------
+local SkillTree = require(script.Parent.Screens.SkillTree)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -7244,7 +6967,7 @@ local enterMatch: () -> ()
 
 local function buildLobby()
 	-- Oyuncu kartı (sol üst)
-	local card, cc = Components.Panel({ Name = "PlayerCard", Size = UDim2.fromOffset(340, 104), Position = UDim2.fromOffset(20, 20) })
+	local card, cc = Components.Panel({ Name = "PlayerCard", Size = UDim2.fromOffset(340, 104), Position = UDim2.fromOffset(20, 60) })
 	card.Parent = gui
 	local badge = Components.Badge({ Text = "F", Size = 54, Image = Config.Assets.Crest })
 	badge.Parent = cc
@@ -7287,7 +7010,7 @@ local function buildLobby()
 	local menu, mc = Components.Panel({
 		Name = "Menu",
 		Size = UDim2.fromOffset(310, 478),
-		Position = UDim2.fromOffset(20, 140),
+		Position = UDim2.fromOffset(20, 178),
 		Title = "Kariyer Merkezi",
 	})
 	menu.Parent = gui
@@ -7318,12 +7041,11 @@ local function buildLobby()
 	add("Deneme sahası", "Secondary", nil, function()
 		enterPitch()
 	end, "Şut, çalım ve savunma çalış")
-	add("Pası geliştir", "Ghost", nil, function()
-		Remotes.Get("UpgradeStat"):FireServer("Pas")
-	end, "Bakiye ile özellik yükselt")
-	add("Plase aç", "Secondary", nil, function()
-		Remotes.Get("UnlockSkill"):FireServer("Sut")
-	end, "Şut zincirinde sıradaki yetenek")
+	add("Yetenek ağacı", "Ghost", nil, function()
+		SkillTree.Open(gui, function()
+			return state.data
+		end)
+	end, "Hareket aç, özellik yükselt")
 	add("Kulüp", "Ghost", nil, function()
 		Components.Toast("info", "Kulüp binası 13. adımda geliyor.")
 	end, "Lig, tesisler, transfer")
@@ -7371,6 +7093,7 @@ end
 local function render(data)
 	local first = state.data == nil or not state.rendered
 	state.data = data
+	SkillTree.Refresh()
 	if not refs.name then
 		return
 	end
@@ -7431,21 +7154,40 @@ end
 
 -- Maç: lobi menüleri kapanır, maç bitince geri gelir
 local MatchController = require(script.Parent.Match.MatchController)
-local Stadium = require(ReplicatedStorage.Shared.Stadium)
-Stadium.Lobby()
+local Lineup = require(script.Parent.Screens.Lineup)
+
+-- Lobi ışığı: aydınlık gündüz (varsayılan ışık sahneyi karanlık bırakıyordu)
+do
+	local Lighting = game:GetService("Lighting")
+	Lighting.ClockTime = 14.2
+	Lighting.GeographicLatitude = 28
+	Lighting.Brightness = 3
+	Lighting.Ambient = Color3.fromRGB(120, 126, 150)
+	Lighting.OutdoorAmbient = Color3.fromRGB(150, 155, 170)
+	Lighting.ExposureCompensation = 0.15
+	Lighting.EnvironmentDiffuseScale = 1
+	Lighting.EnvironmentSpecularScale = 1
+end
+local Squads = require(ReplicatedStorage.Shared.Squads)
 enterMatch = function()
 	if not state.data or not state.data.created then
 		return
 	end
+	SkillTree.Close()
+	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
+	local fixture = Squads.Fixture(state.data)
+	local function back()
+		refs.menu.Visible = true
+		refs.tasks.Visible = true
+		UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
+		UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
+	end
 	UIMotion.Wipe(function()
 		refs.menu.Visible = false
 		refs.tasks.Visible = false
-		MatchController.Start(gui, state.data, function()
-			refs.menu.Visible = true
-			refs.tasks.Visible = true
-			UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
-			UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
-		end)
+		Lineup.Show(gui, fixture, function()
+			MatchController.Start(gui, state.data, back, fixture)
+		end, back)
 	end)
 end
 
@@ -8501,7 +8243,7 @@ end
 
 local NUMBERS = { 1, 2, 4, 5, 3, 7, 6, 8, 11, 9, 10 }
 
-local function spawn(kind: string, team: string, slot: number)
+local function spawn(kind: string, team: string, slot: number, info: any?, club: any?)
 	local folder = ReplicatedStorage:WaitForChild("FK_BotTemplates", 30)
 	local tpl = folder and folder:FindFirstChild(kind)
 	if not tpl then
@@ -8521,13 +8263,32 @@ local function spawn(kind: string, team: string, slot: number)
 		end)
 	end
 	-- forma numarasını dizilişe göre yaz
-	local number = tostring(NUMBERS[slot])
+	local number = tostring(if info then info.number else NUMBERS[slot])
 	for _, d in ipairs(model:GetDescendants()) do
 		if d:IsA("BasePart") then
 			d.CanCollide = false
 			d.CanQuery = false
 		elseif d:IsA("TextLabel") and tonumber(d.Text) then
 			d.Text = number
+		end
+	end
+	-- rakip kulübün renkleri (kaleci kendi formasında kalır)
+	if club and team == "away" and slot ~= 1 then
+		local function paint(names: { string }, c: Color3)
+			for _, n in ipairs(names) do
+				local p = model:FindFirstChild(n)
+				if p and p:IsA("BasePart") then
+					p.Color = c
+				end
+			end
+		end
+		paint({ "UpperTorso", "LeftUpperArm", "RightUpperArm" }, club.A)
+		paint({ "LowerTorso", "LeftUpperLeg", "RightUpperLeg" }, club.B)
+		paint({ "LeftLowerLeg", "RightLowerLeg" }, club.A)
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("Frame") and d.Name == "Stripe" then
+				d.BackgroundColor3 = club.B
+			end
 		end
 	end
 	model.Parent = Workspace
@@ -8545,6 +8306,8 @@ local function spawn(kind: string, team: string, slot: number)
 	local bot = {
 		team = team,
 		slot = slot,
+		info = info,
+		pace = if info then info.pace or 1 else 1,
 		keeper = slot == 1,
 		model = model,
 		hrp = hrp,
@@ -8587,8 +8350,9 @@ local function moveTo(bot, target: Vector3, speed: number, dt: number, faceTo: V
 	end
 end
 
-local function runSpeed(team: string): number
-	return MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]
+-- Her oyuncunun kendi hızı vardır (kadrodaki Hız özelliğinden gelir)
+local function runSpeed(team: string, bot: any?): number
+	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * (if bot then bot.pace or 1 else 1)
 end
 
 function MatchAI.Clear()
@@ -8606,11 +8370,12 @@ function MatchAI.Start(opts)
 	skill.away = math.clamp(opts.awaySkill, 0.05, 1)
 	skill.home = math.clamp(opts.homeSkill, 0.05, 1)
 	humanSlot = Config.FormationSlot[opts.position] or 11
+	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
 	humanKeeper = humanSlot == 1
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
-			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot)
+			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot, fx and fx.home.players[slot])
 		end
 		spawn(
 			if slot == 1
@@ -8619,7 +8384,9 @@ function MatchAI.Start(opts)
 				elseif slot % 2 == 0 then "Rival"
 				else "Rival2",
 			"away",
-			slot
+			slot,
+			fx and fx.away.players[slot],
+			fx and fx.away.club
 		)
 	end
 	MatchAI.ResetPositions()
@@ -8872,7 +8639,7 @@ local function carrierThink(bot, dt: number, ctx)
 			drib = (drib + Vector3.new(away.Unit.X * 0.8, 0, 0)).Unit
 		end
 	end
-	local spd = runSpeed(team) * 0.92
+	local spd = runSpeed(team, bot) * 0.92
 	moveTo(bot, bot.pos + drib * 10, spd, dt)
 	bot.touch -= dt
 	if bot.touch <= 0 and flat(ballPos - bot.pos).Magnitude < 3.6 then
@@ -9024,7 +8791,7 @@ function MatchAI.Update(dt: number, ctx)
 		elseif bot.state == "windup" then
 			-- oyuncuya müdahale hazırlığı (kırmızı halka = çalım penceresi)
 			bot.t -= dt
-			moveTo(bot, ballFlat, runSpeed(team) * 0.7, dt, ballFlat) -- topa doğru hamle
+			moveTo(bot, ballFlat, runSpeed(team, bot) * 0.7, dt, ballFlat) -- topa doğru hamle
 			bot.ring.Transparency = 0.25 + 0.5 * math.abs(math.sin(clock * 22))
 			if bot.t <= 0 then
 				bot.ring.Transparency = 1
@@ -9041,7 +8808,7 @@ function MatchAI.Update(dt: number, ctx)
 		elseif bot == chaser[team] and live then
 			-- topa git; top hızlıysa önünü kes
 			local lead = ballFlat + flat(Ball.Velocity()) * math.clamp(flat(bot.pos - ballFlat).Magnitude / 60, 0, 0.6)
-			moveTo(bot, lead, runSpeed(team), dt, ballFlat)
+			moveTo(bot, lead, runSpeed(team, bot), dt, ballFlat)
 			local dBall = flat(ballPos - bot.pos).Magnitude
 			if team == "away" and humanHas then
 				if dBall < D.TackleRange and bot.cd <= 0 then
@@ -9083,7 +8850,7 @@ function MatchAI.Update(dt: number, ctx)
 				target += Vector3.new(math.sin(clock * 0.9 + bot.slot) * 10, 0, d * 12)
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))
-			local jog = runSpeed(team) * (if flat(target - bot.pos).Magnitude > 18 then 1 else 0.7)
+			local jog = runSpeed(team, bot) * (if flat(target - bot.pos).Magnitude > 18 then 1 else 0.7)
 			moveTo(bot, target, jog, dt, ballFlat)
 			-- pas isteme: top oyuncudayken boştaki forvet el kaldırır
 			if team == "home" and humanHas and bot.slot >= 9 and not bot.animator:IsBusy() and math.random() < dt * 0.25 then
@@ -9133,7 +8900,11 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
-local Stadium = require(ReplicatedStorage.Shared.Stadium)
+-- Stat modülü isteğe bağlıdır: yoksa maç sade sahada oynanır
+local stadiumModule = ReplicatedStorage.Shared:FindFirstChild("Stadium")
+local Stadium = if stadiumModule
+	then require(stadiumModule) :: any
+	else { Build = function() end, Clear = function() end, Cheer = function() end, Score = function() end, Screen = function() end }
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Theme = require(ReplicatedStorage.UI.Theme)
 local UIMotion = require(ReplicatedStorage.UI.UIMotion)
@@ -9801,7 +9572,7 @@ end
 	Maçı başlatır.
 	gui: ScreenGui, data: oyuncu verisi, onDone: lobiye dönüldüğünde çağrılır
 ]]
-function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
+function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: any?)
 	if M then
 		return
 	end
@@ -9820,8 +9591,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
 		myHeaderGoals = 0,
 		lastHumanKick = nil,
 		position = data.position,
-		homeName = if data.club.abbr ~= "" then data.club.abbr else "EV",
-		awayName = "RKP",
+		homeName = if fixture then fixture.home.club.Abbr elseif data.club.abbr ~= "" then data.club.abbr else "EV",
+		awayName = if fixture then fixture.away.club.Abbr else "RKP",
 	}
 	Remotes.Get("MatchStart"):FireServer()
 	Stadium.Build(if data.career and data.career.atFenerbahce then 6 else data.club.tier, {
@@ -9834,6 +9605,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
 	Ball.Init()
 	MatchAI.Start({
 		position = data.position,
+		fixture = fixture,
 		awaySkill = (avg - 28) / 70,
 		homeSkill = (avg - 28) / 70 + 0.04 + ((data.power or 30) - avg) / 200,
 	})
@@ -9991,7 +9763,7 @@ end
 return TimeScale
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX32"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX34"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
 	Creator (karakter ve kulüp oluşturma ekranı)
 	Solda sekmeli seçenek paneli, sağda stüdyo sahnesinde dönen gerçek karakter.
 	Her seçim sunucuya önizleme isteği gönderir; sunucu doğrular ve karaktere uygular.
@@ -10142,7 +9914,7 @@ function Creator.Open(gui: ScreenGui, onCreated: () -> ())
 	----------------------------------------------------------------------------
 	-- Sol panel
 	----------------------------------------------------------------------------
-	local panel, content = Components.Panel({ Name = "Creator", Size = UDim2.new(0, 580, 1, -40), Position = UDim2.fromOffset(20, 20) })
+	local panel, content = Components.Panel({ Name = "Creator", Size = UDim2.new(0, 580, 1, -84), Position = UDim2.fromOffset(20, 64) })
 	panel.Parent = gui
 
 	local header = Components.Label({
@@ -10702,11 +10474,722 @@ end
 
 return Creator
 ]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
+	Lineup
+	Maç öncesi tanıtım: iki kulüp, armalar, teknik direktörler, diziliş ve 11'ler.
+	Her futbolcunun genel gücü ve altı özelliği görünür. "Maça çık" ile santraya geçilir.
+
+	Lineup.Show(gui, fixture, onStart, onCancel)   fixture: Squads.Fixture(data)
+	Lineup.Crest(club, size) -> Frame               kulüp arması (başka ekranlar da kullanır)
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Squads = require(ReplicatedStorage.Shared.Squads)
+local Components = require(ReplicatedStorage.UI.Components)
+local Theme = require(ReplicatedStorage.UI.Theme)
+local UIMotion = require(ReplicatedStorage.UI.UIMotion)
+
+local Lineup = {}
+
+local C = Theme.Color
+
+local function corner(o: Instance, r: number)
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(r, 0)
+	u.Parent = o
+end
+
+local function text(
+	parent: Instance,
+	str: string,
+	size: number,
+	color: Color3,
+	pos: UDim2,
+	frame: UDim2,
+	font: Font?,
+	align: Enum.TextXAlignment?
+)
+	local l = Components.Label({ Text = str, Size = size, Color = color, Font = font or Theme.Font.Body, Frame = frame, Align = align })
+	l.Position = pos
+	l.Parent = parent
+	return l
+end
+
+-- Arma: biçim + çapraz şerit + kısaltma. Crest: 1 kalkan, 2 daire, 3 altıgen, 4 flama, 5 elmas
+function Lineup.Crest(club, size: number): Frame
+	local holder = Instance.new("Frame")
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromOffset(size, size)
+	local shape = Instance.new("Frame")
+	shape.AnchorPoint = Vector2.new(0.5, 0.5)
+	shape.Position = UDim2.fromScale(0.5, 0.5)
+	shape.BackgroundColor3 = club.A
+	shape.BorderSizePixel = 0
+	shape.ClipsDescendants = true
+	local kind = club.Crest or 1
+	if kind == 2 then
+		shape.Size = UDim2.fromScale(0.92, 0.92)
+		corner(shape, 0.5)
+	elseif kind == 3 then
+		shape.Size = UDim2.fromScale(0.86, 0.94)
+		corner(shape, 0.28)
+	elseif kind == 4 then
+		shape.Size = UDim2.fromScale(0.74, 0.96)
+		corner(shape, 0.12)
+	elseif kind == 5 then
+		shape.Size = UDim2.fromScale(0.7, 0.7)
+		shape.Rotation = 45
+		corner(shape, 0.14)
+	else
+		shape.Size = UDim2.fromScale(0.8, 0.94)
+		corner(shape, 0.3)
+	end
+	local st = Instance.new("UIStroke")
+	st.Color = club.B
+	st.Thickness = math.max(2, size * 0.05)
+	st.Parent = shape
+	local band = Instance.new("Frame")
+	band.AnchorPoint = Vector2.new(0.5, 0.5)
+	band.Position = UDim2.fromScale(0.5, 0.5)
+	band.Size = UDim2.fromScale(0.34, 2)
+	band.Rotation = if kind == 5 then -20 else 25
+	band.BackgroundColor3 = club.B
+	band.BackgroundTransparency = 0.15
+	band.BorderSizePixel = 0
+	band.Parent = shape
+	shape.Parent = holder
+	local abbr = Components.Label({
+		Text = club.Abbr,
+		Size = math.floor(size * 0.3),
+		Font = Theme.Font.Display,
+		Color = Color3.new(1, 1, 1),
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.fromScale(1, 1),
+	})
+	local ts = Instance.new("UIStroke")
+	ts.Color = Color3.fromRGB(10, 12, 30)
+	ts.Thickness = math.max(1.5, size * 0.03)
+	ts.Parent = abbr
+	abbr.Parent = holder
+	return holder
+end
+
+local function average(players): number
+	local sum = 0
+	for _, p in ipairs(players) do
+		sum += p.rating
+	end
+	return math.floor(sum / #players + 0.5)
+end
+
+local function ratingColor(v: number): Color3
+	return if v >= 80 then C.Gold elseif v >= 65 then C.Good elseif v >= 45 then C.Yellow else C.Muted
+end
+
+local function side(parent: Instance, team, x: number, home: boolean)
+	local W = 700
+	local col = Instance.new("Frame")
+	col.BackgroundTransparency = 1
+	col.Size = UDim2.fromOffset(W, 720)
+	col.Position = UDim2.fromOffset(x, 96)
+	col.Parent = parent
+
+	-- başlık: arma, kulüp, teknik direktör, takım gücü
+	local crest = Lineup.Crest(team.club, 104)
+	crest.Position = UDim2.fromOffset(0, 0)
+	crest.Parent = col
+	text(col, Theme.Upper(team.club.Name), 30, C.White, UDim2.fromOffset(120, 6), UDim2.fromOffset(W - 240, 36), Theme.Font.Display)
+	text(col, "TEKNİK DİREKTÖR", 12, C.Muted, UDim2.fromOffset(120, 48), UDim2.fromOffset(300, 16), Theme.Font.Title)
+	text(col, team.club.Coach, 18, C.Text, UDim2.fromOffset(120, 64), UDim2.fromOffset(300, 24), Theme.Font.Title)
+	text(col, "DİZİLİŞ 4-4-2", 12, C.Muted, UDim2.fromOffset(120, 90), UDim2.fromOffset(300, 16), Theme.Font.Title)
+	local avg = average(team.players)
+	local badge = Instance.new("Frame")
+	badge.Size = UDim2.fromOffset(96, 96)
+	badge.Position = UDim2.fromOffset(W - 100, 4)
+	badge.BackgroundColor3 = C.Navy
+	badge.BorderSizePixel = 0
+	corner(badge, 0.16)
+	local bs = Instance.new("UIStroke")
+	bs.Color = ratingColor(avg)
+	bs.Thickness = 2
+	bs.Parent = badge
+	badge.Parent = col
+	text(
+		badge,
+		tostring(avg),
+		44,
+		ratingColor(avg),
+		UDim2.fromOffset(0, 10),
+		UDim2.new(1, 0, 0, 50),
+		Theme.Font.Number,
+		Enum.TextXAlignment.Center
+	)
+	text(badge, "TAKIM GÜCÜ", 10, C.Muted, UDim2.fromOffset(0, 66), UDim2.new(1, 0, 0, 16), Theme.Font.Title, Enum.TextXAlignment.Center)
+
+	-- sütun başlıkları
+	local head = Instance.new("Frame")
+	head.BackgroundTransparency = 1
+	head.Size = UDim2.fromOffset(W, 22)
+	head.Position = UDim2.fromOffset(0, 124)
+	head.Parent = col
+	text(head, "#", 11, C.Muted, UDim2.fromOffset(10, 0), UDim2.fromOffset(30, 22), Theme.Font.Title)
+	text(head, "OYUNCU", 11, C.Muted, UDim2.fromOffset(50, 0), UDim2.fromOffset(200, 22), Theme.Font.Title)
+	text(head, "MEVKİ", 11, C.Muted, UDim2.fromOffset(262, 0), UDim2.fromOffset(60, 22), Theme.Font.Title)
+	text(head, "GEN", 11, C.Muted, UDim2.fromOffset(326, 0), UDim2.fromOffset(44, 22), Theme.Font.Title, Enum.TextXAlignment.Center)
+	for i, name in ipairs(Squads.StatOrder) do
+		text(
+			head,
+			Theme.Upper(name),
+			11,
+			C.Muted,
+			UDim2.fromOffset(384 + (i - 1) * 52, 0),
+			UDim2.fromOffset(48, 22),
+			Theme.Font.Title,
+			Enum.TextXAlignment.Center
+		)
+	end
+
+	local rows = {}
+	for i, p in ipairs(team.players) do
+		local row = Instance.new("Frame")
+		row.Size = UDim2.fromOffset(W, 40)
+		row.Position = UDim2.fromOffset(0, 148 + (i - 1) * 44)
+		row.BackgroundColor3 = if p.human then C.Yellow else (if i % 2 == 0 then C.Blue else C.Navy)
+		row.BackgroundTransparency = if p.human then 0 else 0.35
+		row.BorderSizePixel = 0
+		corner(row, 0.18)
+		row.Parent = col
+		local ink = if p.human then C.Navy else C.Text
+		-- forma numarası rozeti (kulüp renginde)
+		local num = Instance.new("Frame")
+		num.Size = UDim2.fromOffset(32, 28)
+		num.Position = UDim2.fromOffset(6, 6)
+		num.BackgroundColor3 = team.club.A
+		num.BorderSizePixel = 0
+		corner(num, 0.25)
+		local ns = Instance.new("UIStroke")
+		ns.Color = team.club.B
+		ns.Thickness = 1.5
+		ns.Parent = num
+		num.Parent = row
+		local nl = text(
+			num,
+			tostring(p.number),
+			15,
+			Color3.new(1, 1, 1),
+			UDim2.new(),
+			UDim2.fromScale(1, 1),
+			Theme.Font.Number,
+			Enum.TextXAlignment.Center
+		)
+		local nst = Instance.new("UIStroke")
+		nst.Color = Color3.fromRGB(10, 12, 30)
+		nst.Thickness = 1.5
+		nst.Parent = nl
+		text(
+			row,
+			if p.human then Theme.Upper(p.name) .. "  (SEN)" else p.name,
+			16,
+			ink,
+			UDim2.fromOffset(50, 0),
+			UDim2.fromOffset(208, 40),
+			Theme.Font.Title
+		)
+		text(row, p.role, 13, if p.human then C.Navy else C.Muted, UDim2.fromOffset(262, 0), UDim2.fromOffset(60, 40), Theme.Font.Title)
+		text(
+			row,
+			tostring(p.rating),
+			20,
+			if p.human then C.Navy else ratingColor(p.rating),
+			UDim2.fromOffset(326, 0),
+			UDim2.fromOffset(44, 40),
+			Theme.Font.Number,
+			Enum.TextXAlignment.Center
+		)
+		for k = 1, 6 do
+			text(
+				row,
+				tostring(p.stats[k]),
+				14,
+				if p.human then C.Navy else C.Text,
+				UDim2.fromOffset(384 + (k - 1) * 52, 0),
+				UDim2.fromOffset(48, 40),
+				Theme.Font.Number,
+				Enum.TextXAlignment.Center
+			)
+		end
+		table.insert(rows, row)
+	end
+	UIMotion.In(crest, Vector2.new(if home then -60 else 60, 0), 0.1)
+	UIMotion.Stagger(rows, Vector2.new(if home then -30 else 30, 0), 0.35)
+end
+
+function Lineup.Show(gui: ScreenGui, fixture, onStart: () -> (), onCancel: (() -> ())?)
+	local root = Instance.new("Frame")
+	root.Name = "Lineup"
+	root.Size = UDim2.fromScale(1, 1)
+	root.BackgroundColor3 = Color3.fromRGB(6, 11, 36)
+	root.BorderSizePixel = 0
+	root.ZIndex = 150
+	root.Parent = gui
+	local grad = Instance.new("UIGradient")
+	grad.Rotation = 90
+	grad.Color = ColorSequence.new(Color3.fromRGB(34, 52, 150), Color3.fromRGB(8, 12, 40))
+	grad.Parent = root
+	-- tasarım 1600x900; ortalanır
+	local stage = Instance.new("Frame")
+	stage.BackgroundTransparency = 1
+	stage.AnchorPoint = Vector2.new(0.5, 0.5)
+	stage.Position = UDim2.fromScale(0.5, 0.5)
+	stage.Size = UDim2.fromOffset(1560, 860)
+	stage.Parent = root
+
+	local top = text(
+		stage,
+		Theme.Upper(string.format("%s  ·  %d. MAÇ  ·  %s", fixture.league, fixture.matchNo, fixture.stadium)),
+		16,
+		C.Yellow,
+		UDim2.fromOffset(0, 8),
+		UDim2.new(1, 0, 0, 24),
+		Theme.Font.Title,
+		Enum.TextXAlignment.Center
+	)
+	local title = text(
+		stage,
+		"MAÇ ÖNCESİ",
+		34,
+		C.White,
+		UDim2.fromOffset(0, 34),
+		UDim2.new(1, 0, 0, 44),
+		Theme.Font.Display,
+		Enum.TextXAlignment.Center
+	)
+	UIMotion.In(top, Vector2.new(0, -20))
+	UIMotion.In(title, Vector2.new(0, -20), 0.05)
+
+	side(stage, fixture.home, 20, true)
+	side(stage, fixture.away, 840, false)
+
+	local vs = text(
+		stage,
+		"VS",
+		54,
+		C.Yellow,
+		UDim2.new(0.5, -60, 0, 116),
+		UDim2.fromOffset(120, 70),
+		Theme.Font.Display,
+		Enum.TextXAlignment.Center
+	)
+	UIMotion.Pop(vs, 1.8)
+
+	local function close(fn: (() -> ())?)
+		UIMotion.Wipe(function()
+			root:Destroy()
+			if fn then
+				fn()
+			end
+		end)
+	end
+	local go = Components.Button({
+		Text = "Maça çık",
+		Style = "Primary",
+		Sub = "Santra ile başlar",
+		Size = UDim2.fromOffset(320, 64),
+		OnClick = function()
+			close(onStart)
+		end,
+	})
+	go.AnchorPoint = Vector2.new(0.5, 1)
+	go.Position = UDim2.new(0.5, 90, 1, -6)
+	go.Parent = stage
+	local back = Components.Button({
+		Text = "Geri",
+		Style = "Ghost",
+		Size = UDim2.fromOffset(160, 64),
+		OnClick = function()
+			close(onCancel)
+		end,
+	})
+	back.AnchorPoint = Vector2.new(0.5, 1)
+	back.Position = UDim2.new(0.5, -164, 1, -6)
+	back.Parent = stage
+	UIMotion.In(go, Vector2.new(0, 30), 0.9)
+	UIMotion.In(back, Vector2.new(0, 30), 0.95)
+	return root
+end
+
+return Lineup
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
+	SkillTree
+	Yetenek ağacı sayfası. Solda zincirler (Şut, Çalım, Hava, Defans, kaleciyse Kaleci): her zincirde
+	hareketler sırayla açılır ve aynı tuş, açılan en üst hareketi oynatır. Sağda özellikler
+	(hız, top kontrolü, pas, şut, defans, fizik) bakiye ile yükseltilir.
+
+	SkillTree.Open(gui, getData)   sayfayı açar
+	SkillTree.Refresh()            veri değişince yeniden çizer (açıksa)
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Shared.Config)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Components = require(ReplicatedStorage.UI.Components)
+local Theme = require(ReplicatedStorage.UI.Theme)
+local UIMotion = require(ReplicatedStorage.UI.UIMotion)
+
+local SkillTree = {}
+
+local C = Theme.Color
+local open: { root: Frame, body: Frame, getData: () -> any, coins: TextLabel, level: TextLabel }? = nil
+
+local function corner(o: Instance, r: number)
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(0, r)
+	u.Parent = o
+end
+
+local function stroke(o: Instance, color: Color3, thickness: number, tr: number?): UIStroke
+	local s = Instance.new("UIStroke")
+	s.Color = color
+	s.Thickness = thickness
+	s.Transparency = tr or 0
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	s.Parent = o
+	return s
+end
+
+local function text(
+	parent: Instance,
+	str: string,
+	size: number,
+	color: Color3,
+	pos: UDim2,
+	frame: UDim2,
+	font: Font?,
+	align: Enum.TextXAlignment?
+)
+	local l = Components.Label({ Text = str, Size = size, Color = color, Font = font or Theme.Font.Body, Frame = frame, Align = align })
+	l.Position = pos
+	l.Parent = parent
+	return l
+end
+
+local DARK = Color3.fromRGB(16, 24, 70)
+local STAT_INFO = {
+	Hiz = "Koşu ve sprint hızı",
+	TopKontrolu = "Top sürme, ilk dokunuş",
+	Pas = "Pas isabeti ve sertliği",
+	Sut = "Şut isabeti",
+	Defans = "Müdahale başarısı",
+	Fizik = "Dayanıklılık, kafa gücü",
+}
+
+local function draw()
+	if not open then
+		return
+	end
+	local data = open.getData()
+	if not data then
+		return
+	end
+	local body = open.body
+	for _, child in ipairs(body:GetChildren()) do
+		child:Destroy()
+	end
+	open.coins.Text = Theme.FormatNumber(data.coins or 0)
+	open.level.Text = "SEVİYE " .. tostring(data.level or 1)
+
+	-- zincirler
+	local chains = {}
+	for _, id in ipairs(Config.SkillChainOrder) do
+		local chain = Config.SkillChains[id]
+		if chain and (not chain.OnlyPosition or chain.OnlyPosition == data.position) then
+			table.insert(chains, id)
+		end
+	end
+	local areaW = 900
+	local colW = math.floor(areaW / #chains) - 12
+	local nodeH, gap = 84, 12
+	for ci, id in ipairs(chains) do
+		local chain = Config.SkillChains[id]
+		local level = Config.SkillLevel(data.skills, id)
+		local x = (ci - 1) * (colW + 12)
+		text(body, Theme.Upper(chain.Name), 20, C.Yellow, UDim2.fromOffset(x, 0), UDim2.fromOffset(colW, 26), Theme.Font.Display)
+		text(body, chain.Hint or "", 11, C.Muted, UDim2.fromOffset(x, 26), UDim2.fromOffset(colW, 16))
+		text(
+			body,
+			string.format("%d / %d", level, #chain.Skills),
+			14,
+			C.Text,
+			UDim2.fromOffset(x, 0),
+			UDim2.fromOffset(colW, 26),
+			Theme.Font.Number,
+			Enum.TextXAlignment.Right
+		)
+		-- bağlantı çizgisi
+		local line = Instance.new("Frame")
+		line.BorderSizePixel = 0
+		line.BackgroundColor3 = C.Blue
+		line.Size = UDim2.fromOffset(4, (#chain.Skills - 1) * (nodeH + gap))
+		line.Position = UDim2.fromOffset(x + 24, 52 + nodeH / 2)
+		line.Parent = body
+		local fill = Instance.new("Frame")
+		fill.BorderSizePixel = 0
+		fill.BackgroundColor3 = C.Yellow
+		fill.Size = UDim2.fromOffset(4, math.max(0, level - 1) * (nodeH + gap))
+		fill.Parent = line
+		for i, sk in ipairs(chain.Skills) do
+			local unlocked = i <= level
+			local isNext = i == level + 1
+			local node = Instance.new("TextButton")
+			node.AutoButtonColor = false
+			node.Text = ""
+			node.Size = UDim2.fromOffset(colW, nodeH)
+			node.Position = UDim2.fromOffset(x, 52 + (i - 1) * (nodeH + gap))
+			node.BackgroundColor3 = if unlocked then C.Blue elseif isNext then DARK else C.Ground
+			node.BackgroundTransparency = if unlocked or isNext then 0 else 0.35
+			node.BorderSizePixel = 0
+			corner(node, 10)
+			local st = stroke(
+				node,
+				if unlocked then C.Yellow elseif isNext then C.Gold else C.Blue,
+				if isNext then 2 else 1.5,
+				if unlocked or isNext then 0 else 0.5
+			)
+			node.Parent = body
+			-- sıra rozeti
+			local badge = Instance.new("Frame")
+			badge.Size = UDim2.fromOffset(34, 34)
+			badge.Position = UDim2.fromOffset(8, 8)
+			badge.BackgroundColor3 = if unlocked then C.Yellow else DARK
+			badge.BorderSizePixel = 0
+			corner(badge, 17)
+			stroke(badge, if unlocked then C.Navy else C.Blue, 1.5)
+			badge.Parent = node
+			text(
+				badge,
+				tostring(i),
+				16,
+				if unlocked then C.Navy else C.Muted,
+				UDim2.new(),
+				UDim2.fromScale(1, 1),
+				Theme.Font.Number,
+				Enum.TextXAlignment.Center
+			)
+			local ink = if unlocked then C.White elseif isNext then C.Text else C.Muted
+			text(node, Theme.Upper(sk.Name), 15, ink, UDim2.fromOffset(50, 8), UDim2.fromOffset(colW - 58, 20), Theme.Font.Title)
+			local info = text(
+				node,
+				sk.Info or "",
+				11,
+				if unlocked then C.Text else C.Muted,
+				UDim2.fromOffset(50, 28),
+				UDim2.fromOffset(colW - 58, 28)
+			)
+			info.TextWrapped = true
+			info.TextYAlignment = Enum.TextYAlignment.Top
+			local state = if unlocked
+				then "AÇIK"
+				elseif sk.Level > (data.level or 1) then "SEVİYE " .. sk.Level .. " GEREKLİ"
+				else "AÇ  ·  " .. Theme.FormatNumber(sk.Cost)
+			local canBuy = isNext and (data.level or 1) >= sk.Level and (data.coins or 0) >= sk.Cost
+			local tag = text(
+				node,
+				state,
+				12,
+				if unlocked then C.Good elseif canBuy then C.Yellow elseif isNext then C.Gold else C.Muted,
+				UDim2.fromOffset(50, nodeH - 24),
+				UDim2.fromOffset(colW - 58, 18),
+				Theme.Font.Title
+			)
+			if isNext then
+				if canBuy then
+					UIMotion.Glow(st, 0, 0.6, 0.9)
+				end
+				node.Activated:Connect(function()
+					if (data.level or 1) < sk.Level then
+						Components.Toast("error", sk.Name .. " için seviye " .. sk.Level .. " gerekli.")
+						UIMotion.Shake(node)
+					elseif (data.coins or 0) < sk.Cost then
+						Components.Toast("error", "Bakiye yetersiz. Gereken: " .. Theme.FormatNumber(sk.Cost))
+						UIMotion.Shake(node)
+					else
+						UIMotion.Flash(node)
+						UIMotion.Sound("ConfirmSound")
+						Remotes.Get("UnlockSkill"):FireServer(id)
+					end
+				end)
+			elseif not unlocked then
+				tag.Text = "KİLİTLİ  ·  SV " .. sk.Level
+				node.Activated:Connect(function()
+					Components.Toast("info", "Önce bir önceki hareketi aç.")
+				end)
+			end
+		end
+	end
+
+	-- özellikler
+	local sx = areaW + 24
+	local sw = 1216 - sx
+	text(body, "ÖZELLİKLER", 20, C.Yellow, UDim2.fromOffset(sx, 0), UDim2.fromOffset(sw, 26), Theme.Font.Display)
+	text(body, "Bakiye ile yükselt (en çok " .. Config.StatMax .. ")", 11, C.Muted, UDim2.fromOffset(sx, 26), UDim2.fromOffset(sw, 16))
+	for i, key in ipairs(Config.Stats) do
+		local v = (data.stats and data.stats[key]) or 1
+		local y = 52 + (i - 1) * 92
+		local card = Instance.new("Frame")
+		card.Size = UDim2.fromOffset(sw, 80)
+		card.Position = UDim2.fromOffset(sx, y)
+		card.BackgroundColor3 = DARK
+		card.BorderSizePixel = 0
+		corner(card, 10)
+		stroke(card, C.Blue, 1.5)
+		card.Parent = body
+		text(
+			card,
+			Theme.Upper(Config.StatNames[key]),
+			15,
+			C.White,
+			UDim2.fromOffset(12, 8),
+			UDim2.fromOffset(sw - 120, 20),
+			Theme.Font.Title
+		)
+		text(card, STAT_INFO[key] or "", 11, C.Muted, UDim2.fromOffset(12, 28), UDim2.fromOffset(sw - 120, 16))
+		text(
+			card,
+			tostring(v),
+			26,
+			C.Yellow,
+			UDim2.fromOffset(sw - 196, 6),
+			UDim2.fromOffset(80, 30),
+			Theme.Font.Number,
+			Enum.TextXAlignment.Right
+		)
+		-- 10 bölmeli çubuk
+		for k = 1, Config.StatMax do
+			local seg = Instance.new("Frame")
+			seg.Size = UDim2.fromOffset((sw - 124 - (Config.StatMax - 1) * 3) / Config.StatMax, 10)
+			seg.Position = UDim2.fromOffset(12 + (k - 1) * ((sw - 124) / Config.StatMax), 56)
+			seg.BackgroundColor3 = if k <= v then C.Yellow else C.Ground
+			seg.BorderSizePixel = 0
+			corner(seg, 3)
+			seg.Parent = card
+		end
+		local maxed = v >= Config.StatMax
+		local cost = if maxed then 0 else Config.StatCost(v)
+		local b = Components.Button({
+			Text = if maxed then "TAM" else "+ " .. Theme.FormatNumber(cost),
+			Style = if maxed then "Ghost" elseif (data.coins or 0) >= cost then "Primary" else "Secondary",
+			TextSize = 15,
+			Size = UDim2.fromOffset(96, 44),
+			OnClick = function()
+				if maxed then
+					return
+				end
+				if (data.coins or 0) < cost then
+					Components.Toast("error", "Bakiye yetersiz. Gereken: " .. Theme.FormatNumber(cost))
+					return
+				end
+				Remotes.Get("UpgradeStat"):FireServer(key)
+			end,
+		})
+		b.Position = UDim2.fromOffset(sw - 106, 18)
+		b.Parent = card
+	end
+end
+
+function SkillTree.Refresh()
+	if open then
+		draw()
+	end
+end
+
+function SkillTree.Close()
+	if not open then
+		return
+	end
+	local root = open.root
+	open = nil
+	UIMotion.Out(root, Vector2.new(0, 20), true)
+end
+
+function SkillTree.Open(gui: ScreenGui, getData: () -> any)
+	if open then
+		return
+	end
+	local dim = Instance.new("TextButton")
+	dim.Name = "SkillTree"
+	dim.AutoButtonColor = false
+	dim.Text = ""
+	dim.BackgroundColor3 = C.Ground
+	dim.BackgroundTransparency = 0.25
+	dim.BorderSizePixel = 0
+	dim.Size = UDim2.fromScale(1, 1)
+	dim.ZIndex = 120
+	dim.Parent = gui
+	local panel, content = Components.Panel({
+		Name = "SkillPanel",
+		Size = UDim2.fromOffset(1280, 760),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Title = "Yetenek Ağacı",
+	})
+	panel.ZIndex = 121
+	panel.Parent = dim
+	local coinsCap = text(
+		content,
+		"BAKİYE",
+		11,
+		C.Muted,
+		UDim2.new(1, -520, 0, 0),
+		UDim2.fromOffset(120, 14),
+		Theme.Font.Title,
+		Enum.TextXAlignment.Right
+	)
+	coinsCap.Name = "CoinsCap"
+	local coins =
+		text(content, "0", 22, C.Yellow, UDim2.new(1, -520, 0, 12), UDim2.fromOffset(120, 24), Theme.Font.Number, Enum.TextXAlignment.Right)
+	local level = text(
+		content,
+		"SEVİYE 1",
+		16,
+		C.Text,
+		UDim2.new(1, -380, 0, 8),
+		UDim2.fromOffset(140, 24),
+		Theme.Font.Title,
+		Enum.TextXAlignment.Right
+	)
+	local closeB =
+		Components.Button({ Text = "Kapat", Style = "Ghost", TextSize = 15, Size = UDim2.fromOffset(120, 38), OnClick = SkillTree.Close })
+	closeB.AnchorPoint = Vector2.new(1, 0)
+	closeB.Position = UDim2.new(1, -80, 0, -2)
+	closeB.Parent = content
+	local body = Instance.new("Frame")
+	body.Name = "Body"
+	body.BackgroundTransparency = 1
+	body.Position = UDim2.fromOffset(0, 50)
+	body.Size = UDim2.new(1, 0, 1, -50)
+	body.Parent = content
+	open = { root = dim, body = body, getData = getData, coins = coins, level = level }
+	draw()
+	UIMotion.In(panel, Vector2.new(0, 30))
+end
+
+return SkillTree
+]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
 </Item>
+<Item class="StarterCharacterScripts" referent="RBX38"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX37"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
+	Animate (boş)
+	Bu ad, Roblox'un varsayılan "Animate" betiğinin yerine geçer: hazır yürüme/koşma animasyonları
+	hiç yüklenmez. Bütün hareketler Client/Anim/Animator tarafından eklemlere doğrudan yazılır.
+]]
+]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="StarterGui" referent="RBX36"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
-<Item class="Workspace" referent="RBX37"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
-<Item class="Lighting" referent="RBX38"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
+</Item>
+<Item class="StarterGui" referent="RBX40"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
+<Item class="Workspace" referent="RBX41"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="Lighting" referent="RBX42"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
 </roblox>

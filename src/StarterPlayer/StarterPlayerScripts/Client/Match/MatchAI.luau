@@ -68,7 +68,7 @@ end
 
 local NUMBERS = { 1, 2, 4, 5, 3, 7, 6, 8, 11, 9, 10 }
 
-local function spawn(kind: string, team: string, slot: number)
+local function spawn(kind: string, team: string, slot: number, info: any?, club: any?)
 	local folder = ReplicatedStorage:WaitForChild("FK_BotTemplates", 30)
 	local tpl = folder and folder:FindFirstChild(kind)
 	if not tpl then
@@ -88,13 +88,32 @@ local function spawn(kind: string, team: string, slot: number)
 		end)
 	end
 	-- forma numarasını dizilişe göre yaz
-	local number = tostring(NUMBERS[slot])
+	local number = tostring(if info then info.number else NUMBERS[slot])
 	for _, d in ipairs(model:GetDescendants()) do
 		if d:IsA("BasePart") then
 			d.CanCollide = false
 			d.CanQuery = false
 		elseif d:IsA("TextLabel") and tonumber(d.Text) then
 			d.Text = number
+		end
+	end
+	-- rakip kulübün renkleri (kaleci kendi formasında kalır)
+	if club and team == "away" and slot ~= 1 then
+		local function paint(names: { string }, c: Color3)
+			for _, n in ipairs(names) do
+				local p = model:FindFirstChild(n)
+				if p and p:IsA("BasePart") then
+					p.Color = c
+				end
+			end
+		end
+		paint({ "UpperTorso", "LeftUpperArm", "RightUpperArm" }, club.A)
+		paint({ "LowerTorso", "LeftUpperLeg", "RightUpperLeg" }, club.B)
+		paint({ "LeftLowerLeg", "RightLowerLeg" }, club.A)
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("Frame") and d.Name == "Stripe" then
+				d.BackgroundColor3 = club.B
+			end
 		end
 	end
 	model.Parent = Workspace
@@ -112,6 +131,8 @@ local function spawn(kind: string, team: string, slot: number)
 	local bot = {
 		team = team,
 		slot = slot,
+		info = info,
+		pace = if info then info.pace or 1 else 1,
 		keeper = slot == 1,
 		model = model,
 		hrp = hrp,
@@ -154,8 +175,9 @@ local function moveTo(bot, target: Vector3, speed: number, dt: number, faceTo: V
 	end
 end
 
-local function runSpeed(team: string): number
-	return MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]
+-- Her oyuncunun kendi hızı vardır (kadrodaki Hız özelliğinden gelir)
+local function runSpeed(team: string, bot: any?): number
+	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * (if bot then bot.pace or 1 else 1)
 end
 
 function MatchAI.Clear()
@@ -173,11 +195,12 @@ function MatchAI.Start(opts)
 	skill.away = math.clamp(opts.awaySkill, 0.05, 1)
 	skill.home = math.clamp(opts.homeSkill, 0.05, 1)
 	humanSlot = Config.FormationSlot[opts.position] or 11
+	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
 	humanKeeper = humanSlot == 1
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
-			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot)
+			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot, fx and fx.home.players[slot])
 		end
 		spawn(
 			if slot == 1
@@ -186,7 +209,9 @@ function MatchAI.Start(opts)
 				elseif slot % 2 == 0 then "Rival"
 				else "Rival2",
 			"away",
-			slot
+			slot,
+			fx and fx.away.players[slot],
+			fx and fx.away.club
 		)
 	end
 	MatchAI.ResetPositions()
@@ -439,7 +464,7 @@ local function carrierThink(bot, dt: number, ctx)
 			drib = (drib + Vector3.new(away.Unit.X * 0.8, 0, 0)).Unit
 		end
 	end
-	local spd = runSpeed(team) * 0.92
+	local spd = runSpeed(team, bot) * 0.92
 	moveTo(bot, bot.pos + drib * 10, spd, dt)
 	bot.touch -= dt
 	if bot.touch <= 0 and flat(ballPos - bot.pos).Magnitude < 3.6 then
@@ -591,7 +616,7 @@ function MatchAI.Update(dt: number, ctx)
 		elseif bot.state == "windup" then
 			-- oyuncuya müdahale hazırlığı (kırmızı halka = çalım penceresi)
 			bot.t -= dt
-			moveTo(bot, ballFlat, runSpeed(team) * 0.7, dt, ballFlat) -- topa doğru hamle
+			moveTo(bot, ballFlat, runSpeed(team, bot) * 0.7, dt, ballFlat) -- topa doğru hamle
 			bot.ring.Transparency = 0.25 + 0.5 * math.abs(math.sin(clock * 22))
 			if bot.t <= 0 then
 				bot.ring.Transparency = 1
@@ -608,7 +633,7 @@ function MatchAI.Update(dt: number, ctx)
 		elseif bot == chaser[team] and live then
 			-- topa git; top hızlıysa önünü kes
 			local lead = ballFlat + flat(Ball.Velocity()) * math.clamp(flat(bot.pos - ballFlat).Magnitude / 60, 0, 0.6)
-			moveTo(bot, lead, runSpeed(team), dt, ballFlat)
+			moveTo(bot, lead, runSpeed(team, bot), dt, ballFlat)
 			local dBall = flat(ballPos - bot.pos).Magnitude
 			if team == "away" and humanHas then
 				if dBall < D.TackleRange and bot.cd <= 0 then
@@ -650,7 +675,7 @@ function MatchAI.Update(dt: number, ctx)
 				target += Vector3.new(math.sin(clock * 0.9 + bot.slot) * 10, 0, d * 12)
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))
-			local jog = runSpeed(team) * (if flat(target - bot.pos).Magnitude > 18 then 1 else 0.7)
+			local jog = runSpeed(team, bot) * (if flat(target - bot.pos).Magnitude > 18 then 1 else 0.7)
 			moveTo(bot, target, jog, dt, ballFlat)
 			-- pas isteme: top oyuncudayken boştaki forvet el kaldırır
 			if team == "home" and humanHas and bot.slot >= 9 and not bot.animator:IsBusy() and math.random() < dt * 0.25 then

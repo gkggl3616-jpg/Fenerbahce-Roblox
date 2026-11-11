@@ -157,6 +157,7 @@ end
 --------------------------------------------------------------------------------
 -- LOBİ KATMANI (bileşen vitrini)
 --------------------------------------------------------------------------------
+local SkillTree = require(script.Parent.Screens.SkillTree)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -165,7 +166,7 @@ local enterMatch: () -> ()
 
 local function buildLobby()
 	-- Oyuncu kartı (sol üst)
-	local card, cc = Components.Panel({ Name = "PlayerCard", Size = UDim2.fromOffset(340, 104), Position = UDim2.fromOffset(20, 20) })
+	local card, cc = Components.Panel({ Name = "PlayerCard", Size = UDim2.fromOffset(340, 104), Position = UDim2.fromOffset(20, 60) })
 	card.Parent = gui
 	local badge = Components.Badge({ Text = "F", Size = 54, Image = Config.Assets.Crest })
 	badge.Parent = cc
@@ -208,7 +209,7 @@ local function buildLobby()
 	local menu, mc = Components.Panel({
 		Name = "Menu",
 		Size = UDim2.fromOffset(310, 478),
-		Position = UDim2.fromOffset(20, 140),
+		Position = UDim2.fromOffset(20, 178),
 		Title = "Kariyer Merkezi",
 	})
 	menu.Parent = gui
@@ -239,12 +240,11 @@ local function buildLobby()
 	add("Deneme sahası", "Secondary", nil, function()
 		enterPitch()
 	end, "Şut, çalım ve savunma çalış")
-	add("Pası geliştir", "Ghost", nil, function()
-		Remotes.Get("UpgradeStat"):FireServer("Pas")
-	end, "Bakiye ile özellik yükselt")
-	add("Plase aç", "Secondary", nil, function()
-		Remotes.Get("UnlockSkill"):FireServer("Sut")
-	end, "Şut zincirinde sıradaki yetenek")
+	add("Yetenek ağacı", "Ghost", nil, function()
+		SkillTree.Open(gui, function()
+			return state.data
+		end)
+	end, "Hareket aç, özellik yükselt")
 	add("Kulüp", "Ghost", nil, function()
 		Components.Toast("info", "Kulüp binası 13. adımda geliyor.")
 	end, "Lig, tesisler, transfer")
@@ -292,6 +292,7 @@ end
 local function render(data)
 	local first = state.data == nil or not state.rendered
 	state.data = data
+	SkillTree.Refresh()
 	if not refs.name then
 		return
 	end
@@ -352,21 +353,40 @@ end
 
 -- Maç: lobi menüleri kapanır, maç bitince geri gelir
 local MatchController = require(script.Parent.Match.MatchController)
-local Stadium = require(ReplicatedStorage.Shared.Stadium)
-Stadium.Lobby()
+local Lineup = require(script.Parent.Screens.Lineup)
+
+-- Lobi ışığı: aydınlık gündüz (varsayılan ışık sahneyi karanlık bırakıyordu)
+do
+	local Lighting = game:GetService("Lighting")
+	Lighting.ClockTime = 14.2
+	Lighting.GeographicLatitude = 28
+	Lighting.Brightness = 3
+	Lighting.Ambient = Color3.fromRGB(120, 126, 150)
+	Lighting.OutdoorAmbient = Color3.fromRGB(150, 155, 170)
+	Lighting.ExposureCompensation = 0.15
+	Lighting.EnvironmentDiffuseScale = 1
+	Lighting.EnvironmentSpecularScale = 1
+end
+local Squads = require(ReplicatedStorage.Shared.Squads)
 enterMatch = function()
 	if not state.data or not state.data.created then
 		return
 	end
+	SkillTree.Close()
+	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
+	local fixture = Squads.Fixture(state.data)
+	local function back()
+		refs.menu.Visible = true
+		refs.tasks.Visible = true
+		UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
+		UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
+	end
 	UIMotion.Wipe(function()
 		refs.menu.Visible = false
 		refs.tasks.Visible = false
-		MatchController.Start(gui, state.data, function()
-			refs.menu.Visible = true
-			refs.tasks.Visible = true
-			UIMotion.In(refs.menu, Vector2.new(-40, 0), 0.1)
-			UIMotion.In(refs.tasks, Vector2.new(40, 0), 0.15)
-		end)
+		Lineup.Show(gui, fixture, function()
+			MatchController.Start(gui, state.data, back, fixture)
+		end, back)
 	end)
 end
 

@@ -84,73 +84,81 @@ end
 
 -- Yetenek zincirleri: sırayla açılır. { ad, seviye şartı, bakiye }
 Config.SkillChains = {
+	-- Her zincirde yetenekler sırayla açılır; aynı tuş, açılan en üst hareketi oynatır.
 	Sut = {
 		Name = "Şut",
+		Hint = "1-6 tuşlarıyla şut türü seçilir",
 		Skills = {
-			{ Id = "Normal", Name = "Normal şut", Level = 1, Cost = 0 },
-			{ Id = "Plase", Name = "Plase", Level = 2, Cost = 150 },
-			{ Id = "Fuze", Name = "Füze", Level = 5, Cost = 400 },
-			{ Id = "Asirtma", Name = "Aşırtma", Level = 8, Cost = 700 },
-			{ Id = "Vole", Name = "Vole", Level = 11, Cost = 1100 },
-			{ Id = "Rovesata", Name = "Röveşata", Level = 15, Cost = 1800 },
-			{ Id = "SerbestVurus", Name = "Serbest vuruş ustası", Level = 20, Cost = 2800 },
+			{ Id = "Shoot", Name = "Normal şut", Level = 1, Cost = 0, Info = "Dengeli, güvenilir vuruş" },
+			{ Id = "Plase", Name = "Plase", Level = 2, Cost = 150, Info = "İç ayakla köşeye, isabetli" },
+			{ Id = "Fuze", Name = "Füze", Level = 5, Cost = 400, Info = "Uzun gerilme, çok sert şut" },
+			{ Id = "Asirtma", Name = "Aşırtma", Level = 8, Cost = 700, Info = "Kalecinin üstünden" },
+			{ Id = "Vole", Name = "Vole", Level = 11, Cost = 1100, Info = "Havadaki topa gelişine" },
+			{ Id = "Rovesata", Name = "Röveşata", Level = 15, Cost = 1800, Info = "Sırt üstü makas vuruşu" },
 		},
 	},
 	Calim = {
 		Name = "Çalım",
+		Hint = "Q: açık olan en üst çalım",
 		Skills = {
-			{ Id = "VucutCalimi", Name = "Vücut çalımı", Level = 1, Cost = 0 },
-			{ Id = "TopSurukleme", Name = "Top sürükleme", Level = 3, Cost = 200 },
-			{ Id = "Marsilya", Name = "Marsilya", Level = 6, Cost = 450 },
-			{ Id = "Nutmeg", Name = "Nutmeg", Level = 9, Cost = 800 },
-			{ Id = "Elastico", Name = "Elastico", Level = 13, Cost = 1300 },
-			{ Id = "Rabona", Name = "Rabona", Level = 17, Cost = 2000 },
-			{ Id = "Gokkusagi", Name = "Gökkuşağı", Level = 22, Cost = 3000 },
+			{ Id = "VucutCalimi", Name = "Vücut çalımı", Level = 1, Cost = 0, Info = "Omuz ve kalça sahtesi" },
+			{ Id = "Bisiklet", Name = "Bisiklet", Level = 3, Cost = 200, Info = "Topun üstünden çift ayak geçişi" },
+			{ Id = "Marsilya", Name = "Marsilya", Level = 6, Cost = 450, Info = "Topla birlikte tam tur dönüş" },
+			{ Id = "Elastico", Name = "Elastico", Level = 10, Cost = 900, Info = "Dış-iç ayak ani yön değişimi" },
+			{ Id = "Gokkusagi", Name = "Gökkuşağı", Level = 15, Cost = 1800, Info = "Topu topukla rakibin üstünden aşır" },
 		},
 	},
 	Hava = {
 		Name = "Hava",
+		Hint = "Boşluk: açık olan en üst hava hareketi",
 		Skills = {
-			{ Id = "Ziplama", Name = "Zıplama", Level = 1, Cost = 0 },
-			{ Id = "Kafa", Name = "Kafa vuruşu", Level = 3, Cost = 200 },
-			{ Id = "GucluKafa", Name = "Güçlü kafa", Level = 7, Cost = 600 },
-			{ Id = "UcanKafa", Name = "Uçan kafa", Level = 12, Cost = 1200 },
-			{ Id = "Makas", Name = "Makas vuruşu", Level = 18, Cost = 2200 },
+			{ Id = "Jump", Name = "Zıplama", Level = 1, Cost = 0, Info = "Yerinde yükselme" },
+			{ Id = "Header", Name = "Kafa vuruşu", Level = 2, Cost = 150, Info = "Havadaki topa kafa" },
+			{ Id = "GucluKafa", Name = "Güçlü kafa", Level = 6, Cost = 500, Info = "Gövdeyi yay gibi gerip sert kafa" },
+			{ Id = "UcanKafa", Name = "Uçan kafa", Level = 10, Cost = 1000, Info = "Koşarken balıklama kafa" },
+			{ Id = "Makas", Name = "Makas vuruşu", Level = 16, Cost = 2000, Info = "Koşarken havada yan makas" },
 		},
 	},
 	Defans = {
 		Name = "Defans",
+		Hint = "C: müdahale · V: blok",
 		Skills = {
-			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0 },
-			{ Id = "PasArasi", Name = "Pas arası", Level = 3, Cost = 200 },
-			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 6, Cost = 450 },
-			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 9, Cost = 800 },
-			{ Id = "Blok", Name = "Blok", Level = 13, Cost = 1300 },
-			{ Id = "SonAdam", Name = "Son adam", Level = 18, Cost = 2200 },
-		},
-	},
-	OzelGuc = {
-		Name = "Özel güç",
-		Skills = {
-			{ Id = "Turbo", Name = "Turbo", Level = 4, Cost = 300 },
-			{ Id = "DemirAdam", Name = "Demir adam", Level = 10, Cost = 900 },
-			{ Id = "KaptanLider", Name = "Kaptan lider", Level = 16, Cost = 1800 },
-			{ Id = "EfsaneAn", Name = "Efsane an", Level = 25, Cost = 4000 },
+			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0, Info = "Ayağı uzatıp topu çelme" },
+			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 3, Cost = 200, Info = "Omuzla dengesini boz, topu al" },
+			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
+			{ Id = "Blok", Name = "Blok", Level = 10, Cost = 900, Info = "Şutun önüne gövdeyle gir" },
+			{ Id = "UcanBlok", Name = "Uçan blok", Level = 15, Cost = 1800, Info = "Şuta doğru atlayarak kapat" },
 		},
 	},
 	Kaleci = {
 		Name = "Kaleci",
 		OnlyPosition = "Kaleci",
+		Hint = "Z / X: sola / sağa plonjon",
 		Skills = {
-			{ Id = "Plonjon", Name = "Plonjon", Level = 1, Cost = 0 },
-			{ Id = "Yumruk", Name = "Yumruk", Level = 4, Cost = 300 },
-			{ Id = "BireBir", Name = "Bire bir çıkış", Level = 8, Cost = 700 },
-			{ Id = "UzunDegaj", Name = "Uzun degaj", Level = 12, Cost = 1200 },
-			{ Id = "PenaltiUzmani", Name = "Penaltı uzmanı", Level = 18, Cost = 2200 },
+			{ Id = "Plonjon", Name = "Plonjon", Level = 1, Cost = 0, Info = "Köşeye uzanma" },
 		},
 	},
 }
-Config.SkillChainOrder = { "Sut", "Calim", "Hava", "Defans", "OzelGuc", "Kaleci" }
+Config.SkillChainOrder = { "Sut", "Calim", "Hava", "Defans", "Kaleci" }
+
+-- Bir zincirde açık olan son yeteneğin sırası (ilk yetenek ücretsizse baştan açıktır)
+function Config.SkillLevel(skills, chainId: string): number
+	local chain = Config.SkillChains[chainId]
+	local base = if chain and chain.Skills[1] and chain.Skills[1].Cost == 0 then 1 else 0
+	return math.max(base, (skills and skills[chainId]) or 0)
+end
+
+-- Bir hareket açık mı? (hareket hiçbir zincirde yoksa her zaman açıktır)
+function Config.ActionUnlocked(skills, action: string): boolean
+	for id, chain in pairs(Config.SkillChains) do
+		for i, sk in ipairs(chain.Skills) do
+			if sk.Id == action then
+				return Config.SkillLevel(skills, id) >= i
+			end
+		end
+	end
+	return true
+end
 
 -- Kulüp kademeleri
 Config.Tiers = {
@@ -269,14 +277,14 @@ Config.Data = { AutoSave = 90, Retries = 4, LockTimeout = 600 }
 Config.Movement = {
 	Run = 17,
 	Sprint = 25,
-	AccelTime = 0.45, -- 0'dan tam hıza
+	AccelTime = 0.3, -- 0'dan tam hıza
 	DecelTime = 0.25,
-	TurnLoss = 0.5, -- ani dönüşte kalan hız oranı
+	TurnLoss = 0.8, -- ani dönüşte kalan hız oranı
 	TurnDot = -0.25, -- bu değerin altındaki yön değişimi "ani dönüş" sayılır
 	StaminaMax = 100,
-	SprintDrain = 20, -- saniyede
-	Regen = 13,
-	TiredFactor = 0.75, -- dayanıklılık bitince hız çarpanı
+	SprintDrain = 12, -- saniyede
+	Regen = 16,
+	TiredFactor = 1, -- dayanıklılık bitince hız çarpanı
 	TiredUntil = 25, -- bu değere dolana kadar yorgun kalır
 	FovBase = 70,
 	FovSprint = 75,
@@ -298,7 +306,7 @@ Config.Keys = {
 -- Geliştirme ayarları. Yayından önce UnlockAllActions kapatılır.
 Config.Debug = {
 	-- Yalnızca Roblox Studio'da geçerlidir; yayınlanan oyunda yetenek kilitleri her zaman çalışır
-	UnlockAllActionsInStudio = true,
+	UnlockAllActionsInStudio = false,
 }
 
 -- Yüklenmiş animasyon dosyaları (isteğe bağlı). Bir eylemin kimliği yazılırsa kodla üretilen poz yerine o oynar.
@@ -327,18 +335,20 @@ Config.Shots = {
 	Rovesata = { Speed = 108, Error = 1.2, Curve = 0, Lift = 1.1 },
 	Header = { Speed = 74, Error = 0.9, Curve = 0, Lift = 0.35 },
 	UcanKafa = { Speed = 92, Error = 1.1, Curve = 0, Lift = 0.4 },
+	GucluKafa = { Speed = 98, Error = 0.8, Curve = 0, Lift = 0.35 },
+	Makas = { Speed = 120, Error = 1.1, Curve = 0, Lift = 0.9 },
 }
 Config.Shooting = {
 	ChargeTime = 0.9, -- barın dolma süresi
-	PerfectFrom = 0.8, -- yeşil pencere başlangıcı (0-1)
-	PerfectTo = 0.93,
+	PerfectFrom = 0.7, -- yeşil pencere başlangıcı (0-1)
+	PerfectTo = 0.96,
 	OverFrom = 1.0, -- bunun üstü topu havaya diker
 	MaxCharge = 1.18,
 	BaseError = 0.12, -- radyan; Şut özelliği 1 iken
 	ErrorPerStat = 0.009,
 	PerfectErrorFactor = 0.3,
 	PerfectSpeedBonus = 1.12,
-	Reach = 3.6, -- topa vurabilme mesafesi
+	Reach = 4.6, -- topa vurabilme mesafesi
 	PassSpeed = { 52, 88 }, -- kısa ve uzun basış
 	SlowMo = 0.35,
 	SlowMoTime = 0.9,

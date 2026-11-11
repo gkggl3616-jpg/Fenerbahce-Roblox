@@ -9,7 +9,9 @@ Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 
 
 - Dosya yalnızca kod içerir; saha, stat, karakter ve arayüz oyun başlayınca kodla kurulur.
 - Avatar R15 olmalı (Studio: Home > Game Settings > Avatar > R15). Yayınlanmamış dosyada kayıt bellekte tutulur.
-- Stat kulübün kademesine göre kurulur (6 kademe): `src/ReplicatedStorage/Shared/Stadium.luau`
+- Herkes aynı varsayılan gövdeyle oynar; oyuncunun kendi Roblox avatarı yüklenmez.
+- Yetenek ağacı: lobi > "Yetenek ağacı". Aynı tuş, zincirde açılan en üst hareketi oynatır (Q çalım, Boşluk hava, C müdahale, V blok).
+- Maç öncesi kadro ekranı: iki kulüp, armalar, teknik direktörler, 11'ler ve oyuncu özellikleri (`Shared/Squads.luau`).
 
 ## Çalıştırma
 1. [Rojo](https://rojo.space) 7 ve Roblox Studio'daki Rojo eklentisini kur.

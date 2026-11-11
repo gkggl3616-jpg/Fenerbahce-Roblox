@@ -149,7 +149,7 @@ function Creator.Open(gui: ScreenGui, onCreated: () -> ())
 	----------------------------------------------------------------------------
 	-- Sol panel
 	----------------------------------------------------------------------------
-	local panel, content = Components.Panel({ Name = "Creator", Size = UDim2.new(0, 580, 1, -40), Position = UDim2.fromOffset(20, 20) })
+	local panel, content = Components.Panel({ Name = "Creator", Size = UDim2.new(0, 580, 1, -84), Position = UDim2.fromOffset(20, 64) })
 	panel.Parent = gui
 
 	local header = Components.Label({

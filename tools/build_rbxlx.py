@@ -43,7 +43,11 @@ def from_path(name, path):
 
 def from_node(name, node):
     if "$path" in node:
-        return from_path(name, os.path.join(ROOT, node["$path"]))
+        path = os.path.join(ROOT, node["$path"])
+        if "$className" in node and os.path.isdir(path):
+            kids = "".join(from_path(None, os.path.join(path, e)) for e in sorted(os.listdir(path)))
+            return item(node["$className"], name, "", kids)
+        return from_path(name, path)
     props = ""
     for key, value in node.get("$properties", {}).items():
         if isinstance(value, bool):
