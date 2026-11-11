@@ -222,7 +222,7 @@ end
 function MatchAI.Positions()
 	local out = {}
 	for i, bot in ipairs(bots) do
-		out[i] = { bot.pos.X, bot.pos.Z, bot.team }
+		out[i] = { bot.pos.X, bot.pos.Z, bot.team, bot.dir.X, bot.dir.Z, bot.speed, bot.animator:Current() or "", bot.keeper }
 	end
 	return out
 end

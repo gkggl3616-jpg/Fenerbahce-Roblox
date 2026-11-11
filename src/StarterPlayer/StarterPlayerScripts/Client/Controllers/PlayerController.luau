@@ -1300,6 +1300,16 @@ function Controller.SetMatch(api: any, pitch: any)
 	end
 end
 
+-- Anlık durum (sınama ve kayıt araçları için)
+function Controller.Debug()
+	return {
+		action = state.animator and state.animator:Current() or "",
+		speed = state.speed,
+		stamina = state.stamina,
+		charge = if state.charging then state.charge else 0,
+	}
+end
+
 -- Dışarıdan eylem oynatma (gol sevinci, üzülme)
 function Controller.PlayAction(name: string)
 	if state.animator then

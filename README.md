@@ -109,6 +109,10 @@ Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.
 - Yüklenmiş animasyon dosyan olursa kimliğini `Config.Animations` içine yaz; o eylemde kod yerine o oynar.
 - Arma `Config.Assets.Crest` boşken göğüste kulüp kısaltmalı küçük kalkan çizilir.
 
+## Sınamalar
+`tests/` klasöründe oyunun mantığını Roblox dışında çalıştıran 886 denetim var (`node tests/run.mjs`). Ayrıntı: `tests/README.md`.
+Bu sınamalar Studio testinin yerini tutmaz; görünüm, Roblox fiziği ve gerçek cihaz davranışı yalnızca Studio'da görülür.
+
 ## Belgeler
 - `TEK_PROMPT.md`: oyunun tamamının tarifi
 - `OYUN_TASARIM_VE_PROMPT.md`, `PROMPTLAR.md`, `tasarim/`: tasarım ve görseller
