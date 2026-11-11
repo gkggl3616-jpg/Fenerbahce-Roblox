@@ -121,10 +121,19 @@ function Components.Panel(props)
 	hi.Parent = p
 
 	if props.Accent ~= false then
-		local st = Components.Stripes(4, 8)
+		local st = Components.Stripes(6, 8)
 		st.AnchorPoint = Vector2.new(1, 0)
 		st.Position = UDim2.new(1, 6, 0, -14)
 		st.Parent = p
+		-- çubuklar yavaşça kayar (panel canlı dursun)
+		local drift = game:GetService("TweenService"):Create(
+			st,
+			TweenInfo.new(2.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Position = UDim2.new(1, 30, 0, -14) }
+		)
+		if not UIMotion.Reduced then
+			drift:Play()
+		end
 	end
 
 	local content = Instance.new("Frame")
@@ -140,9 +149,12 @@ function Components.Panel(props)
 		local line = Instance.new("Frame")
 		line.BorderSizePixel = 0
 		line.BackgroundColor3 = C.Yellow
-		line.Size = UDim2.fromOffset(34, 3)
+		line.Size = UDim2.fromOffset(0, 3)
 		line.Position = UDim2.fromOffset(0, 26)
 		line.Parent = content
+		task.delay(0.25, function()
+			UIMotion.Tween(line, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, { Size = UDim2.fromOffset(46, 3) })
+		end)
 	end
 	return p, content
 end
@@ -180,16 +192,50 @@ function Components.Button(props)
 	scale.Parent = b
 
 	local textColor = if locked then C.Muted elseif style == "Primary" then C.Navy elseif style == "Ghost" then C.Yellow else C.Text
+	local hasSub = props.Sub ~= nil
 	local label = Components.Label({
 		Text = props.Text,
 		Size = props.TextSize or 19,
 		Font = Theme.Font.Display,
 		Color = textColor,
 		Upper = true,
-		Align = Enum.TextXAlignment.Center,
-		Frame = UDim2.fromScale(1, 1),
+		Align = if hasSub then Enum.TextXAlignment.Left else Enum.TextXAlignment.Center,
+		Frame = if hasSub then UDim2.new(1, -70, 0, 24) else UDim2.fromScale(1, 1),
 	})
+	if hasSub then
+		label.Position = UDim2.fromOffset(30, 9)
+		local sub = Components.Label({
+			Text = props.Sub,
+			Size = 12,
+			Font = Theme.Font.Body,
+			Color = if style == "Primary" and not locked then C.Navy else C.Muted,
+			Frame = UDim2.new(1, -70, 0, 16),
+		})
+		sub.Position = UDim2.fromOffset(30, 34)
+		sub.Parent = b
+	end
 	label.Parent = b
+
+	-- sağda ok: üzerine gelince ileri kayar
+	local arrow = Components.Label({
+		Text = if locked then "×" else "›",
+		Size = 30,
+		Font = Theme.Font.Display,
+		Color = textColor,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.new(0, 30, 1, 0),
+	})
+	arrow.AnchorPoint = Vector2.new(1, 0)
+	arrow.Position = UDim2.new(1, -10, 0, -2)
+	arrow.Visible = hasSub or props.Arrow == true
+	arrow.Parent = b
+
+	-- parlayan çerçeve ve aralıklı ışık süpürmesi (yalnız birincil buton)
+	if style == "Primary" and not locked then
+		local glow = stroke(b, C.White, 2, 0.75)
+		UIMotion.Glow(glow, 0.85, 0.3, 1.2)
+		UIMotion.ShineLoop(b, 3.4)
+	end
 
 	-- Sol kenarda eğik vurgu çizgisi (birincil butonda lacivert, diğerlerinde sarı)
 	if not locked then
@@ -208,6 +254,7 @@ function Components.Button(props)
 	b.MouseEnter:Connect(function()
 		hover = true
 		UIMotion.Tween(scale, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 1.04 })
+		UIMotion.Tween(arrow, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out, { Position = UDim2.new(1, -4, 0, -2) })
 		if not locked then
 			UIMotion.Shine(b)
 		end
@@ -215,6 +262,7 @@ function Components.Button(props)
 	b.MouseLeave:Connect(function()
 		hover = false
 		UIMotion.Tween(scale, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 1 })
+		UIMotion.Tween(arrow, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Position = UDim2.new(1, -10, 0, -2) })
 	end)
 	b.MouseButton1Down:Connect(function()
 		UIMotion.Tween(scale, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 0.96 })
@@ -238,6 +286,7 @@ function Components.Button(props)
 			pos = m
 		end
 		UIMotion.Ripple(b, pos)
+		UIMotion.Flash(b)
 		if props.OnClick then
 			props.OnClick(b)
 		end
@@ -365,6 +414,15 @@ function Components.Toast(kind: string, text: string)
 	local l = Components.Label({ Text = text, Size = 15, Wrap = true, Frame = UDim2.new(1, -40, 1, 0) })
 	l.Position = UDim2.fromOffset(30, 0)
 	l.Parent = card
+	local timer = Instance.new("Frame")
+	timer.BorderSizePixel = 0
+	timer.BackgroundColor3 = color
+	timer.BackgroundTransparency = 0.2
+	timer.AnchorPoint = Vector2.new(0, 1)
+	timer.Position = UDim2.fromScale(0, 1)
+	timer.Size = UDim2.new(1, 0, 0, 3)
+	timer.Parent = card
+	UIMotion.Tween(timer, 3.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, { Size = UDim2.new(0, 0, 0, 3) })
 	card.Parent = toastHolder
 	UIMotion.Sound(if kind == "error" then "ErrorSound" elseif kind == "unlock" or kind == "level" then "RewardSound" else "ConfirmSound")
 	-- Liste düzeni konumu yönettiği için giriş saydamlık + ölçekle yapılır

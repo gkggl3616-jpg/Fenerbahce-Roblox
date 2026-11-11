@@ -249,4 +249,116 @@ function UIMotion.Wipe(onCovered: (() -> ())?)
 	end)
 end
 
+-- Sürekli parlayan çerçeve: UIStroke saydamlığı nabız gibi gider gelir. Durdurmak için dönen işlevi çağır.
+function UIMotion.Glow(stroke: UIStroke, from: number, to: number, period: number?)
+	stroke.Transparency = from
+	local tw = TweenService:Create(
+		stroke,
+		TweenInfo.new(period or 1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+		{ Transparency = to }
+	)
+	if not UIMotion.Reduced then
+		tw:Play()
+	end
+	return function()
+		tw:Cancel()
+	end
+end
+
+-- Belirli aralıkla tekrarlanan parlaklık süpürmesi (dikkat çekmesi gereken butonlar için)
+function UIMotion.ShineLoop(gui: GuiObject, every: number?)
+	local alive = true
+	task.spawn(function()
+		while alive and gui.Parent do
+			task.wait(every or 3.6)
+			if alive and gui.Parent and gui.Visible and not UIMotion.Reduced then
+				UIMotion.Shine(gui)
+			end
+		end
+	end)
+	return function()
+		alive = false
+	end
+end
+
+-- Tıklamada kısa beyaz parlama
+function UIMotion.Flash(gui: GuiObject)
+	local f = Instance.new("Frame")
+	f.Name = "Flash"
+	f.BackgroundColor3 = Theme.Color.White
+	f.BackgroundTransparency = 0.45
+	f.BorderSizePixel = 0
+	f.Size = UDim2.fromScale(1, 1)
+	f.ZIndex = gui.ZIndex + 6
+	f.Parent = gui
+	local tw = tween(f, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { BackgroundTransparency = 1 })
+	tw.Completed:Once(function()
+		f:Destroy()
+	end)
+end
+
+-- Ekran ortasında patlayan kutlama: büyük yazı + genişleyen halkalar (seviye atlama, lig atlama)
+function UIMotion.Burst(parent: Instance, text: string, sub: string?, color: Color3?)
+	local col = color or Theme.Color.Gold
+	local root = Instance.new("Frame")
+	root.Name = "Burst"
+	root.BackgroundTransparency = 1
+	root.Size = UDim2.fromScale(1, 1)
+	root.ZIndex = 300
+	root.Parent = parent
+	for i = 1, 3 do
+		local ring = Instance.new("Frame")
+		ring.AnchorPoint = Vector2.new(0.5, 0.5)
+		ring.Position = UDim2.fromScale(0.5, 0.42)
+		ring.Size = UDim2.fromOffset(40, 40)
+		ring.BackgroundTransparency = 1
+		ring.ZIndex = 300
+		local cr = Instance.new("UICorner")
+		cr.CornerRadius = UDim.new(1, 0)
+		cr.Parent = ring
+		local st = Instance.new("UIStroke")
+		st.Color = col
+		st.Thickness = 6
+		st.Parent = ring
+		ring.Parent = root
+		task.delay(dur((i - 1) * 0.12), function()
+			tween(ring, 0.9, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, { Size = UDim2.fromOffset(900, 900) })
+			tween(st, 0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Transparency = 1, Thickness = 1 })
+		end)
+	end
+	local function label(str: string, size: number, y: number, font)
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.AnchorPoint = Vector2.new(0.5, 0.5)
+		l.Position = UDim2.new(0.5, 0, 0.42, y)
+		l.Size = UDim2.new(1, 0, 0, size + 10)
+		l.FontFace = font
+		l.TextSize = size
+		l.TextColor3 = col
+		l.Text = Theme.Upper(str)
+		l.ZIndex = 301
+		local st = Instance.new("UIStroke")
+		st.Color = Theme.Color.Navy
+		st.Thickness = 5
+		st.Parent = l
+		l.Parent = root
+		UIMotion.Pop(l, 0.3)
+		return l, st
+	end
+	local parts = { { label(text, 96, 0, Theme.Font.Display) } }
+	if sub then
+		table.insert(parts, { label(sub, 28, 70, Theme.Font.Title) })
+	end
+	UIMotion.Sound("RewardSound")
+	task.delay(1.8, function()
+		for _, p in ipairs(parts) do
+			tween(p[1], 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, { TextTransparency = 1 })
+			tween(p[2], 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In, { Transparency = 1 })
+		end
+		task.delay(0.5, function()
+			root:Destroy()
+		end)
+	end)
+end
+
 return UIMotion

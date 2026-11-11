@@ -163,20 +163,17 @@ CFrame = {
 		local x, y, z = axis.X, axis.Y, axis.Z
 		local c, s = math.cos(ang), math.sin(ang)
 		local t = 1 - c
-		return mk(
-			V3.new(0, 0, 0),
-			{
-				t * x * x + c,
-				t * x * y - s * z,
-				t * x * z + s * y,
-				t * x * y + s * z,
-				t * y * y + c,
-				t * y * z - s * x,
-				t * x * z - s * y,
-				t * y * z + s * x,
-				t * z * z + c,
-			}
-		)
+		return mk(V3.new(0, 0, 0), {
+			t * x * x + c,
+			t * x * y - s * z,
+			t * x * z + s * y,
+			t * x * y + s * z,
+			t * y * y + c,
+			t * y * z - s * x,
+			t * x * z - s * y,
+			t * y * z + s * x,
+			t * z * z + c,
+		})
 	end,
 	lookAt = function(from, to)
 		local f = (to - from).Unit
@@ -400,6 +397,20 @@ local function newInstance(class)
 		o.Transparency = 0
 	elseif class == "Motor6D" then
 		o.Transform = CFrame.new()
+	elseif
+		string.find(class, "Label")
+		or string.find(class, "Button")
+		or string.find(class, "Frame")
+		or string.find(class, "Box")
+		or class == "CanvasGroup"
+	then
+		o.Position = UDim2.new(0, 0, 0, 0)
+		o.Size = UDim2.new(0, 100, 0, 40)
+		o.AbsolutePosition = Vector2.new(0, 0)
+		o.AbsoluteSize = Vector2.new(200, 50)
+		o.ZIndex = 1
+		o.Visible = true
+		o.Text = ""
 	elseif class == "Humanoid" then
 		o.HipHeight = 2
 		o.WalkSpeed = 16
@@ -410,6 +421,9 @@ local function newInstance(class)
 	return setmetatable(o, Inst)
 end
 Inst.__index = function(o, k)
+	if k == "Parent" then
+		return rawget(o, "__parent")
+	end
 	if k == "Position" and rawget(o, "CFrame") then
 		return o.CFrame.Position
 	end
@@ -431,14 +445,14 @@ Inst.__index = function(o, k)
 end
 Inst.__newindex = function(o, k, v)
 	if k == "Parent" then
-		local old = rawget(o, "Parent")
+		local old = rawget(o, "__parent")
 		if old then
 			local i = table.find(old.__children, o)
 			if i then
 				table.remove(old.__children, i)
 			end
 		end
-		rawset(o, "Parent", v)
+		rawset(o, "__parent", v)
 		if v then
 			table.insert(v.__children, o)
 		end
@@ -487,12 +501,12 @@ function Inst:GetDescendants()
 	return out
 end
 function Inst:IsDescendantOf(other)
-	local p = rawget(self, "Parent")
+	local p = rawget(self, "__parent")
 	while p do
 		if p == other then
 			return true
 		end
-		p = rawget(p, "Parent")
+		p = rawget(p, "__parent")
 	end
 	return false
 end
@@ -502,7 +516,7 @@ end
 function Inst:Clone()
 	local c = newInstance(self.ClassName)
 	for k, v in pairs(self) do
-		if k ~= "__children" and k ~= "Parent" and k ~= "__attrs" and not (type(v) == "table" and v.handlers) then
+		if k ~= "__children" and k ~= "__parent" and k ~= "__attrs" and not (type(v) == "table" and v.handlers) then
 			rawset(c, k, v)
 		end
 	end
@@ -579,6 +593,8 @@ function game:BindToClose() end
 workspace = service("Workspace")
 workspace.Gravity = 196.2
 workspace.CurrentCamera = newInstance("Camera")
+workspace.CurrentCamera.FieldOfView = 70
+workspace.CurrentCamera.ViewportSize = Vector2.new(1600, 900)
 
 local tween = service("TweenService")
 function tween:Create(target, info, goal)
@@ -617,6 +633,21 @@ function players:GetPlayerByUserId(id)
 	end
 	return nil
 end
+
+local uis = service("UserInputService")
+uis.TouchEnabled = false
+function uis:GetMouseLocation()
+	return Vector2.new(10, 10)
+end
+local guiService = service("GuiService")
+function guiService:GetGuiInset()
+	return Vector2.new(0, 36)
+end
+local sound = service("SoundService")
+function sound:PlayLocalSound() end
+local pg = newInstance("PlayerGui")
+pg.Name = "PlayerGui"
+pg.Parent = __localPlayer
 
 local text = service("TextService")
 function text:FilterStringAsync(str)
@@ -726,7 +757,13 @@ local match = folder("Match", client)
 for _, n in ipairs({ "Ball", "Bots", "MatchAI", "TimeScale" }) do
 	moduleNode(n, CL .. "Match/" .. n .. ".luau", match)
 end
-__tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match }
+moduleNode("MatchController", CL .. "Match/MatchController.luau", match)
+moduleNode("RemoteAnim", CL .. "Match/RemoteAnim.luau", match)
+local controllers = folder("Controllers", client)
+moduleNode("PlayerController", CL .. "Controllers/PlayerController.luau", controllers)
+local screens = folder("Screens", client)
+moduleNode("Creator", CL .. "Screens/Creator.luau", screens)
+__tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 
 -- R15 iskeletli sahte karakter (animasyon ve bot sınamaları için)
 function __makeRig(name)
@@ -742,6 +779,12 @@ function __makeRig(name)
 		local motor = newInstance("Motor6D")
 		motor.Name = j
 		motor.Parent = hrp
+	end
+	for _, n in ipairs({ "LeftFoot", "RightFoot" }) do
+		local f = newInstance("Part")
+		f.Name = n
+		f.Size = V3.new(1, 0.4, 1)
+		f.Parent = m
 	end
 	return m
 end

@@ -207,7 +207,7 @@ local function buildLobby()
 	-- Menü (sol)
 	local menu, mc = Components.Panel({
 		Name = "Menu",
-		Size = UDim2.fromOffset(280, 416),
+		Size = UDim2.fromOffset(310, 478),
 		Position = UDim2.fromOffset(20, 140),
 		Title = "Kariyer Merkezi",
 	})
@@ -220,27 +220,35 @@ local function buildLobby()
 	holder.Parent = mc
 	list(holder, 8)
 	local buttons = {}
-	local function add(text: string, style: string, locked: string?, onClick: (() -> ())?)
-		local b = Components.Button({ Text = text, Style = style, Locked = locked, Order = #buttons + 1, OnClick = onClick })
+	local function add(text: string, style: string, locked: string?, onClick: (() -> ())?, sub: string?)
+		local b = Components.Button({
+			Text = text,
+			Style = style,
+			Locked = locked,
+			Order = #buttons + 1,
+			OnClick = onClick,
+			Sub = sub,
+			Size = UDim2.new(1, 0, 0, 58),
+		})
 		b.Parent = holder
 		table.insert(buttons, b)
 	end
 	add("Maça çık", "Primary", nil, function()
 		enterMatch()
-	end)
+	end, "Lig maçı · 11'e 11")
 	add("Deneme sahası", "Secondary", nil, function()
 		enterPitch()
-	end)
+	end, "Şut, çalım ve savunma çalış")
 	add("Pası geliştir", "Ghost", nil, function()
 		Remotes.Get("UpgradeStat"):FireServer("Pas")
-	end)
+	end, "Bakiye ile özellik yükselt")
 	add("Plase aç", "Secondary", nil, function()
 		Remotes.Get("UnlockSkill"):FireServer("Sut")
-	end)
+	end, "Şut zincirinde sıradaki yetenek")
 	add("Kulüp", "Ghost", nil, function()
 		Components.Toast("info", "Kulüp binası 13. adımda geliyor.")
-	end)
-	add("Sıralama", "Secondary", "Dünya sıralaması için önce bir maç oyna.")
+	end, "Lig, tesisler, transfer")
+	add("Sıralama", "Secondary", "Dünya sıralaması için önce bir maç oyna.", nil, "Dünya genelinde yerin")
 
 	-- Görevler (sağ)
 	local tasks, tc = Components.Panel({
@@ -305,6 +313,9 @@ end
 
 Remotes.Get("DataChanged").OnClientEvent:Connect(render)
 Remotes.Get("Notify").OnClientEvent:Connect(function(kind, text)
+	if kind == "level" then
+		UIMotion.Burst(gui, text, "Yeni ödüller açıldı") -- seviye atlama kutlaması
+	end
 	Components.Toast(kind, text)
 end)
 

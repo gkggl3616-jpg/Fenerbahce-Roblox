@@ -451,10 +451,132 @@ check("botlar sahanın içinde kalır", inside)
 MatchAI.Clear()
 Ball.SetPitch(Config.TestPitch)
 
+------------------------------------------------------------------ Arayüz
+section("Arayüz bileşenleri (kurulum ve etkileşim, çizim yok)")
+local Theme = require(__tree.UI.Theme)
+local UIMotion = require(__tree.UI.UIMotion)
+local Components = require(__tree.UI.Components)
+local Forms = require(__tree.UI.Forms)
+check("büyük harf Türkçe", Theme.Upper("ışık çiçeği") == "IŞIK ÇİÇEĞİ", Theme.Upper("ışık çiçeği"))
+check("sayı biçimi", Theme.FormatNumber(1234567) == "1.234.567" and Theme.FormatNumber(950) == "950", Theme.FormatNumber(1234567))
+local screen = Instance.new("ScreenGui")
+screen.Parent = __localPlayer.PlayerGui
+local holder = Instance.new("Frame")
+holder.Parent = screen
+Components.SetToastHolder(holder)
+local panel, content = Components.Panel({ Title = "Deneme", Size = UDim2.fromOffset(300, 200) })
+panel.Parent = screen
+check("panel kurulur", panel ~= nil and content ~= nil)
+local clicks = 0
+for _, style in ipairs({ "Primary", "Secondary", "Ghost" }) do
+	local b = Components.Button({
+		Text = "Buton " .. style,
+		Style = style,
+		Sub = "alt yazı",
+		OnClick = function()
+			clicks += 1
+		end,
+	})
+	b.Parent = content
+	b.MouseEnter:Fire()
+	b.MouseButton1Down:Fire()
+	b.MouseButton1Up:Fire()
+	b.Activated:Fire()
+	b.MouseLeave:Fire()
+end
+check("üç buton stili tıklanır", clicks == 3, clicks)
+local lockedBtn = Components.Button({ Text = "Kilitli", Locked = "Seviye 5 gerekli" })
+lockedBtn.Parent = content
+lockedBtn.Activated:Fire()
+check("kilitli buton tıklamayı işlemez, nedenini bildirir", clicks == 3 and #holder:GetChildren() >= 1)
+local bar = Components.Bar({ Value = 0.2 })
+bar.Set(0.9)
+check("çubuk değeri sınırlanır", bar.Value == 0.9 and (bar.Set(5) or bar.Value == 1))
+check("rozet kurulur", Components.Badge({ Text = "F" }) ~= nil)
+for _, kind in ipairs({ "success", "error", "unlock", "level", "info" }) do
+	Components.Toast(kind, "Bildirim " .. kind)
+end
+local lbl = Components.Label({ Text = "0" })
+UIMotion.CountUp(lbl, 0, 1500)
+UIMotion.In(panel, Vector2.new(0, 20))
+UIMotion.Stagger({ lockedBtn }, nil, 0)
+UIMotion.Shake(lockedBtn)
+UIMotion.Burst(screen, "Seviye 5", "Yeni ödüller")
+local wiped = false
+UIMotion.Wipe(function()
+	wiped = true
+end)
+for i = 1, 60 * 6 do
+	__advance(1 / 60)
+end
+check("perde kapanınca geri çağrı çalışır", wiped)
+check("sayaç hedefe ulaşır", lbl.Text == "1.500", lbl.Text)
+check("bildirimler süresi dolunca silinir", #holder:GetChildren() == 0, #holder:GetChildren())
+-- form bileşenleri
+local picked
+local chips = Forms.Chips({
+	Options = { { Id = "a", Text = "A" }, { Id = "b", Text = "B" }, { Id = "c", Text = "C", Locked = "kilitli" } },
+	Value = "a",
+	OnChange = function(v)
+		picked = v
+	end,
+})
+chips.Frame:GetChildren()[3].Activated:Fire()
+check("çip seçimi", picked == "b" and chips.Value == "b", tostring(picked))
+local multi = Forms.Chips({ Options = { { Id = "x", Text = "X" }, { Id = "y", Text = "Y" } }, Multi = true, Values = {} })
+multi.Frame:GetChildren()[2].Activated:Fire()
+check("çoklu çip", multi.Values.x == true)
+local sv
+local slider = Forms.Slider({
+	Min = 165,
+	Max = 195,
+	Value = 180,
+	OnChange = function(v)
+		sv = v
+	end,
+})
+check("kaydırıcı başlangıcı", slider.Value == 180)
+local stepV
+local stepper = Forms.Stepper({
+	Min = 1,
+	Max = 99,
+	Value = 99,
+	OnChange = function(v)
+		stepV = v
+	end,
+})
+local plus
+for _, c in ipairs(stepper.Frame:GetChildren()) do
+	if c.ClassName == "TextButton" and c.Text == "+" then
+		plus = c
+	end
+end
+plus.MouseButton1Down:Fire()
+plus.MouseButton1Up:Fire()
+check("sayaç 99'dan 1'e döner", stepV == 1, tostring(stepV))
+local tabs = Forms.Tabs({ Tabs = { { Id = "t1", Text = "Bir" }, { Id = "t2", Text = "İki" } } })
+check("sekmeler kurulur", tabs.Value == "t1")
+local sw = Forms.Swatches({ Colors = Config.SkinColors, Value = 2 })
+check("renk seçici kurulur", sw.Value == 2)
+local confirmed = false
+Forms.Modal({
+	Parent = screen,
+	Title = "Emin misin?",
+	Text = "Deneme",
+	OnConfirm = function()
+		confirmed = true
+	end,
+})
+for i = 1, 30 do
+	__advance(1 / 60)
+end
+check("onay penceresi kurulur", true)
+
 ------------------------------------------------------------------ Sunucu
 section("Sunucu: veri ve istek doğrulama")
 __isServer = true
 __resetModules()
+__ServerConfig = require(__tree.Shared.Config) -- sunucu modüllerinin gördüğü ayarlar
 local Remotes = require(__tree.Shared.Remotes)
 local DataService = require(__tree.Server.DataService)
 local PlayerService = require(__tree.Server.PlayerService)
@@ -583,5 +705,184 @@ check(
 	DataService.Save(plr, false) == true and __stores[Config.DataStoreName]["p_" .. plr.UserId].session.jobId == "baska-sunucu"
 )
 check("kilitliyken yükleme reddedilir", DataService.Load(plr) == nil)
+
+------------------------------------------------------------------ Oyuncu kontrolü ve maç akışı
+section("Oyuncu kontrolü (tuşlarla deneme sahası)")
+__isServer = false
+__resetModules()
+Config = require(__tree.Shared.Config)
+local UIS = game:GetService("UserInputService")
+local Run = game:GetService("RunService")
+workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+local char = __makeRig("Tester")
+char.Parent = workspace
+__localPlayer.Character = char
+local hum = char:FindFirstChildOfClass("Humanoid")
+local hrpPart = char.HumanoidRootPart
+hrpPart.CFrame = CFrame.lookAt(Vector3.new(0, 3, 70), Vector3.new(0, 3, 140))
+local gui2 = Instance.new("ScreenGui")
+gui2.Parent = __localPlayer.PlayerGui
+local PC = require(__tree.Controllers.PlayerController)
+local Ball2 = require(__tree.Match.Ball)
+local exited = false
+PC.Start(gui2, function()
+	return data
+end, function()
+	exited = true
+end)
+local function frames(n)
+	for i = 1, n do
+		-- sahte fizik: karakter hareket yönünde WalkSpeed ile ilerler
+		local v = hum.MoveDirection * hum.WalkSpeed
+		hrpPart.AssemblyLinearVelocity = Vector3.new(v.X, hrpPart.AssemblyLinearVelocity.Y, v.Z)
+		hrpPart.CFrame = hrpPart.CFrame + v * (1 / 60)
+		Run.Stepped:Fire(0, 1 / 60)
+		__advance(1 / 60)
+	end
+end
+local function key(code, hold)
+	UIS.InputBegan:Fire({ KeyCode = code, UserInputType = Enum.UserInputType.Keyboard }, false)
+	frames(hold or 2)
+	UIS.InputEnded:Fire({ KeyCode = code, UserInputType = Enum.UserInputType.Keyboard }, false)
+end
+frames(40)
+PC.SetHud(true)
+frames(10)
+check("deneme sahasında top hazır", Ball2.Position().Z > 70)
+-- koş: hız yarım saniyede koşu hızına çıkar
+hum.MoveDirection = Vector3.new(0, 0, 1)
+frames(15)
+local early = hum.WalkSpeed
+frames(45)
+check(
+	"ivmelenme: hız kademeli artar",
+	early < hum.WalkSpeed and math.abs(hum.WalkSpeed - Config.Movement.Run) < 1.5,
+	early .. " -> " .. hum.WalkSpeed
+)
+-- sprint
+UIS.InputBegan:Fire({ KeyCode = Config.Keys.Sprint, UserInputType = Enum.UserInputType.Keyboard }, false)
+frames(60)
+check("sprint hızı", hum.WalkSpeed > Config.Movement.Run + 4, hum.WalkSpeed)
+frames(60 * 6)
+check("dayanıklılık bitince yavaşlar", hum.WalkSpeed < Config.Movement.Run, hum.WalkSpeed)
+UIS.InputEnded:Fire({ KeyCode = Config.Keys.Sprint, UserInputType = Enum.UserInputType.Keyboard }, false)
+hum.MoveDirection = Vector3.zero
+frames(60 * 4)
+-- topun yanına git ve şut çek (basılı tut, bırak)
+local function toBall()
+	local bp = Ball2.Position()
+	hrpPart.CFrame = CFrame.lookAt(Vector3.new(bp.X, 3, bp.Z - 2), Vector3.new(bp.X, 3, bp.Z + 50))
+end
+PC.SetHud(false)
+PC.SetHud(true)
+frames(5)
+Ball2.Reset(Vector3.new(70, 0, 88)) -- savunmacılardan uzakta
+toBall()
+local goalsBefore = 0
+local trainingGoals = 0
+Ball2.On("goal", function()
+	trainingGoals += 1
+end)
+UIS.InputBegan:Fire({ KeyCode = Config.Keys.Shoot, UserInputType = Enum.UserInputType.Keyboard }, false)
+frames(math.floor(Config.Shooting.ChargeTime * 0.86 * 60))
+UIS.InputEnded:Fire({ KeyCode = Config.Keys.Shoot, UserInputType = Enum.UserInputType.Keyboard }, false)
+frames(20)
+check("şut tuşu bırakılınca top vurulur", Ball2.Speed() > 40 or Ball2.InNet(), Ball2.Speed())
+frames(60 * 4)
+-- bütün eylem tuşları hatasız çalışır
+for _, code in ipairs({
+	Enum.KeyCode.One,
+	Enum.KeyCode.Two,
+	Enum.KeyCode.Three,
+	Enum.KeyCode.Four,
+	Enum.KeyCode.Five,
+	Enum.KeyCode.Six,
+	Config.Keys.Pass,
+	Config.Keys.Dribble,
+	Config.Keys.Special,
+	Enum.KeyCode.T,
+	Config.Keys.Jump,
+	Config.Keys.Tackle,
+	Enum.KeyCode.V,
+	Config.Keys.Celebrate,
+	Enum.KeyCode.H,
+	Enum.KeyCode.Z,
+	Enum.KeyCode.X,
+	Enum.KeyCode.B,
+	Enum.KeyCode.N,
+}) do
+	key(code, 4)
+	frames(80)
+end
+check("bütün eylem tuşları hatasız", true)
+-- orta + kafa: top düşerken zıpla
+key(Enum.KeyCode.N, 2)
+frames(10)
+key(Enum.KeyCode.B, 2)
+frames(75)
+key(Config.Keys.Jump, 2)
+frames(120)
+check("orta ve kafa akışı hatasız", true)
+-- röveşata
+key(Enum.KeyCode.Six, 2)
+key(Enum.KeyCode.B, 2)
+frames(80)
+key(Config.Keys.Shoot, 6)
+frames(140)
+check("röveşata akışı hatasız", true)
+PC.SetHud(false)
+frames(30)
+
+section("Maç akışı (kısaltılmış maç: santra, devre arası, maç sonu, ödül)")
+Config.Match.HalfSeconds = 20
+Config.Match.IntroTime = 1
+__ServerConfig.Match.HalfSeconds = 20 -- sunucu da aynı süreyi beklesin
+local MCtl = require(__tree.Match.MatchController)
+local coinsBefore = data.coins
+local playedBefore = data.club.season.played
+local back = false
+data.power = 60
+MCtl.Start(gui2, data, function()
+	back = true
+end)
+frames(30)
+check("maç sahasına ışınlanır", hrpPart.Position.Z > Config.MatchPitch.MinZ, hrpPart.Position.Z)
+check("skor tabelası ve radar kurulur", gui2:FindFirstChild("MatchHud") ~= nil)
+hum.MoveDirection = Vector3.new(0, 0, 1)
+for i = 1, 20 do
+	frames(60)
+	if i % 3 == 0 then
+		key(Config.Keys.Pass, 3) -- (müdahale tuşu kart ve maçtan atılma getirebilir; ayrıca sınanıyor)
+	elseif i % 3 == 1 then
+		key(Config.Keys.Dribble, 3)
+	else
+		UIS.InputBegan:Fire({ KeyCode = Config.Keys.Shoot, UserInputType = Enum.UserInputType.Keyboard }, false)
+		frames(40)
+		UIS.InputEnded:Fire({ KeyCode = Config.Keys.Shoot, UserInputType = Enum.UserInputType.Keyboard }, false)
+	end
+	hum.MoveDirection = Vector3.new(math.sin(i), 0, math.cos(i * 0.7))
+end
+hum.MoveDirection = Vector3.zero
+frames(60 * 40)
+local resultPanel
+for _, d in ipairs(gui2:GetDescendants()) do
+	if d.Name == "Result" then
+		resultPanel = d
+	end
+end
+check("maç sonu ekranı açılır", resultPanel ~= nil)
+check("sunucu maçı sezona işler", data.club.season.played == playedBefore + 1, data.club.season.played)
+check("maç ödülü verilir", data.coins > coinsBefore, data.coins - coinsBefore)
+-- "Lobiye dön"
+if resultPanel then
+	for _, d in ipairs(resultPanel:GetDescendants()) do
+		if d.ClassName == "TextButton" then
+			d.Activated:Fire()
+		end
+	end
+end
+frames(120)
+check("maç bitince lobiye dönülür", back)
+check("maç arayüzü kaldırılır", gui2:FindFirstChild("MatchHud") == nil)
 
 print(string.format("\nSONUÇ: %d geçti, %d kaldı", passed, failedCount))
