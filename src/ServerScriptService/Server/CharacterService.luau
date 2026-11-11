@@ -193,8 +193,7 @@ end
 		appearance = {...}, position, kitPattern, number, name, abbr, atFenerbahce, level
 	}
 ]]
-local function applyNow(player: Player, look)
-	local character = player.Character
+local function dress(character: Model?, look)
 	local hum = character and character:FindFirstChildOfClass("Humanoid")
 	if not character or not hum or not character:IsDescendantOf(Workspace) then
 		return
@@ -246,7 +245,7 @@ local function applyNow(player: Player, look)
 	clear(character, "FK_Extra")
 	clear(character, "FK_Kit")
 
-	local kit = Kits.For(look.position, look.kitPattern, look.atFenerbahce)
+	local kit = look.kit or Kits.For(look.position, look.kitPattern, look.atFenerbahce)
 	local acc = a.accessories or {}
 	color(character, { "UpperTorso" }, kit.Shirt)
 	color(character, { "LowerTorso", "LeftUpperLeg", "RightUpperLeg" }, kit.Shorts)
@@ -334,6 +333,74 @@ local function applyNow(player: Player, look)
 		end
 	end
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+end
+
+local function applyNow(player: Player, look)
+	dress(player.Character, look)
+end
+
+-- Bot şablonları: rakip, rakip kaleci ve takım arkadaşı. Sunucu bir kez kurar, istemci kopyalayıp sahada kullanır.
+function CharacterService.BuildBotTemplates()
+	local ReplicatedStorageRef = game:GetService("ReplicatedStorage")
+	local Players = game:GetService("Players")
+	if ReplicatedStorageRef:FindFirstChild("FK_BotTemplates") then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "FK_BotTemplates"
+	local defs = {
+		{ Name = "Rival", Kit = Kits.Rival, Position = "Defans", Number = 4, Skin = 3, Hair = 2 },
+		{ Name = "Rival2", Kit = Kits.Rival, Position = "Defans", Number = 5, Skin = 1, Hair = 3 },
+		{ Name = "RivalAttacker", Kit = Kits.Rival, Position = "Forvet", Number = 9, Skin = 5, Hair = 1 },
+		{ Name = "RivalKeeper", Kit = Kits.RivalKeeper, Position = "Kaleci", Number = 1, Skin = 2, Hair = 2 },
+		{ Name = "Mate", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 10, Skin = 4, Hair = 3 },
+	}
+	for i, d in ipairs(defs) do
+		local ok, rig = pcall(function()
+			return Players:CreateHumanoidModelFromDescription(Instance.new("HumanoidDescription"), Enum.HumanoidRigType.R15)
+		end)
+		if ok and rig then
+			rig.Name = d.Name
+			local hrp = rig:FindFirstChild("HumanoidRootPart")
+			if hrp and hrp:IsA("BasePart") then
+				hrp.Anchored = true
+			end
+			rig:PivotTo(CFrame.new(i * 12, -150, 0))
+			rig.Parent = Workspace
+			local okDress, err = pcall(dress, rig, {
+				appearance = {
+					height = 176 + i * 3,
+					build = "Atletik",
+					skin = d.Skin,
+					face = 1,
+					hairStyle = d.Hair,
+					hairColor = Config.HairColors[(i % #Config.HairColors) + 1],
+					beard = 0,
+					bootModel = 1,
+					bootColor = "1A1A1A",
+					accessories = {},
+				},
+				position = d.Position,
+				kit = d.Kit,
+				number = d.Number,
+				name = if d.Name == "Mate" then "TAKIM" else "RAKIP",
+				abbr = "RK",
+				level = 1,
+			})
+			if not okDress then
+				warn("[CharacterService] bot giydirilemedi: " .. tostring(err))
+			end
+			for _, sc in ipairs(rig:GetDescendants()) do
+				if sc:IsA("LuaSourceContainer") then
+					sc:Destroy()
+				end
+			end
+			rig.Parent = folder
+		else
+			warn("[CharacterService] bot şablonu oluşturulamadı: " .. tostring(rig))
+		end
+	end
+	folder.Parent = ReplicatedStorageRef
 end
 
 -- Art arda gelen istekleri sıraya koyar: aynı anda tek uygulama, en son istek kazanır

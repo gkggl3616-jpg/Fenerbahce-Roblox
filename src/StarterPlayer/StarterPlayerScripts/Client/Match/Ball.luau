@@ -30,7 +30,7 @@ local inNet = false
 local lastKick = -10
 local lastKind = "Shoot"
 local clock = 0
-local listeners = { goal = {}, post = {}, out = {} }
+local listeners = { goal = {}, post = {}, out = {}, kick = {} }
 
 local function fire(name: string, ...)
 	for _, fn in ipairs(listeners[name]) do
@@ -137,6 +137,7 @@ function Ball.Kick(v: Vector3, spin: number?, kind: string?)
 	if trail then
 		trail.Color = TRAIL_COLORS[lastKind] or ColorSequence.new(C.White)
 	end
+	fire("kick", lastKind, v)
 	-- vuruşta sıkışma
 	if part then
 		part.Size = Vector3.new(B.Radius * 2.5, B.Radius * 1.5, B.Radius * 2.5)
@@ -268,6 +269,33 @@ function Ball.Predict(): (Vector3?, number?)
 		end
 	end
 	return nil, nil
+end
+
+-- Top z düzlemini nerede ve kaç saniyede geçer? (kalecinin kurtarış kararı için)
+function Ball.PredictCross(z: number): (Vector3?, number?)
+	if vel.Z <= 1 or pos.Z >= z then
+		return nil, nil
+	end
+	local p, v, cv, t = pos, vel, curve, 0
+	local h = 1 / 90
+	for _ = 1, 400 do
+		p, v, cv = integrate(p, v, cv, h, false)
+		t += h
+		if p.Z >= z then
+			return p, t
+		end
+		if v.Z <= 0.5 then
+			return nil, nil
+		end
+	end
+	return nil, nil
+end
+
+-- Topun hızını olay tetiklemeden değiştirir (sekme, çelme)
+function Ball.Deflect(v: Vector3)
+	vel = v
+	curve = 0
+	lastKick = clock
 end
 
 --------------------------------------------------------------------------------

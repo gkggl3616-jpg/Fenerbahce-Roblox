@@ -12,7 +12,7 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - Game Settings > Avatar > Avatar Type: **R15** (forma boyama R15 parça adlarına göre çalışır).
 - Game Settings > Security > "Enable Studio Access to API Services": açık.
 
-## Şu an ne var (adım 1-5)
+## Şu an ne var (adım 1-9)
 - `Shared/Config.luau`: bütün ayarlar, kademeler, yetenek zincirleri, görünüm seçenekleri, hareket sayıları, tuşlar
 - `Shared/Kits.luau`: forma tanımları
 - `Server/DataService.luau`: DataStore, oturum kilidi, yeniden deneme, otomatik kayıt, sıralama
@@ -24,6 +24,7 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - `Client/Anim/Animator.luau`: katmanlı animasyon motoru (koşu döngüsü, eylem karışımı, olaylar, girdi tamponu)
 - `Client/Controllers/PlayerController.luau`: ivmeli hareket, sprint, dayanıklılık, eylem tuşları, dokunmatik butonlar, efektler, saha içi arayüz
 - `Client/Match/Ball.luau`: top fiziği (sekme, sürtünme, falso, direk, kale), sürme, ilk dokunuş, şut, pas, kafa, vole, röveşata, düşüş tahmini
+- `Client/Match/Bots.luau`: savunmacı (kademe, müdahale, sendeleme), kaleci (izleme, plonjon, çelme, elden kaçırma), top süren hücumcu
 - `Client/Match/TimeScale.luau`: yavaş çekim ve vuruş anı duraksaması
 - `Client/Match/RemoteAnim.luau`: diğer oyuncuların karakterlerini de canlandırır
 - `Client/Main.client.luau`: yükleme ekranı, çubuklu perde, lobi katmanı
@@ -64,6 +65,17 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 29. Orta gelirken 5 seçip F (vole) ya da 6 seçip F (röveşata): top doğru yükseklikteyse vurur ve yavaş çekim oynar; değilse "Iska".
 30. N: topu önüne getirir.
 
+### Adım 6, 8, 9: çalım, defans, kaleci
+Sunucu açılışta beş bot şablonu kurar; ilk girişte botların gelmesi birkaç saniye sürebilir.
+
+31. Deneme sahasında artık iki rakip savunmacı (beyaz-yeşil) ve bir kaleci (turuncu) var. Üstte "Hücum çalışması / Savunma çalışması" seçimi.
+32. Topla savunmacıya yaklaş: önünü keser, topla kale arasında durur. Yaklaşınca altında kırmızı halka yanıp söner (müdahale hazırlığı).
+33. Halka yanarken Q, R ya da T ile çalım at: savunmacı sendeler, "Çalım!" yazar, kombo sayacı artar. Üç çalımda "Turbo!": dört saniye hızlanırsın ve karakter sarı parlar.
+34. Halka yanarken çalım atmazsan savunmacı topu kapar ve uzağa vurur: "Top kaptırdın", kombo sıfırlanır.
+35. Şut çek: kaleci topun gideceği yere uzanır. Ortaya ve yavaş şutları tutar ya da çeler; köşeye, hızlı ve mükemmel şutlar gol olur. Füze şutunda bazen "Kaleci elinden kaçırdı!".
+36. Savunmacıya çarpan şut geri seker.
+37. "Savunma çalışması"na geç: bir hücumcu topu sürerek sana doğru gelir. C ile (sprintteyken kayarak) topa müdahale et: topa değersen "Top sende!", topa değmeden adama girersen "Faul!", arkadan ya da kayarak girersen sarı kart; ikinci sarıda kırmızı kart. Kaçırırsan "Rakip kaçtı" ve yeniden başlar.
+
 Animasyonlar kodla yazıldı ve hiç görülmeden ayarlandı. Bir eklem ters yöne dönüyorsa (örneğin diz öne bükülüyorsa) hangi harekette olduğunu söyle; `Poses.luau` içindeki açının işareti düzeltilir.
 
 Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.DataStoreName` değerini değiştir.
@@ -71,7 +83,8 @@ Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.
 ## Bilinen sınırlar
 - Gövde, oyuncunun kendi Roblox avatarının insan oranlarına ölçeklenmiş halidir. Gerçekçi gövde için bir gövde paketinin kimlikleri `Config.Body.Parts` içine yazılmalı.
 - Saç, başa kaynaklı basit bir hacimdir. Yüz ve sakal seçimi kaydedilir ama görseli yoktur. Bunlar için model/görsel yüklenmesi gerekir.
-- Kaleci, rakip ve takım arkadaşı yok; kale boş (9. ve 10. adım). Çalım ve müdahalenin topa etkisi 6. ve 8. adımda gelir.
+- Henüz tam maç yok: takım arkadaşı, 11'e 11, kurallar ve duran toplar 10. adımda. Pas arası ve blok şimdilik yalnızca animasyon.
+- Kırmızı kartın şimdilik cezası yok (maç sistemiyle gelecek). Oyuncu kaleciyse kullanacağı kaleci kontrolü de maç sistemiyle gelecek.
 - Top istemcide benzetilir (tek oyunculu maç). Ödüller sunucuda bekleme süresiyle sınırlanır.
 - Yetenek kilitleri yalnızca Studio'da kapalıdır (`Config.Debug.UnlockAllActionsInStudio`); yayınlanan oyunda her zaman çalışır.
 - Yüklenmiş animasyon dosyan olursa kimliğini `Config.Animations` içine yaz; o eylemde kod yerine o oynar.

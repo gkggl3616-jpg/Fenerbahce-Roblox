@@ -23,6 +23,8 @@ local Poses = require(script.Parent.Parent.Anim.Poses)
 local Ball = require(script.Parent.Parent.Match.Ball)
 local TimeScale = require(script.Parent.Parent.Match.TimeScale)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Bots = require(script.Parent.Parent.Match.Bots)
+local Forms = require(ReplicatedStorage.UI.Forms)
 
 local C = Theme.Color
 local M = Config.Movement
@@ -68,10 +70,14 @@ local state = {
 	pending = nil :: any, -- bırakılan şutun gücü ve nişanı; vuruş anında kullanılır
 	passPower = 0,
 	goals = 0,
+	combo = 0,
+	turboUntil = 0,
+	yellow = false,
 	lastMirror = false,
 }
 local SH = Config.Shooting
 local TP = Config.TestPitch
+local DU = Config.Duel
 local ui: { [string]: any } = {}
 
 --------------------------------------------------------------------------------
@@ -183,6 +189,49 @@ local function banner(text: string, color: Color3?)
 			UIMotion.Tween(ui.bannerStroke, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, { Transparency = 1 })
 		end
 	end)
+end
+
+-- Hakem kartı: ekranın ortasında dönerek belirir
+local function showCard(color: Color3, text: string)
+	if not ui.root then
+		return
+	end
+	local card = Instance.new("Frame")
+	card.AnchorPoint = Vector2.new(0.5, 0.5)
+	card.Position = UDim2.fromScale(0.5, 0.42)
+	card.Size = UDim2.fromOffset(110, 160)
+	card.BackgroundColor3 = color
+	card.BorderSizePixel = 0
+	card.Rotation = -200
+	card.ZIndex = 40
+	Components.Corner(card, 10)
+	Components.Stroke(card, C.White, 3, 0.2)
+	card.Parent = ui.root
+	UIMotion.Pop(card, 0.2)
+	UIMotion.Tween(card, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out, { Rotation = 8 })
+	banner(text, color)
+	task.delay(1.4, function()
+		local tw = UIMotion.Tween(
+			card,
+			0.25,
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.In,
+			{ Position = UDim2.fromScale(0.5, -0.3), Rotation = 60 }
+		)
+		tw.Completed:Once(function()
+			card:Destroy()
+		end)
+	end)
+end
+
+local function setCombo(n: number)
+	state.combo = n
+	if ui.combo then
+		ui.combo.Text = if n > 0 then "KOMBO x" .. n else ""
+		if n > 0 then
+			UIMotion.Pop(ui.combo, 1.5)
+		end
+	end
 end
 
 local function unlocked(action: string): boolean
@@ -433,10 +482,50 @@ local function onEvent(event: string, action: string)
 	elseif event == "slide" then
 		hrp.AssemblyLinearVelocity = look * (if action == "DizKaymasi" then 26 else 34) + Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
 		puff(footPos("Right"), 14)
-	elseif event == "tackle" or event == "block" or event == "save" then
+	elseif event == "tackle" then
+		ring(footPos("Right") + look * 1.5, C.White, 4)
+		if Bots.Mode() == "Savunma" then
+			local result = Bots.Tackle(hrp.Position - Vector3.new(0, 3, 0), look, action == "Kayma")
+			if result == "win" then
+				banner("Top sende!", C.Good)
+				shake(0.6)
+				ring(Ball.Position(), C.Good, 9)
+				UIMotion.Sound("ConfirmSound")
+				Remotes.Get("TrainingGoal"):FireServer("Tackle")
+			elseif result == "foul" then
+				banner("Faul!", C.Bad)
+				UIMotion.Sound("ErrorSound")
+				shake(0.5)
+			elseif result == "card" then
+				UIMotion.Sound("ErrorSound")
+				shake(0.7)
+				if state.yellow then
+					state.yellow = false
+					showCard(C.Bad, "Kırmızı kart!")
+				else
+					state.yellow = true
+					showCard(C.Yellow, "Sarı kart")
+				end
+			end
+		end
+	elseif event == "block" or event == "save" then
 		ring(footPos("Right") + look * 1.5, C.White, 4)
 	elseif event == "feint" then
 		ring(hrp.Position - Vector3.new(0, 2.8, 0), C.Yellow, 6)
+		if Bots.Feint(hrp.Position - Vector3.new(0, 3, 0)) then
+			setCombo(state.combo + 1)
+			banner("Çalım!", C.Gold)
+			ring(hrp.Position - Vector3.new(0, 2.8, 0), C.Gold, 12)
+			shake(0.4)
+			UIMotion.Sound("ConfirmSound")
+			Remotes.Get("TrainingGoal"):FireServer("Feint")
+			if state.combo >= DU.ComboForTurbo then
+				setCombo(0)
+				state.turboUntil = os.clock() + DU.TurboTime
+				banner("Turbo!", C.Gold)
+				UIMotion.Sound("RewardSound")
+			end
+		end
 	elseif event == "land" then
 		puff(hrp.Position - Vector3.new(0, 2.8, 0), 10)
 		shake(0.2)
@@ -506,6 +595,9 @@ local function step(dt: number)
 		if state.tired then
 			target *= M.TiredFactor
 		end
+		if os.clock() < state.turboUntil then
+			target *= DU.TurboBoost -- kombo ödülü: kısa süreli hız
+		end
 	end
 	if moving and state.lastDir.Magnitude > 0.1 and state.lastDir:Dot(dir) < M.TurnDot and state.speed > M.Run * 0.7 then
 		state.speed *= M.TurnLoss
@@ -544,8 +636,15 @@ local function step(dt: number)
 		vy = vel.Y,
 	})
 
+	-- turbo parlaması
+	local turbo = os.clock() < state.turboUntil
+	if ui.aura and ui.aura.Parent ~= (if turbo then an.Character else nil) then
+		ui.aura.Parent = if turbo then an.Character else nil
+	end
+
 	-- top
 	if state.hud then
+		Bots.Update(sdt, { playerPos = hrp.Position - Vector3.new(0, 3, 0) })
 		Ball.Carry(sdt, {
 			pos = hrp.Position - Vector3.new(0, 3, 0),
 			dir = if moving then dir else Vector3.zero,
@@ -850,7 +949,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			{ "F", "Şut: basılı tut, yeşilde bırak" },
 			{ "E", "Pas (uzun bas: sert)" },
 			{ "B / N", "Orta aç / Topu getir" },
-			{ "Q / R / T", "Vücut çalımı / Marsilya / Elastico" },
+			{ "Q / R / T", "Çalım (kırmızı halka yanınca)" },
 			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
 			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
 			{ "Z / X", "Plonjon sol / sağ" },
@@ -945,6 +1044,43 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	end
 	ui.aim = marker(C.Yellow)
 	ui.landRing = marker(C.Yellow)
+
+	-- Kombo sayacı (gol sayacının sağında)
+	ui.combo = Components.Label({ Text = "", Size = 26, Font = Theme.Font.Display, Color = C.Gold, Frame = UDim2.fromOffset(220, 32) })
+	ui.combo.Position = UDim2.new(0.5, 116, 0, 34)
+	Components.Stroke(ui.combo, C.Navy, 3, 0).ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	ui.combo.Parent = root
+
+	-- Çalışma modu (gol sayacının altında)
+	local modes = Forms.Chips({
+		Options = { { Id = "Hucum", Text = "Hücum çalışması" }, { Id = "Savunma", Text = "Savunma çalışması" } },
+		Value = "Hucum",
+		OnChange = function(id)
+			state.yellow = false
+			setCombo(0)
+			Bots.Start(id)
+			if id == "Hucum" and state.hrp then
+				Ball.Reset(state.hrp.Position + state.hrp.CFrame.LookVector * 6)
+			end
+			banner(if id == "Hucum" then "Savunmayı geç, gol at" else "Rakibi durdur, topu al")
+		end,
+	})
+	modes.Frame.AnchorPoint = Vector2.new(0.5, 0)
+	modes.Frame.Position = UDim2.new(0.5, 0, 0, 88)
+	modes.Frame.Size = UDim2.fromOffset(400, 34)
+	modes.Frame.Parent = root
+	local ml = modes.Frame:FindFirstChildOfClass("UIListLayout")
+	if ml then
+		ml.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	end
+
+	-- Turbo parlaması
+	local aura = Instance.new("Highlight")
+	aura.FillColor = C.Yellow
+	aura.FillTransparency = 0.75
+	aura.OutlineColor = C.Yellow
+	aura.OutlineTransparency = 0
+	ui.aura = aura
 	paintShots()
 end
 
@@ -1019,7 +1155,29 @@ local function bindBall()
 	end)
 	Ball.On("out", function()
 		banner("Aut", C.Muted)
-		back(1.4)
+		if Bots.Mode() == "Hucum" then
+			back(1.4)
+		end
+	end)
+	Bots.On("steal", function()
+		setCombo(0)
+		banner("Top kaptırdın", C.Bad)
+		UIMotion.Sound("ErrorSound")
+		back(2.2)
+	end)
+	Bots.On("save", function(kind)
+		banner(
+			if kind == "fumble" then "Kaleci elinden kaçırdı!" elseif kind == "catch" then "Kaleci tuttu" else "Kaleci çeldi!",
+			C.White
+		)
+		shake(0.5)
+	end)
+	Bots.On("escape", function()
+		banner("Rakip kaçtı", C.Bad)
+		UIMotion.Sound("ErrorSound")
+	end)
+	Bots.On("telegraph", function()
+		UIMotion.Sound("ClickSound") -- müdahale geliyor: şimdi çalım at
 	end)
 end
 
@@ -1053,10 +1211,14 @@ function Controller.SetHud(visible: boolean)
 			end
 			banner("Deneme sahası")
 			Ball.Init()
+			Bots.Start("Hucum")
 			local hrp = state.hrp
 			if hrp then
 				Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 6)
 			end
+		end
+		if not visible then
+			Bots.Clear()
 		end
 		for _, key in ipairs({ "aim", "landRing" }) do
 			if ui[key] and not visible then

@@ -317,6 +317,12 @@ local function onTrainingGoal(player: Player, kind)
 	end
 	lastTrainingGoal[player.UserId] = now
 	local bonus = if kind == "Header" or kind == "UcanKafa" or kind == "Rovesata" or kind == "Vole" then R.HeaderBonus else 0
+	if kind == "Feint" or kind == "Tackle" then
+		-- çalım ve top kapma: gol ödülünün yarısı
+		data.coins += math.floor(R.Coins / 2)
+		PlayerService.AddXp(player, math.floor(R.Xp / 2))
+		return
+	end
 	data.coins += R.Coins + bonus
 	PlayerService.AddXp(player, R.Xp + bonus)
 end

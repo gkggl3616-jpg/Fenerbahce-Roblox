@@ -345,6 +345,37 @@ Config.Shooting = {
 	HitStop = 0.06,
 }
 
+-- İkili mücadele: çalım, müdahale, kombo
+Config.Duel = {
+	TackleWindup = 0.45, -- savunmacının müdahale hazırlığı; çalım bu sürede atılırsa savunmacı sendeler
+	TackleCooldown = 1.8,
+	DefenderSpeed = 15,
+	JockeyDistance = 4.5, -- savunmacının topla arasında bıraktığı mesafe
+	TackleRange = 5.5,
+	StealRange = 3.6,
+	FeintRange = 9,
+	StaggerTime = 0.8,
+	ComboForTurbo = 3,
+	TurboTime = 4,
+	TurboBoost = 1.18,
+	AttackerSpeed = 14,
+	StandReach = 3.4, -- ayakta müdahalenin topa erişimi
+	SlideReach = 5.6, -- kayarak müdahalenin topa erişimi
+	FoulRange = 2.8, -- topa değmeden bu kadar yakına girilirse faul
+	EscapeZ = 62, -- hücumcu bu çizgiyi geçerse kaçmış sayılır
+}
+
+-- Kaleci botu
+Config.Keeper = {
+	Reaction = 0.22, -- şutu fark etme süresi
+	DiveSpeed = 24, -- stud/saniye
+	BaseReach = 3.2, -- yerinden kıpırdamadan uzanabildiği mesafe
+	ShuffleSpeed = 9, -- çizgi üzerinde kayma hızı
+	FumbleChance = 0.3, -- füze şutunda topu elinden kaçırma olasılığı
+	ErrorChance = 0.1, -- yetişebileceği topu kaçırma olasılığı (kademeyle azalır)
+	MinShotSpeed = 42, -- bundan yavaş toplar şut sayılmaz
+}
+
 -- Deneme sahası ölçüleri (CharacterService bu sayılarla kurar, top bu sınırlarla çarpışır)
 Config.TestPitch = {
 	GroundY = -0.02,

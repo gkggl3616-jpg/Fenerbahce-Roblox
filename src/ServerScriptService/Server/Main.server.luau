@@ -15,4 +15,6 @@ DataService.Init()
 PlayerService.Init()
 DataService.StartAutoSave()
 
+task.spawn(CharacterService.BuildBotTemplates)
+
 print("[FenerKariyer] Sunucu hazır")
