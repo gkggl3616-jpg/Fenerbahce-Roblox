@@ -20,6 +20,9 @@ local UIMotion = require(ReplicatedStorage.UI.UIMotion)
 local Components = require(ReplicatedStorage.UI.Components)
 local Animator = require(script.Parent.Parent.Anim.Animator)
 local Poses = require(script.Parent.Parent.Anim.Poses)
+local Ball = require(script.Parent.Parent.Match.Ball)
+local TimeScale = require(script.Parent.Parent.Match.TimeScale)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 local C = Theme.Color
 local M = Config.Movement
@@ -60,7 +63,15 @@ local state = {
 	shot = 1,
 	hud = false,
 	getData = nil :: any,
+	charging = false,
+	charge = 0,
+	pending = nil :: any, -- bırakılan şutun gücü ve nişanı; vuruş anında kullanılır
+	passPower = 0,
+	goals = 0,
+	lastMirror = false,
 }
+local SH = Config.Shooting
+local TP = Config.TestPitch
 local ui: { [string]: any } = {}
 
 --------------------------------------------------------------------------------
@@ -175,7 +186,7 @@ local function banner(text: string, color: Color3?)
 end
 
 local function unlocked(action: string): boolean
-	if Config.Debug.UnlockAllActions then
+	if Config.Debug.UnlockAllActionsInStudio and RunService:IsStudio() then
 		return true
 	end
 	local req = REQUIRES[action]
@@ -227,8 +238,61 @@ local function play(action: string, opts: any?)
 	an:Play(action, opts)
 end
 
-local function doShoot()
+local function stat(name: string): number
+	local data = state.getData and state.getData()
+	return (data and data.stats and data.stats[name]) or 1
+end
+
+local function aimInput(): number
+	local hum = state.hum
+	return if hum then math.clamp(hum.MoveDirection.X * 1.4, -1, 1) else 0
+end
+
+-- Şut: basılı tut (güç dolar), bırak (vuruş başlar)
+local function shootDown()
+	if not state.hud or state.charging then
+		return
+	end
+	if not unlocked(SHOTS[state.shot]) then
+		return Components.Toast("error", Poses.Names[SHOTS[state.shot]] .. " henüz açılmadı.")
+	end
+	state.charging = true
+	state.charge = 0
+end
+local function shootUp()
+	if not state.charging then
+		return
+	end
+	state.charging = false
+	local p = state.charge
+	state.pending = { power = p, perfect = p >= SH.PerfectFrom and p <= SH.PerfectTo, over = p > SH.OverFrom, aimX = aimInput() }
 	play(SHOTS[state.shot])
+end
+local passAt = 0
+local function passDown()
+	passAt = os.clock()
+end
+local function passUp()
+	if passAt > 0 then
+		state.passPower = math.clamp((os.clock() - passAt) / 0.5, 0, 1)
+		passAt = 0
+		play("Pass")
+	end
+end
+local function cross()
+	local hrp = state.hrp
+	if not hrp or not state.hud then
+		return
+	end
+	local side = if math.random() < 0.5 then -1 else 1
+	local target = hrp.Position + hrp.CFrame.LookVector * 5 + Vector3.new(0, 3, 0)
+	Ball.Cross(Vector3.new(side * 100, 0, math.min(TP.GoalZ - 14, target.Z + 30)), target, 1.75)
+end
+local function fetchBall()
+	local hrp = state.hrp
+	if hrp and state.hud then
+		Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 5)
+	end
 end
 local function doTackle()
 	play(if state.speed > M.Run + 2 then "Kayma" else "AyaktaMudahale")
@@ -241,10 +305,10 @@ local function doJump()
 end
 
 local KEYMAP: { [Enum.KeyCode]: () -> () } = {
-	[Config.Keys.Shoot] = doShoot,
-	[Config.Keys.Pass] = function()
-		play("Pass")
-	end,
+	[Config.Keys.Shoot] = shootDown,
+	[Config.Keys.Pass] = passDown,
+	[Enum.KeyCode.B] = cross,
+	[Enum.KeyCode.N] = fetchBall,
 	[Config.Keys.Dribble] = function()
 		play("VucutCalimi", { Mirror = math.random() < 0.5 })
 	end,
@@ -282,16 +346,86 @@ local function onEvent(event: string, action: string)
 		if action ~= "Fren" then
 			banner(Poses.Names[action] or action)
 		end
+		Remotes.Get("Anim"):FireServer(action, state.lastMirror) -- diğer oyuncular da görsün
 	elseif event == "strike" then
-		local power = if action == "Fuze" then 1 elseif action == "Rovesata" or action == "UcanKafa" then 0.8 else 0.5
-		shake(0.25 + power * 0.5)
-		local pos = if action == "Header" or action == "UcanKafa"
-			then hrp.Position + look * 1.5 + Vector3.new(0, 2.2, 0)
-			else footPos("Right") + look * 1.2
-		ring(pos, if action == "Fuze" then Color3.fromRGB(255, 120, 60) else C.Yellow, 4 + power * 5)
+		local feet = hrp.Position - Vector3.new(0, 3, 0)
+		local near = (Ball.Position() - hrp.Position).Magnitude < 9
+		if action == "Pass" then
+			local targets = {}
+			local studio = Workspace:FindFirstChild("FK_Studio")
+			if studio then
+				for _, d in ipairs(studio:GetChildren()) do
+					if d.Name == "PassTarget" then
+						table.insert(targets, (d :: BasePart).Position)
+					end
+				end
+			end
+			if Ball.Pass(feet, look, state.passPower or 0, stat("Pas"), targets) then
+				ring(Ball.Position(), C.White, 4)
+				shake(0.2)
+			end
+			return
+		end
+		-- zamanlamaya dayalı vuruşlar: { en alçak, en yüksek, erişim, ideal yükseklik }
+		local WINDOW = {
+			Header = { 3.6, 9.5, 4.2, 6.2 },
+			UcanKafa = { 1.6, 6.8, 5.4, 4 },
+			Vole = { 1.3, 5.2, 4, 3 },
+			Rovesata = { 2.4, 9.5, 4.4, 6 },
+		}
+		local win = WINDOW[action]
+		local pending = state.pending or { power = 0.7, perfect = false, aimX = aimInput() }
+		state.pending = nil
+		local opts: any = {
+			kind = action,
+			from = feet,
+			facing = look,
+			aimX = pending.aimX,
+			power = pending.power,
+			perfect = pending.perfect,
+			stat = stat("Sut"),
+		}
+		if win then
+			local h = Ball.Position().Y - TP.GroundY
+			opts.minY, opts.maxY, opts.reach = win[1], win[2], win[3]
+			opts.power = 0.85
+			opts.aimX = aimInput()
+			opts.perfect = math.abs(h - win[4]) < 1.3 -- top tam ideal yükseklikteyken vurulduysa
+			if action == "Header" or action == "UcanKafa" then
+				opts.stat = stat("Fizik")
+			end
+		end
+		local quality, target = Ball.Strike(opts)
+		if quality == "miss" then
+			if near then
+				banner("Iska", C.Bad)
+				UIMotion.Sound("ErrorSound")
+			end
+			return
+		end
+		local strength = if action == "Fuze" then 1 elseif win then 0.8 else 0.5
+		local color = if action == "Fuze" then Color3.fromRGB(255, 120, 60) elseif quality == "perfect" then C.Gold else C.Yellow
+		ring(Ball.Position(), color, 5 + strength * 6)
 		UIMotion.Sound("ConfirmSound")
-		if action == "Rovesata" then
-			banner("Röveşata!", C.Gold)
+		if quality == "perfect" then
+			banner("Mükemmel!", C.Gold)
+			TimeScale.Set(0.05, SH.HitStop) -- vuruş anında kısa duraksama
+			shake(0.9)
+			ring(Ball.Position(), C.White, 12)
+		else
+			shake(0.3 + strength * 0.5)
+			if pending.over and not win then
+				banner("Fazla tuttun", C.Bad)
+			end
+		end
+		if action == "Rovesata" or action == "UcanKafa" then
+			task.delay(SH.HitStop + 0.02, function()
+				TimeScale.Set(SH.SlowMo, SH.SlowMoTime) -- yavaş çekim
+			end)
+			banner(if action == "Rovesata" then "Röveşata!" else "Uçan kafa!", C.Gold)
+		end
+		if target and ui.aim then
+			ui.aimHold = os.clock() + 0.8
 		end
 	elseif event == "jump" then
 		local v = hrp.AssemblyLinearVelocity
@@ -312,11 +446,21 @@ local function onEvent(event: string, action: string)
 		if action == "sprint" then
 			puff(footPos(if event == "footL" then "Left" else "Right"), 2)
 		end
+		-- sürme: her adımda top öne itilir
+		if state.hud and hum.MoveDirection.Magnitude > 0.1 then
+			Ball.Touch({
+				pos = hrp.Position - Vector3.new(0, 3, 0),
+				dir = hum.MoveDirection,
+				speed = state.speed,
+				sprinting = action == "sprint",
+				control = stat("TopKontrolu"),
+			})
+		end
 	elseif event == "end" then
 		local def = Poses.Actions[action]
 		if def and def.EndShift then
 			local s = def.EndShift
-			local mirror = action == "Plonjon" and ui.lastMirror
+			local mirror = action == "Plonjon" and state.lastMirror
 			hrp.CFrame = hrp.CFrame * CFrame.new(if mirror then -s.X else s.X, s.Y, s.Z)
 		end
 	end
@@ -373,7 +517,9 @@ local function step(dt: number)
 	local rate = if target > state.speed then M.Sprint / M.AccelTime else M.Sprint / M.DecelTime
 	state.speed += math.clamp(target - state.speed, -rate * dt, rate * dt)
 	local factor = an:SpeedFactor()
-	hum.WalkSpeed = if hum:GetAttribute("FK_Frozen") then 0 else math.max(state.speed, if moving then 3 else 0) * factor
+	local ts = TimeScale.Value
+	local sdt = dt * ts
+	hum.WalkSpeed = math.max(state.speed, if moving then 3 else 0) * factor * ts
 	hum.JumpHeight = 0 -- zıplama eylemle yapılır
 
 	-- görüş açısı hıza göre genişler
@@ -389,7 +535,7 @@ local function step(dt: number)
 		turn = math.clamp(hrp.CFrame.RightVector:Dot(dir) * 2, -1, 1)
 	end
 	local vel = hrp.AssemblyLinearVelocity
-	an:Update(dt, {
+	an:Update(sdt, {
 		speed = Vector3.new(vel.X, 0, vel.Z).Magnitude,
 		sprinting = wantSprint,
 		tired = state.tired,
@@ -397,6 +543,57 @@ local function step(dt: number)
 		turn = turn,
 		vy = vel.Y,
 	})
+
+	-- top
+	if state.hud then
+		Ball.Carry(sdt, {
+			pos = hrp.Position - Vector3.new(0, 3, 0),
+			dir = if moving then dir else Vector3.zero,
+			speed = state.speed,
+			control = stat("TopKontrolu"),
+		})
+		Ball.Step(sdt)
+		-- düşüş halkası: havadan gelen topun ineceği yer; halka daraldıkça zıplama zamanı yaklaşır
+		local land, t = Ball.Predict()
+		if ui.landRing then
+			if land and t and t > 0.05 then
+				local sz = 2.5 + t * 7
+				ui.landRing.Size = Vector3.new(0.06, sz, sz)
+				ui.landRing.CFrame = CFrame.new(land.X, TP.GroundY + 0.05, land.Z) * CFrame.Angles(0, 0, math.rad(90))
+				ui.landRing.Color = if t < 0.5 then C.Good else C.Yellow
+				ui.landRing.Transparency = 0.35
+			else
+				ui.landRing.Transparency = 1
+			end
+		end
+		-- şut gücü
+		if state.charging then
+			state.charge = math.min(SH.MaxCharge, state.charge + dt / SH.ChargeTime)
+			if state.charge >= SH.MaxCharge then
+				shootUp()
+			end
+		end
+		if ui.powerHolder then
+			ui.powerHolder.Visible = state.charging
+			if state.charging then
+				ui.powerFill.Size = UDim2.fromScale(state.charge / SH.MaxCharge, 1)
+				local perfect = state.charge >= SH.PerfectFrom and state.charge <= SH.PerfectTo
+				ui.powerFill.BackgroundColor3 = if state.charge > SH.OverFrom then C.Bad elseif perfect then C.Good else C.Yellow
+			end
+		end
+		if ui.aim then
+			if state.charging then
+				local shot = Config.Shots[SHOTS[state.shot]]
+				local ap = Ball.AimPoint(aimInput(), state.charge, shot.Lift)
+				local spread = 1.2 + (11 - stat("Sut")) * 0.28 * shot.Error
+				ui.aim.Size = Vector3.new(0.06, spread * 2, spread * 2)
+				ui.aim.CFrame = CFrame.new(ap.X, math.min(ap.Y, TP.GoalHeight + 6), TP.GoalZ - 0.3) * CFrame.Angles(0, math.rad(90), 0)
+				ui.aim.Transparency = 0.3
+			elseif os.clock() > (ui.aimHold or 0) then
+				ui.aim.Transparency = 1
+			end
+		end
+	end
 
 	-- arayüz
 	if ui.stamina then
@@ -608,14 +805,10 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			b.Position = UDim2.new(1, -x, 1, -y)
 			b.Parent = pad
 		end
-		place(roundButton("Şut", 120, true, doShoot), 0, 0)
-		place(
-			roundButton("Pas", 88, false, function()
-				play("Pass")
-			end),
-			132,
-			0
-		)
+		place(roundButton("Şut", 120, true, shootDown, shootUp), 0, 0)
+		place(roundButton("Pas", 88, false, passDown, passUp), 132, 0)
+		place(roundButton("Orta", 76, false, cross), 250, 220)
+		place(roundButton("Top", 76, false, fetchBall), 340, 220)
 		place(
 			roundButton("Sprint", 88, false, function()
 				state.sprintHeld = true
@@ -646,7 +839,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		-- Tuş ipuçları (sağ alt)
 		local hp, hc = Components.Panel({
 			Name = "Keys",
-			Size = UDim2.fromOffset(330, 250),
+			Size = UDim2.fromOffset(340, 274),
 			AnchorPoint = Vector2.new(1, 1),
 			Position = UDim2.new(1, -20, 1, -20),
 			Title = "Tuşlar",
@@ -654,8 +847,9 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		hp.Parent = root
 		local lines = {
 			{ "Shift", "Sprint" },
-			{ "F", "Şut (1-6 ile tür seç)" },
-			{ "E", "Pas" },
+			{ "F", "Şut: basılı tut, yeşilde bırak" },
+			{ "E", "Pas (uzun bas: sert)" },
+			{ "B / N", "Orta aç / Topu getir" },
 			{ "Q / R / T", "Vücut çalımı / Marsilya / Elastico" },
 			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
 			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
@@ -672,7 +866,179 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			t.Parent = hc
 		end
 	end
+	-- Şut gücü barı (şut yuvalarının üstünde): sarı dolar, yeşil pencere mükemmel, kırmızı fazla
+	local ph = Instance.new("Frame")
+	ph.Name = "Power"
+	ph.AnchorPoint = Vector2.new(0.5, 1)
+	ph.Position = UDim2.new(0.5, 0, 1, -96)
+	ph.Size = UDim2.fromOffset(460, 22)
+	ph.BackgroundColor3 = C.Ground
+	ph.BackgroundTransparency = 0.15
+	ph.BorderSizePixel = 0
+	ph.Visible = false
+	ph.ClipsDescendants = true
+	Components.Corner(ph, 6)
+	Components.Stroke(ph, C.Yellow, 1.5, 0.3)
+	ph.Parent = root
+	local function zone(from: number, to: number, color: Color3, tr: number)
+		local z = Instance.new("Frame")
+		z.BorderSizePixel = 0
+		z.BackgroundColor3 = color
+		z.BackgroundTransparency = tr
+		z.Position = UDim2.fromScale(from / SH.MaxCharge, 0)
+		z.Size = UDim2.fromScale((to - from) / SH.MaxCharge, 1)
+		z.Parent = ph
+	end
+	zone(SH.PerfectFrom, SH.PerfectTo, C.Good, 0.45)
+	zone(SH.OverFrom, SH.MaxCharge, C.Bad, 0.6)
+	local pf = Instance.new("Frame")
+	pf.BorderSizePixel = 0
+	pf.BackgroundColor3 = C.Yellow
+	pf.BackgroundTransparency = 0.1
+	pf.Size = UDim2.fromScale(0, 1)
+	pf.Parent = ph
+	ui.powerHolder, ui.powerFill = ph, pf
+
+	-- Gol sayacı (üst orta)
+	local gp, gc = Components.Panel({
+		Name = "Goals",
+		Size = UDim2.fromOffset(200, 60),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 20),
+		Accent = false,
+	})
+	gp.Parent = root
+	local gl = Components.Label({
+		Text = "Gol",
+		Size = 12,
+		Color = C.Muted,
+		Font = Theme.Font.Title,
+		Upper = true,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.new(1, 0, 0, 14),
+	})
+	gl.Parent = gc
+	ui.goals = Components.Label({
+		Text = "0",
+		Size = 26,
+		Font = Theme.Font.Number,
+		Color = C.Yellow,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.new(1, 0, 0, 28),
+	})
+	ui.goals.Position = UDim2.fromOffset(0, 12)
+	ui.goals.Parent = gc
+
+	-- Sahadaki işaretler: nişan halkası ve düşüş halkası
+	local function marker(color: Color3)
+		local m = Instance.new("Part")
+		m.Shape = Enum.PartType.Cylinder
+		m.Anchored = true
+		m.CanCollide = false
+		m.CanQuery = false
+		m.Material = Enum.Material.Neon
+		m.Color = color
+		m.Transparency = 1
+		m.Size = Vector3.new(0.06, 3, 3)
+		m.Parent = Workspace
+		return m
+	end
+	ui.aim = marker(C.Yellow)
+	ui.landRing = marker(C.Yellow)
 	paintShots()
+end
+
+-- Gol, direk ve aut tepkileri
+local function bindBall()
+	local function back(delay: number)
+		task.delay(delay, function()
+			local hrp = state.hrp
+			if hrp and state.hud then
+				Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 5)
+			end
+		end)
+	end
+	Ball.On("goal", function(kind)
+		state.goals += 1
+		if ui.goals then
+			ui.goals.Text = tostring(state.goals)
+			UIMotion.Pop(ui.goals, 1.6)
+		end
+		local head = kind == "Header" or kind == "UcanKafa"
+		banner(if head then "Kafa golü!" elseif kind == "Rovesata" then "Röveşata golü!" else "Gol!", C.Gold)
+		shake(1.2)
+		UIMotion.Sound("RewardSound")
+		-- konfeti
+		local burst = Instance.new("Part")
+		burst.Anchored = true
+		burst.CanCollide = false
+		burst.Transparency = 1
+		burst.Size = Vector3.new(TP.GoalHalfWidth * 2, 1, 1)
+		burst.CFrame = CFrame.new(0, TP.GoalHeight + 2, TP.GoalZ - 2)
+		burst.Parent = Workspace
+		for _, col in ipairs({ C.Yellow, C.Navy, C.White }) do
+			local e = Instance.new("ParticleEmitter")
+			e.Enabled = false
+			e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+			e.Color = ColorSequence.new(col)
+			e.Size = NumberSequence.new(0.6)
+			e.Lifetime = NumberRange.new(1.2, 2.2)
+			e.Speed = NumberRange.new(14, 30)
+			e.SpreadAngle = Vector2.new(70, 70)
+			e.Acceleration = Vector3.new(0, -26, 0)
+			e.Rotation = NumberRange.new(0, 360)
+			e.RotSpeed = NumberRange.new(-200, 200)
+			e.EmissionDirection = Enum.NormalId.Top
+			e.Parent = burst
+			e:Emit(40)
+		end
+		task.delay(3, function()
+			burst:Destroy()
+		end)
+		-- file dalgalanması
+		local studio = Workspace:FindFirstChild("FK_Studio")
+		if studio then
+			for _, d in ipairs(studio:GetChildren()) do
+				if d.Name == "Net" and d:IsA("BasePart") then
+					d.Transparency = 0.15
+					TweenService:Create(d, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 0.6 })
+						:Play()
+				end
+			end
+		end
+		Remotes.Get("TrainingGoal"):FireServer(kind)
+		if state.animator and not state.animator:IsBusy() then
+			state.animator:Play("Sevinc")
+		end
+		back(2.4)
+	end)
+	Ball.On("post", function()
+		banner("Direk!", C.White)
+		shake(0.8)
+		UIMotion.Sound("ErrorSound")
+	end)
+	Ball.On("out", function()
+		banner("Aut", C.Muted)
+		back(1.4)
+	end)
+end
+
+-- Telefonda Roblox'un kendi zıplama butonunu gizle (zıplama "Zıpla" butonuyla yapılır)
+local function hideDefaultJump()
+	task.spawn(function()
+		local pg = player:WaitForChild("PlayerGui")
+		local touch = pg:WaitForChild("TouchGui", 15)
+		local frame = touch and touch:WaitForChild("TouchControlFrame", 10)
+		local jump = frame and frame:WaitForChild("JumpButton", 10)
+		if jump and jump:IsA("GuiObject") then
+			jump.Visible = false
+			jump:GetPropertyChangedSignal("Visible"):Connect(function()
+				if jump.Visible then
+					jump.Visible = false
+				end
+			end)
+		end
+	end)
 end
 
 function Controller.SetHud(visible: boolean)
@@ -686,6 +1052,20 @@ function Controller.SetHud(visible: boolean)
 				end
 			end
 			banner("Deneme sahası")
+			Ball.Init()
+			local hrp = state.hrp
+			if hrp then
+				Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 6)
+			end
+		end
+		for _, key in ipairs({ "aim", "landRing" }) do
+			if ui[key] and not visible then
+				ui[key].Transparency = 1
+			end
+		end
+		local ballPart = Workspace:FindFirstChild("FK_Ball")
+		if ballPart and ballPart:IsA("BasePart") then
+			ballPart.Transparency = if visible then 0 else 1
 		end
 	end
 end
@@ -693,6 +1073,10 @@ end
 function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 	state.getData = getData
 	buildHud(gui, onExit)
+	bindBall()
+	if UserInputService.TouchEnabled then
+		hideDefaultJump()
+	end
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if processed then
@@ -707,9 +1091,9 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 			return selectShot(idx)
 		end
 		if input.KeyCode == Enum.KeyCode.Z then
-			ui.lastMirror = true
+			state.lastMirror = true
 		elseif input.KeyCode == Enum.KeyCode.X then
-			ui.lastMirror = false
+			state.lastMirror = false
 		end
 		local fn = KEYMAP[input.KeyCode]
 		if fn then
@@ -719,6 +1103,10 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Config.Keys.Sprint or input.KeyCode == Enum.KeyCode.ButtonR2 then
 			state.sprintHeld = false
+		elseif input.KeyCode == Config.Keys.Shoot then
+			shootUp()
+		elseif input.KeyCode == Config.Keys.Pass then
+			passUp()
 		end
 	end)
 

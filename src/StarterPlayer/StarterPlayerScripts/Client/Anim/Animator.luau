@@ -9,6 +9,9 @@
 	Varsayılan Roblox Animate betiği kapatılır.
 ]]
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Shared.Config)
 local Poses = require(script.Parent.Poses)
 
 local Animator = {}
@@ -110,9 +113,41 @@ function Animator:Play(name: string, opts)
 		self.LastMask = a.def.Mask
 	end
 	self.Action = { def = def, name = name, t = 0, mirror = opts and opts.Mirror == true, fired = {} }
+	-- Bu eylem için yüklenmiş bir animasyon varsa o oynar; zamanlama olayları yine buradan tetiklenir
+	local assetId = Config.Animations[name]
+	if assetId and assetId ~= "" then
+		local track = self:_track(name, assetId)
+		if track then
+			track:Play(0.1)
+			self.Action.track = track
+		end
+	end
 	self.Buffered = nil
 	self:_fire("start", name)
 	return true
+end
+
+function Animator:_track(name: string, assetId: string)
+	self.Tracks = self.Tracks or {}
+	if self.Tracks[name] then
+		return self.Tracks[name]
+	end
+	local hum = self.Character:FindFirstChildOfClass("Humanoid")
+	local an = hum and hum:FindFirstChildOfClass("Animator")
+	if not an then
+		return nil
+	end
+	local anim = Instance.new("Animation")
+	anim.AnimationId = assetId
+	local ok, track = pcall(function()
+		return an:LoadAnimation(anim)
+	end)
+	if ok then
+		track.Priority = Enum.AnimationPriority.Action
+		self.Tracks[name] = track
+		return track
+	end
+	return nil
 end
 
 function Animator:Stop()
@@ -123,30 +158,36 @@ function Animator:Stop()
 	end
 end
 
+-- Catmull-Rom: anahtar kareler arasında köşesiz, akıcı geçiş
+local function spline(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: number): Vector3
+	local t2, t3 = t * t, t * t * t
+	return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+end
+
 function Animator:_sample(a)
 	local keys = a.def.Keys
 	local t = a.t
-	local k0, k1 = keys[1], keys[#keys]
+	local i0 = #keys - 1
 	for i = 1, #keys - 1 do
 		if t >= keys[i][1] and t <= keys[i + 1][1] then
-			k0, k1 = keys[i], keys[i + 1]
+			i0 = i
 			break
 		end
 	end
+	local k0, k1 = keys[i0], keys[i0 + 1]
+	local kp, kn = keys[math.max(1, i0 - 1)], keys[math.min(#keys, i0 + 2)]
 	local span = k1[1] - k0[1]
-	local alpha = if span > 0 then smooth(math.clamp((t - k0[1]) / span, 0, 1)) else 1
+	local alpha = if span > 0 then math.clamp((t - k0[1]) / span, 0, 1) else 1
 	local out = {}
 	for _, j in ipairs(Poses.Joints) do
 		local src = if a.mirror then MIRROR[j] else j
-		local v0, v1 = k0[2][src] or ZERO, k1[2][src] or ZERO
-		local v = v0:Lerp(v1, alpha)
+		local v = spline(kp[2][src] or ZERO, k0[2][src] or ZERO, k1[2][src] or ZERO, kn[2][src] or ZERO, alpha)
 		if a.mirror then
 			v = Vector3.new(v.X, -v.Y, -v.Z)
 		end
 		out[j] = v
 	end
-	local p0, p1 = k0[2].RootPos or ZERO, k1[2].RootPos or ZERO
-	local p = p0:Lerp(p1, alpha)
+	local p = spline(kp[2].RootPos or ZERO, k0[2].RootPos or ZERO, k1[2].RootPos or ZERO, kn[2].RootPos or ZERO, alpha)
 	out.RootPos = if a.mirror then Vector3.new(-p.X, p.Y, p.Z) else p
 	return out
 end
@@ -281,6 +322,9 @@ function Animator:Update(dt: number, ctx)
 		local motor = self.Motors[j]
 		if motor then
 			local v = base[j] or ZERO
+			if a and a.track then
+				continue -- yüklenmiş animasyon oynarken eklemlere dokunma
+			end
 			if actPose and w > 0 and (mask == "Full" or Poses.Upper[j]) then
 				v = v:Lerp(actPose[j] or ZERO, w)
 			end

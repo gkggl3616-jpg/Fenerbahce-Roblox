@@ -291,7 +291,39 @@ local function onPreview(player: Player, p)
 	)
 end
 
+-- Animasyon aktarımı: bir oyuncunun eylemi aynı sunucudaki diğer oyunculara bildirilir (onlar da görsün)
+local function onAnim(player: Player, action, mirror)
+	if type(action) ~= "string" or #action > 24 or not allowed(player, "anim") then
+		return
+	end
+	for _, other in ipairs(Players:GetPlayers()) do
+		if other ~= player then
+			Remotes.Get("Anim"):FireClient(other, player.UserId, action, mirror == true)
+		end
+	end
+end
+
+-- Deneme sahasında atılan gol: küçük ödül. Bekleme süresi sunucuda tutulur.
+local lastTrainingGoal: { [number]: number } = {}
+local function onTrainingGoal(player: Player, kind)
+	local data = DataService.Get(player)
+	local R = Config.TestPitch.Reward
+	if not data or not data.created then
+		return
+	end
+	local now = os.clock()
+	if now - (lastTrainingGoal[player.UserId] or 0) < R.Cooldown then
+		return
+	end
+	lastTrainingGoal[player.UserId] = now
+	local bonus = if kind == "Header" or kind == "UcanKafa" or kind == "Rovesata" or kind == "Vole" then R.HeaderBonus else 0
+	data.coins += R.Coins + bonus
+	PlayerService.AddXp(player, R.Xp + bonus)
+end
+
 function PlayerService.Init()
+	Remotes.Get("Anim").OnServerEvent:Connect(onAnim)
+	Remotes.Get("TrainingGoal").OnServerEvent:Connect(onTrainingGoal)
 	Remotes.Get("PreviewAppearance").OnServerEvent:Connect(onPreview)
 	Remotes.Get("CreateCareer").OnServerEvent:Connect(onCreateCareer)
 	Remotes.Get("UpgradeStat").OnServerEvent:Connect(onUpgradeStat)
@@ -348,6 +380,7 @@ function PlayerService.Init()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastCall[player.UserId] = nil
+		lastTrainingGoal[player.UserId] = nil
 		DataService.Save(player, true)
 	end)
 end

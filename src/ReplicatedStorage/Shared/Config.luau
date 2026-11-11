@@ -297,7 +297,65 @@ Config.Keys = {
 
 -- Geliştirme ayarları. Yayından önce UnlockAllActions kapatılır.
 Config.Debug = {
-	UnlockAllActions = true, -- yetenek kilidine bakmadan bütün hareketler denenebilir
+	-- Yalnızca Roblox Studio'da geçerlidir; yayınlanan oyunda yetenek kilitleri her zaman çalışır
+	UnlockAllActionsInStudio = true,
+}
+
+-- Yüklenmiş animasyon dosyaları (isteğe bağlı). Bir eylemin kimliği yazılırsa kodla üretilen poz yerine o oynar.
+-- Örnek: Config.Animations.Shoot = "rbxassetid://123456"
+Config.Animations = {}
+
+-- Top fiziği (stud ve saniye)
+Config.Ball = {
+	Radius = 0.55,
+	Gravity = 85,
+	AirDrag = 0.1,
+	RollFriction = 0.95,
+	Bounce = 0.55,
+	WallBounce = 0.45,
+	CurveAccel = 30,
+	TrailSpeed = 60, -- bu hızın üstünde iz bırakır
+}
+
+-- Şut türleri: hız, isabet çarpanı (küçük = isabetli), falso, yükseklik eğilimi
+Config.Shots = {
+	Shoot = { Speed = 95, Error = 1, Curve = 0, Lift = 1 },
+	Plase = { Speed = 78, Error = 0.45, Curve = 1, Lift = 0.8 },
+	Fuze = { Speed = 138, Error = 1.7, Curve = 0, Lift = 0.9 },
+	Asirtma = { Speed = 66, Error = 0.8, Curve = 0, Lift = 3.2 },
+	Vole = { Speed = 112, Error = 1.3, Curve = 0, Lift = 0.9 },
+	Rovesata = { Speed = 108, Error = 1.2, Curve = 0, Lift = 1.1 },
+	Header = { Speed = 74, Error = 0.9, Curve = 0, Lift = 0.35 },
+	UcanKafa = { Speed = 92, Error = 1.1, Curve = 0, Lift = 0.4 },
+}
+Config.Shooting = {
+	ChargeTime = 0.9, -- barın dolma süresi
+	PerfectFrom = 0.8, -- yeşil pencere başlangıcı (0-1)
+	PerfectTo = 0.93,
+	OverFrom = 1.0, -- bunun üstü topu havaya diker
+	MaxCharge = 1.18,
+	BaseError = 0.12, -- radyan; Şut özelliği 1 iken
+	ErrorPerStat = 0.009,
+	PerfectErrorFactor = 0.3,
+	PerfectSpeedBonus = 1.12,
+	Reach = 3.6, -- topa vurabilme mesafesi
+	PassSpeed = { 52, 88 }, -- kısa ve uzun basış
+	SlowMo = 0.35,
+	SlowMoTime = 0.9,
+	HitStop = 0.06,
+}
+
+-- Deneme sahası ölçüleri (CharacterService bu sayılarla kurar, top bu sınırlarla çarpışır)
+Config.TestPitch = {
+	GroundY = -0.02,
+	MinX = -118,
+	MaxX = 118,
+	MinZ = 42,
+	MaxZ = 199.4,
+	GoalZ = 194,
+	GoalHalfWidth = 12,
+	GoalHeight = 8,
+	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5 },
 }
 
 -- Genel güç (sıralama ve teklif şartı için)

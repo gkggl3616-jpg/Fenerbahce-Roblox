@@ -6,7 +6,17 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local EVENTS = { "DataChanged", "Notify", "CreateCareer", "UpgradeStat", "UnlockSkill", "UpgradeFacility", "PreviewAppearance" }
+local EVENTS = {
+	"DataChanged",
+	"Notify",
+	"CreateCareer",
+	"UpgradeStat",
+	"UnlockSkill",
+	"UpgradeFacility",
+	"PreviewAppearance",
+	"Anim",
+	"TrainingGoal",
+}
 local FUNCTIONS = { "GetData" }
 
 local Remotes = {}

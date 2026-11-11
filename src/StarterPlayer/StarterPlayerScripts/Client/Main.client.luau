@@ -307,6 +307,9 @@ end)
 local Creator = require(script.Parent.Screens.Creator)
 local PlayerController = require(script.Parent.Controllers.PlayerController)
 
+local RemoteAnim = require(script.Parent.Match.RemoteAnim)
+RemoteAnim.Start()
+
 local controllerStarted = false
 local function exitPitch()
 	UIMotion.Wipe(function()

@@ -12,7 +12,7 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - Game Settings > Avatar > Avatar Type: **R15** (forma boyama R15 parça adlarına göre çalışır).
 - Game Settings > Security > "Enable Studio Access to API Services": açık.
 
-## Şu an ne var (adım 1-4)
+## Şu an ne var (adım 1-5)
 - `Shared/Config.luau`: bütün ayarlar, kademeler, yetenek zincirleri, görünüm seçenekleri, hareket sayıları, tuşlar
 - `Shared/Kits.luau`: forma tanımları
 - `Server/DataService.luau`: DataStore, oturum kilidi, yeniden deneme, otomatik kayıt, sıralama
@@ -23,6 +23,9 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 - `Client/Anim/Poses.luau`: kodla tanımlı 21 animasyon (şutlar, pas, kafa, uçan kafa, röveşata, çalımlar, müdahaleler, blok, plonjon, sevinçler)
 - `Client/Anim/Animator.luau`: katmanlı animasyon motoru (koşu döngüsü, eylem karışımı, olaylar, girdi tamponu)
 - `Client/Controllers/PlayerController.luau`: ivmeli hareket, sprint, dayanıklılık, eylem tuşları, dokunmatik butonlar, efektler, saha içi arayüz
+- `Client/Match/Ball.luau`: top fiziği (sekme, sürtünme, falso, direk, kale), sürme, ilk dokunuş, şut, pas, kafa, vole, röveşata, düşüş tahmini
+- `Client/Match/TimeScale.luau`: yavaş çekim ve vuruş anı duraksaması
+- `Client/Match/RemoteAnim.luau`: diğer oyuncuların karakterlerini de canlandırır
 - `Client/Main.client.luau`: yükleme ekranı, çubuklu perde, lobi katmanı
 
 ## Sınama listesi
@@ -48,6 +51,19 @@ Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu 
 18. Bir hareket bitmeden ikinci tuşa bas: ilk hareket toparlanınca ikincisi kendiliğinden oynar.
 19. "Lobiye dön": perdeyle menüler geri gelir.
 
+### Adım 5: top, sürme, pas, şut
+20. Deneme sahasına girince önünde top belirir. Topa doğru koş: her adımda top öne itilir, ayağına yapışmaz. Sprintte daha uzağa kaçar.
+21. Dur: top ayağının dibinde durur. Ters yöne dönünce top geride kalabilir (geri dönüp alman gerekir).
+22. F'ye basılı tut: şut yuvalarının üstünde güç barı dolar, kalede sarı nişan halkası belirir. A/D ile halka sağa sola kayar, güç arttıkça yükselir.
+23. Yeşil pencerede bırak: "Mükemmel!" yazar, oyun bir an duraksar, top daha hızlı ve isabetli gider. Kırmızıda bırak: "Fazla tuttun", top üstten gider.
+24. Gol: "Gol!" yazısı, konfeti, file parlaması, sarsıntı, gol sayacı artar, bakiye 10 artar (3 saniyede bir). Top geri gelir.
+25. Direğe çarparsa "Direk!", kaleyi ıskalarsa "Aut".
+26. Şut türleri: 2 Plase (A/D basılıyken köşeye kıvrılır, sarı iz), 3 Füze (çok hızlı, kırmızı iz, isabeti düşük), 4 Aşırtma (yüksek yay).
+27. E: pas. Sarı mankenlere doğru bakarken pas mankene yönelir. Uzun basınca sert ve havadan gider.
+28. B: kanattan orta gelir. Yerde topun düşeceği yeri gösteren halka daralır ve yeşile döner. Boşluk ile zıplayıp kafa vur; doğru zamanda vurursan "Mükemmel!", gol olursa "Kafa golü!".
+29. Orta gelirken 5 seçip F (vole) ya da 6 seçip F (röveşata): top doğru yükseklikteyse vurur ve yavaş çekim oynar; değilse "Iska".
+30. N: topu önüne getirir.
+
 Animasyonlar kodla yazıldı ve hiç görülmeden ayarlandı. Bir eklem ters yöne dönüyorsa (örneğin diz öne bükülüyorsa) hangi harekette olduğunu söyle; `Poses.luau` içindeki açının işareti düzeltilir.
 
 Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.DataStoreName` değerini değiştir.
@@ -55,9 +71,10 @@ Kariyeri sıfırlamak için: Studio'da DataStore anahtarını sil ya da `Config.
 ## Bilinen sınırlar
 - Gövde, oyuncunun kendi Roblox avatarının insan oranlarına ölçeklenmiş halidir. Gerçekçi gövde için bir gövde paketinin kimlikleri `Config.Body.Parts` içine yazılmalı.
 - Saç, başa kaynaklı basit bir hacimdir. Yüz ve sakal seçimi kaydedilir ama görseli yoktur. Bunlar için model/görsel yüklenmesi gerekir.
-- Top henüz yok; şut ve pas şimdilik yalnızca animasyon ve efekt oynatır (5. adım).
-- `Config.Debug.UnlockAllActions` açık: bütün hareketler yetenek kilidine bakmadan denenebilir. Yayından önce kapatılacak.
-- Varsayılan Roblox zıplama butonu (telefonda) çalışmaz; zıplama "Zıpla" butonuyla yapılır.
+- Kaleci, rakip ve takım arkadaşı yok; kale boş (9. ve 10. adım). Çalım ve müdahalenin topa etkisi 6. ve 8. adımda gelir.
+- Top istemcide benzetilir (tek oyunculu maç). Ödüller sunucuda bekleme süresiyle sınırlanır.
+- Yetenek kilitleri yalnızca Studio'da kapalıdır (`Config.Debug.UnlockAllActionsInStudio`); yayınlanan oyunda her zaman çalışır.
+- Yüklenmiş animasyon dosyan olursa kimliğini `Config.Animations` içine yaz; o eylemde kod yerine o oynar.
 - Arma `Config.Assets.Crest` boşken göğüste kulüp kısaltmalı küçük kalkan çizilir.
 
 ## Belgeler

@@ -406,6 +406,51 @@ function CharacterService.BuildStudio()
 	for i = -9, 9 do
 		part(Vector3.new(0.5, 30, 0.2), CFrame.new(i * 4, 15, -21.4), if i % 2 == 0 then C.Yellow else C.Blue).Transparency = 0.55
 	end
+	-- Deneme sahası: kale, çizgiler, pas mankenleri
+	local T = Config.TestPitch
+	local white = Color3.fromRGB(245, 245, 245)
+	local function post(size: Vector3, cf: CFrame)
+		local p = part(size, cf, white)
+		p.Shape = Enum.PartType.Cylinder
+		p.Material = Enum.Material.Metal
+		return p
+	end
+	local gw, gh, gz = T.GoalHalfWidth, T.GoalHeight, T.GoalZ
+	post(Vector3.new(gh, 0.5, 0.5), CFrame.new(-gw, gh / 2, gz) * CFrame.Angles(0, 0, math.rad(90)))
+	post(Vector3.new(gh, 0.5, 0.5), CFrame.new(gw, gh / 2, gz) * CFrame.Angles(0, 0, math.rad(90)))
+	post(Vector3.new(gw * 2 + 0.5, 0.5, 0.5), CFrame.new(0, gh, gz))
+	local function net(size: Vector3, cf: CFrame)
+		local p = part(size, cf, white, Enum.Material.ForceField)
+		p.Name = "Net"
+		p.Transparency = 0.6
+		p.CanCollide = false
+		return p
+	end
+	net(Vector3.new(gw * 2, gh, 0.1), CFrame.new(0, gh / 2, gz + 5))
+	net(Vector3.new(0.1, gh, 5), CFrame.new(-gw, gh / 2, gz + 2.5))
+	net(Vector3.new(0.1, gh, 5), CFrame.new(gw, gh / 2, gz + 2.5))
+	net(Vector3.new(gw * 2, 0.1, 5), CFrame.new(0, gh, gz + 2.5))
+	local function line(size: Vector3, pos: Vector3)
+		local p = part(size, CFrame.new(pos), white)
+		p.CanCollide = false
+		p.Material = Enum.Material.SmoothPlastic
+		return p
+	end
+	line(Vector3.new(236, 0.04, 0.4), Vector3.new(0, 0, gz)) -- kale çizgisi
+	line(Vector3.new(132, 0.04, 0.4), Vector3.new(0, 0, gz - 54)) -- ceza sahası
+	line(Vector3.new(0.4, 0.04, 54), Vector3.new(-66, 0, gz - 27))
+	line(Vector3.new(0.4, 0.04, 54), Vector3.new(66, 0, gz - 27))
+	line(Vector3.new(60, 0.04, 0.4), Vector3.new(0, 0, gz - 18)) -- altı pas
+	line(Vector3.new(0.4, 0.04, 18), Vector3.new(-30, 0, gz - 9))
+	line(Vector3.new(0.4, 0.04, 18), Vector3.new(30, 0, gz - 9))
+	line(Vector3.new(1, 0.05, 1), Vector3.new(0, 0, gz - 36)) -- penaltı noktası
+	for i, x in ipairs({ -34, 0, 34 }) do
+		local d = part(Vector3.new(2, 5.6, 0.5), CFrame.new(x, 2.8, gz - 62 - (i % 2) * 14), C.Yellow)
+		d.Name = "PassTarget"
+		d.CanCollide = false
+		part(Vector3.new(1.3, 1.3, 0.5), CFrame.new(x, 6.2, gz - 62 - (i % 2) * 14), C.Navy).CanCollide = false
+	end
+
 	local function light(pos: Vector3, c: Color3, brightness: number)
 		local p = part(Vector3.new(1, 1, 1), CFrame.new(pos), c)
 		p.Transparency = 1
