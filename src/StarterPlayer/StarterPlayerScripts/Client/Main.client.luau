@@ -352,6 +352,8 @@ end
 
 -- Maç: lobi menüleri kapanır, maç bitince geri gelir
 local MatchController = require(script.Parent.Match.MatchController)
+local Stadium = require(ReplicatedStorage.Shared.Stadium)
+Stadium.Lobby()
 enterMatch = function()
 	if not state.data or not state.data.created then
 		return

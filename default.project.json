@@ -24,7 +24,7 @@
     },
     "Workspace": {
       "$className": "Workspace",
-      "$properties": { "StreamingEnabled": true }
+      "$properties": { "StreamingEnabled": false }
     },
     "Lighting": {
       "$className": "Lighting",

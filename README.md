@@ -2,6 +2,15 @@
 
 Roblox için tek oyunculu futbol kariyer oyunu. Fenerbahçe taraftar topluluğu için yapılıyor.
 
+## Tek tıkla açma
+
+`FenerKariyer.rbxlx` dosyasına çift tıkla; Roblox Studio açılır. Sonra **F5** (Play) ile oyna.
+Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 tools/build_rbxlx.py`
+
+- Dosya yalnızca kod içerir; saha, stat, karakter ve arayüz oyun başlayınca kodla kurulur.
+- Avatar R15 olmalı (Studio: Home > Game Settings > Avatar > R15). Yayınlanmamış dosyada kayıt bellekte tutulur.
+- Stat kulübün kademesine göre kurulur (6 kademe): `src/ReplicatedStorage/Shared/Stadium.luau`
+
 ## Çalıştırma
 1. [Rojo](https://rojo.space) 7 ve Roblox Studio'daki Rojo eklentisini kur.
 2. Bu klasörde `rojo serve` çalıştır, Studio'da eklentiden bağlan.

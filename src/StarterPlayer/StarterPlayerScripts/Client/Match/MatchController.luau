@@ -14,6 +14,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Stadium = require(ReplicatedStorage.Shared.Stadium)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Theme = require(ReplicatedStorage.UI.Theme)
 local UIMotion = require(ReplicatedStorage.UI.UIMotion)
@@ -352,6 +353,13 @@ local function onGoal(kind: string, side: string)
 	end
 	M.phase = "goal"
 	local scorer = Ball.LastTeam
+	Stadium.Cheer()
+	task.defer(function()
+		if M then
+			Stadium.Score(M.homeName, M.awayName, M.home, M.away, M.minute)
+			Stadium.Screen("GOL!", (if side == "front" then M.homeName else M.awayName) .. "  " .. tostring(M.minute) .. "'", nil, 6)
+		end
+	end)
 	-- kendi kalemize giren top rakibin, rakip kaleye giren bizim golümüzdür
 	local team = if side == "front" then "home" else "away"
 	if team == "home" then
@@ -610,6 +618,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 			PlayerController.SetMatch(nil, nil)
 			PlayerController.SetHud(false)
 			MatchAI.Clear()
+			Stadium.Clear()
 			Ball.SetPitch(Config.TestPitch)
 			if ui.root then
 				ui.root:Destroy()
@@ -696,6 +705,12 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> ())
 		awayName = "RKP",
 	}
 	Remotes.Get("MatchStart"):FireServer()
+	Stadium.Build(if data.career and data.career.atFenerbahce then 6 else data.club.tier, {
+		club = data.club.name,
+		abbr = data.club.abbr,
+		facilities = data.club.facilities,
+	})
+	Stadium.Score(M.homeName, M.awayName, 0, 0, 0)
 	Ball.SetPitch(P)
 	Ball.Init()
 	MatchAI.Start({

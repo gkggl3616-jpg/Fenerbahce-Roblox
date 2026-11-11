@@ -739,6 +739,7 @@ local rs = service("ReplicatedStorage")
 local shared = folder("Shared", rs)
 moduleNode("Config", SRC .. "ReplicatedStorage/Shared/Config.luau", shared)
 moduleNode("Kits", SRC .. "ReplicatedStorage/Shared/Kits.luau", shared)
+moduleNode("Stadium", SRC .. "ReplicatedStorage/Shared/Stadium.luau", shared)
 moduleNode("Remotes", SRC .. "ReplicatedStorage/Shared/Remotes.luau", shared)
 local uiF = folder("UI", rs)
 for _, n in ipairs({ "Theme", "UIMotion", "Components", "Forms" }) do

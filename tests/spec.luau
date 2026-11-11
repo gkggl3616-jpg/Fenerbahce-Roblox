@@ -833,6 +833,39 @@ check("röveşata akışı hatasız", true)
 PC.SetHud(false)
 frames(30)
 
+section("Stadyum (altı kademe kurulur, ışık ayarlanır, ekran ve seyirci çalışır)")
+do
+	local Stadium = require(__tree.Shared.Stadium)
+	local Lighting = game:GetService("Lighting")
+	local last = 0
+	for tier = 1, 6 do
+		local model = Stadium.Build(tier, { club = "Moda Gençlik", abbr = "MOD", facilities = { TribunEki = 1, Aydinlatma = 1 } })
+		local n, seats = 0, 0
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("BasePart") then
+				n += 1
+				if d.Name == "Seats" then
+					seats += 1
+				end
+			end
+		end
+		check("kademe " .. tier .. ": parça sayısı makul (" .. n .. ")", n > 80 and n < 2500)
+		check("kademe " .. tier .. ": tribün var (" .. seats .. ")", seats >= 2)
+		check("kademe " .. tier .. ": tribün önceki kademeden küçük değil", seats >= last)
+		last = seats
+		check("kademe " .. tier .. ": dev ekran yalnızca en büyük üç statta", Stadium.HasScreen() == (tier >= 4))
+		Stadium.Score("MOD", "RKP", 2, 1, 55)
+		Stadium.Screen("GOL!", "MOD 55'", nil, 1)
+		Stadium.Cheer()
+	end
+	check("gece maçında saha aydınlık (parlaklık " .. Lighting.Brightness .. ")", Lighting.Brightness >= 3)
+	Stadium.Clear()
+	check("stat kaldırıldı", workspace:FindFirstChild("FK_Stadium") == nil)
+	check("lobi ışığı gündüz", Lighting.ClockTime > 12 and Lighting.ClockTime < 16)
+	Stadium.Lobby()
+	check("lobi çevresi kuruldu", workspace:FindFirstChild("FK_LobbyWorld") ~= nil)
+end
+
 section("Maç akışı (kısaltılmış maç: santra, devre arası, maç sonu, ödül)")
 Config.Match.HalfSeconds = 20
 Config.Match.IntroTime = 1
