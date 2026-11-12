@@ -67,24 +67,45 @@ function Ball.Init()
 	p.Color = Color3.fromRGB(250, 250, 250)
 	p.Material = Enum.Material.SmoothPlastic
 	p.CastShadow = true
-	-- top deseni: altı yüze koyu beşgen izlenimi veren lekeler
-	for _, face in ipairs(Enum.NormalId:GetEnumItems()) do
-		local d = Instance.new("SurfaceGui")
-		d.Face = face
-		d.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
-		d.CanvasSize = Vector2.new(60, 60)
-		d.LightInfluence = 1
-		local f = Instance.new("Frame")
-		f.AnchorPoint = Vector2.new(0.5, 0.5)
-		f.Position = UDim2.fromScale(0.5, 0.5)
-		f.Size = UDim2.fromScale(0.42, 0.42)
-		f.BackgroundColor3 = C.Navy
-		f.BorderSizePixel = 0
-		f.Rotation = 18
-		local cr = Instance.new("UICorner")
-		cr.CornerRadius = UDim.new(0.3, 0)
-		cr.Parent = f
-		f.Parent = d
+	p.Parent = Workspace
+	-- top deseni: klasik futbol topundaki 12 koyu beşgenin yerine, yüzeye yapışık 12 koyu yama
+	-- (yirmi yüzlünün köşelerine dizilir; düz çıkartma gibi havada durmaz, topla birlikte döner)
+	local phi = (1 + math.sqrt(5)) / 2
+	local patch = B.Radius * 0.78
+	for _, v in ipairs({
+		Vector3.new(0, 1, phi),
+		Vector3.new(0, 1, -phi),
+		Vector3.new(0, -1, phi),
+		Vector3.new(0, -1, -phi),
+		Vector3.new(1, phi, 0),
+		Vector3.new(1, -phi, 0),
+		Vector3.new(-1, phi, 0),
+		Vector3.new(-1, -phi, 0),
+		Vector3.new(phi, 0, 1),
+		Vector3.new(phi, 0, -1),
+		Vector3.new(-phi, 0, 1),
+		Vector3.new(-phi, 0, -1),
+	}) do
+		local n = v.Unit
+		local d = Instance.new("Part")
+		d.Name = "Patch"
+		d.Size = Vector3.new(patch, B.Radius * 0.16, patch)
+		d.Color = C.Navy
+		d.Material = Enum.Material.SmoothPlastic
+		d.CanCollide = false
+		d.CanQuery = false
+		d.CanTouch = false
+		d.Massless = true
+		d.CastShadow = false
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = d
+		local at = p.Position + n * (B.Radius * 0.94)
+		d.CFrame = CFrame.lookAt(at, at + n) * CFrame.Angles(-math.pi / 2, 0, 0)
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = p
+		w.Part1 = d
+		w.Parent = d
 		d.Parent = p
 	end
 	local a0 = Instance.new("Attachment")

@@ -212,6 +212,7 @@ function MatchAI.Start(opts)
 	humanSlot = Config.FormationSlot[opts.position] or 11
 	order = { name = "Dengeli", strength = 1 }
 	lastCarrier = nil
+	mentality = { home = 0, away = 0 }
 	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
 	humanKeeper = humanSlot == 1
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
@@ -372,6 +373,48 @@ local function nearest(team: string?, point: Vector3, exclude: any?, noKeeper: b
 	return best, bd
 end
 
+-- Rakipler (insan oyuncu dahil) bir doğru parçasına ne kadar yakın? Pas ve şut yolunun açık olup olmadığını söyler.
+local function laneGap(from: Vector3, to: Vector3, oppTeam: string, ctx, skip: any?): number
+	local a, b = flat(from), flat(to)
+	local ab = b - a
+	local len2 = math.max(ab:Dot(ab), 0.01)
+	local gap = math.huge
+	local function test(p: Vector3)
+		local t = math.clamp((flat(p) - a):Dot(ab) / len2, 0.08, 1)
+		local dist = (flat(p) - (a + ab * t)).Magnitude
+		if dist < gap then
+			gap = dist
+		end
+	end
+	for _, bot in ipairs(bots) do
+		if bot.team == oppTeam and bot ~= skip and bot.state ~= "down" then
+			test(bot.pos)
+		end
+	end
+	if oppTeam == "home" and ctx and not humanKeeper then
+		test(ctx.playerPos)
+	end
+	return gap
+end
+
+local function keeperOf(team: string): any?
+	for _, bot in ipairs(bots) do
+		if bot.team == team and bot.keeper then
+			return bot
+		end
+	end
+	return nil
+end
+
+-- Skor ve dakikaya göre rakip takımın oyun anlayışı: gerideyse öne çıkar, öndeyse geri yaslanır
+local mentality = { home = 0, away = 0 }
+local botShot = false
+function MatchAI.SetScore(homeGoals: number, awayGoals: number, minute: number)
+	local diff = awayGoals - homeGoals
+	local late = math.clamp((minute - 45) / 45, 0, 1)
+	mentality.away = if diff < 0 then 8 + 16 * late elseif diff > 0 then -6 - 12 * late else 0
+end
+
 -- Topu hedefe yaklaşık hızla gönderir (yerçekimi telafili)
 local function kickTo(target: Vector3, speed: number, kind: string, team: string, loft: number?)
 	local pos = Ball.Position()
@@ -470,6 +513,9 @@ Ball.On("kick", function(kind, v)
 					local need = (Vector3.new(p.X, p.Y, line) - hands).Magnitude
 					local sk = skill[k.team]
 					local can = K.BaseReach + math.max(0, t - K.Reaction * (1.4 - sk * 0.6)) * K.DiveSpeed * (0.75 + sk * 0.4)
+					if botShot then
+						can = can * 1.7 + 1.5
+					end
 					local ok = need <= can and math.random() > K.ErrorChance * (1.6 - sk)
 					local side = if p.X >= k.pos.X then 1 else -1
 					plans[k] = {
@@ -569,7 +615,12 @@ local function carrierThink(bot, dt: number, ctx)
 	if threat and td < 9 then
 		local away = flat(bot.pos - threat.pos)
 		if away.Magnitude > 0.1 then
-			drib = (drib + Vector3.new(away.Unit.X * 0.8, 0, 0)).Unit
+			-- rakibin boş tarafına kır; kenar çizgisine sıkışma
+			local side = away.Unit.X
+			if math.abs(bot.pos.X) > P.MaxX - 14 then
+				side = if bot.pos.X > 0 then -1 else 1
+			end
+			drib = (drib + Vector3.new(side * (0.6 + sk * 0.5), 0, 0)).Unit
 		end
 	end
 	local spd = runSpeed(team, bot) * 0.92
@@ -584,24 +635,45 @@ local function carrierThink(bot, dt: number, ctx)
 	if clock < bot.decideAt then
 		return
 	end
-	bot.decideAt = clock + MC.DecideEvery
+	bot.decideAt = clock + MC.DecideEvery * (1.3 - sk * 0.6) -- becerikli oyuncu daha hızlı karar verir
 	local distGoal = toGoal.Magnitude
 
-	-- şut
+	-- şut: açı, şut yolu ve kalecinin yeri hesaba katılır; hedef kalecinin uzak köşesidir
 	if distGoal < MC.ShootRange and math.abs(bot.pos.X) < 75 then
-		local chance = if distGoal < 55 then 0.75 else 0.35
+		local keeper = keeperOf(opp)
+		local kx = if keeper then keeper.pos.X elseif opp == "home" and humanKeeper then ctx.playerPos.X else 0
+		local side = if kx > 0.5 then -1 elseif kx < -0.5 then 1 else (if math.random() < 0.5 then -1 else 1)
+		if math.random() > 0.25 + sk * 0.75 then
+			side = if math.random() < 0.5 then -1 else 1 -- az becerikli oyuncu köşe seçemez
+		end
+		local aimX = side * (P.GoalHalfWidth - 2.6 - (1 - sk) * 4) -- az becerikli oyuncu köşeyi tam bulamaz
+		local gap = laneGap(bot.pos, Vector3.new(aimX, 0, goal.Z), opp, ctx, keeper)
+		local wideAngle = math.abs(bot.pos.X) < 22 + distGoal * 0.85
+		local chance = if distGoal < 40 then 0.75 elseif distGoal < 60 then 0.28 else 0.06
+		if gap < 3.2 then
+			chance *= 0.3 -- önü kapalı
+		end
+		if not wideAngle then
+			chance *= 0.3 -- dar açı: pas ara
+		end
+		if pressure < 6 and distGoal < 65 then
+			chance += 0.15 -- sıkıştı: beklemeden vur
+		end
 		if math.random() < chance then
-			local err = (1 - sk) * 7
+			-- en iyi oyuncu bile her şutu köşeye koyamaz; uzaktan şut daha çok sapar
+			local err = 3 + (1 - sk) * 6 + distGoal * 0.06
 			local target = Vector3.new(
-				(math.random() - 0.5) * 2 * (P.GoalHalfWidth - 1.5) + (math.random() - 0.5) * err,
-				1 + math.random() * 5.5 + math.random() * err * 0.5,
+				math.clamp(aimX + (math.random() - 0.5) * err * 2, -P.GoalHalfWidth - err, P.GoalHalfWidth + err),
+				1 + math.random() * 4.5 + math.random() * err * 0.6,
 				goal.Z + d
 			)
 			bot.animator:Play("Shoot")
 			local b = bot
 			task.delay(0.3, function()
 				if b.model.Parent and flat(Ball.Position() - b.pos).Magnitude < 5 and not Ball.InNet() then
-					kickTo(target, 88 + sk * 34, "Shoot", team)
+					botShot = true -- kaleci, botların şutuna karşı daha hazırlıklıdır (maç skoru makul kalsın)
+					kickTo(target, 72 + sk * 30, "Shoot", team)
+					botShot = false
 					fire("shot", team)
 				end
 			end)
@@ -610,34 +682,55 @@ local function carrierThink(bot, dt: number, ctx)
 		end
 	end
 
-	-- pas: baskı altındaysa ya da ara sıra
-	if pressure < 8 or math.random() < 0.22 then
+	-- pas: baskı altındaysa ya da iyi bir fırsat varsa. Pas yolu kapalıysa o pas seçilmez;
+	-- koşan arkadaşa topu önüne, forvete ara pası atılır.
+	local pressured = pressure < 8
+	if pressured or math.random() < 0.22 + sk * 0.2 then
 		local best, bestScore, bestPos = nil, -math.huge, nil
-		local function consider(target: any, pos: Vector3)
-			local to = flat(pos - bot.pos)
-			local dist = to.Magnitude
+		local function consider(target: any, pos: Vector3, vel: Vector3?, runner: boolean)
+			local dist = flat(pos - bot.pos).Magnitude
 			if dist < MC.PassMin or dist > MC.PassMax then
 				return
 			end
-			local forward = (pos.Z - bot.pos.Z) * d
-			local _, open = nearest(opp, pos, nil, true)
-			if opp == "home" then
-				open = math.min(open, flat(ctx.playerPos - pos).Magnitude)
+			-- top varana kadar arkadaşın gideceği yer; forvete biraz daha öne (ara pası)
+			local lead = pos + (vel or Vector3.zero) * (dist / 75) * sk
+			if runner then
+				lead += Vector3.new(0, 0, d * (4 + 10 * sk))
 			end
-			local score = forward * 0.9 + math.min(open, 20) * 1.6 - dist * 0.25 + math.random() * 14
+			lead = Vector3.new(math.clamp(lead.X, P.MinX + 4, P.MaxX - 4), pos.Y, math.clamp(lead.Z, P.MinZ + 6, P.MaxZ - 6))
+			local forward = (lead.Z - bot.pos.Z) * d
+			local _, open = nearest(opp, lead, nil, true)
+			if opp == "home" then
+				open = math.min(open, flat(ctx.playerPos - lead).Magnitude)
+			end
+			local gap = laneGap(ballPos, lead, opp, ctx, nil)
+			local score = forward * 0.9 + math.min(open, 20) * 1.6 - dist * 0.25 + math.random() * 14 * (1.3 - sk)
+			if gap < 3 + dist * 0.04 then
+				score -= 70 * (0.3 + sk) -- pas yolu kapalı: becerikli oyuncu bunu görür
+			end
 			if score > bestScore then
-				best, bestScore, bestPos = target, score, pos
+				best, bestScore, bestPos = target, score, lead
 			end
 		end
 		for _, mate in ipairs(bots) do
 			if mate.team == team and mate ~= bot and not mate.keeper and mate.state ~= "down" then
-				consider(mate, mate.pos)
+				consider(mate, mate.pos, mate.dir * mate.speed, mate.slot >= 10)
 			end
 		end
 		if team == "home" and not humanKeeper then
-			consider("human", ctx.playerPos)
+			consider("human", ctx.playerPos, nil, false)
 		end
-		if best and bestPos then
+		-- baskı yokken yalnızca gerçekten iyi pas atılır; yoksa top sürmeye devam
+		if best and bestPos and (pressured or bestScore > 18) then
+			local ownThird = (bot.pos.Z - (if team == "home" then P.MinZ else P.MaxZ)) * d < LEN * 0.3
+			if pressured and bestScore < -25 and ownThird then
+				-- güvenli pas yok ve kendi sahamızdayız: topu uzaklaştır
+				bot.animator:Play("Shoot")
+				kickTo(Vector3.new((if bot.pos.X > 0 then 1 else -1) * (P.MaxX - 20), 0, bot.pos.Z + d * 150), 78, "Clear", team, 1.5)
+				bot.decideAt = clock + 0.9
+				bot.cd = 0.6
+				return
+			end
 			local dist = flat(bestPos - bot.pos).Magnitude
 			local err = (1 - sk) * 0.12
 			local dir = CFrame.Angles(0, (math.random() - 0.5) * 2 * err, 0):VectorToWorldSpace(flat(bestPos - ballPos).Unit)
@@ -791,6 +884,7 @@ function MatchAI.Update(dt: number, ctx)
 			-- dizilişteki yer: top ilerledikçe takım kayar
 			local shift = math.clamp((ballPos.Z - MID_Z) * 0.55, -110, 110)
 			local push = if possession == team then 14 * d else -10 * d
+			push += mentality[team] * d
 			if team == "home" then
 				push += MatchAI.OrderPush() * d
 			end
@@ -799,6 +893,32 @@ function MatchAI.Update(dt: number, ctx)
 			-- hücumda forvetler boşa kaçar
 			if possession == team and bot.slot >= (if team == "home" and order.name == "Atak" then 6 else 10) then
 				target += Vector3.new(math.sin(clock * 0.9 + bot.slot) * 10, 0, d * 12)
+			end
+			local sk = skill[team]
+			local oppTeam = if team == "home" then "away" else "home"
+			if possession ~= team and bot.slot <= 9 then
+				-- adam tutma: bölgesine giren rakibi, kale ile rakip arasında kalarak karşılar
+				local mark, md = nearest(oppTeam, target, nil, true)
+				local markPos = mark and mark.pos
+				if oppTeam == "home" and not humanKeeper then
+					local hd = flat(ctx.playerPos - target).Magnitude
+					if hd < md then
+						markPos, md = ctx.playerPos, hd
+					end
+				end
+				if markPos and md < (if bot.slot <= 5 then 46 else 30) then
+					local goalSide = Vector3.new(markPos.X * 0.92, 0, markPos.Z - d * 5)
+					target = target:Lerp(goalSide, 0.3 + 0.5 * sk)
+				end
+			elseif possession == team then
+				-- destek: yakındaki rakipten uzaklaşıp pas açısı ver
+				local near, nd = nearest(oppTeam, bot.pos, nil, true)
+				if near and nd < 10 then
+					local away = flat(bot.pos - near.pos)
+					if away.Magnitude > 0.1 then
+						target += away.Unit * (4 + 6 * sk)
+					end
+				end
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))
 			local jog = runSpeed(team, bot) * (if flat(target - bot.pos).Magnitude > 18 then 1 else 0.7)

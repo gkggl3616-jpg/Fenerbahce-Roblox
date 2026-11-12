@@ -159,6 +159,7 @@ end
 --------------------------------------------------------------------------------
 local SkillTree = require(script.Parent.Screens.SkillTree)
 local CrestDesigner = require(script.Parent.Screens.CrestDesigner)
+local League = require(script.Parent.Screens.League)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -251,7 +252,11 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Biçim, desen, renk, simge")
-	add("Sıralama", "Secondary", "Dünya sıralaması için önce bir maç oyna.", nil, "Dünya genelinde yerin")
+	add("Puan durumu", "Ghost", nil, function()
+		League.Open(gui, function()
+			return state.data
+		end)
+	end, "Lig tablosu ve lig atlama çizgisi")
 
 	-- Görevler (sağ)
 	local tasks, tc = Components.Panel({
@@ -387,6 +392,7 @@ enterMatch = function()
 	end
 	SkillTree.Close()
 	CrestDesigner.Close()
+	League.Close()
 	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
 	local fixture = Squads.Fixture(state.data)
 	local function back()

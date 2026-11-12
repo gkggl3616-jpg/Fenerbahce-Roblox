@@ -260,12 +260,13 @@ Config.CaptainBandLevel = 10
 Config.Body = {
 	HeightScaleMin = 0.94,
 	HeightScaleMax = 1.1,
-	BodyTypeScale = 1, -- 1 = insan oranları
-	ProportionScale = 0.2,
-	HeadScale = 0.95,
+	BodyTypeScale = 0.5, -- 0 klasik kısa gövde, 1 uzun ince gövde; ortası sporcu oranı verir
+	ProportionScale = 0.25,
+	HeadScale = 1,
 	Width = { Ince = 0.82, Atletik = 0.92, Guclu = 1.03 },
-	-- Topluluk gerçekçi bir gövde paketi yüklerse kimlikleri buraya yazılır (0 = oyuncunun kendi avatarı)
-	Parts = { Head = 0, Torso = 0, LeftArm = 0, RightArm = 0, LeftLeg = 0, RightLeg = 0 },
+	-- Gövde paketi: Roblox'un kendi "Man" gövdesi (köşeli kutu yerine omuzlu, belli insan gövdesi).
+	-- Yüklenemezse oyun kendiliğinden standart köşeli gövdeye döner. 0 = standart gövde.
+	Parts = { Head = 0, Torso = 86500008, RightArm = 86500036, LeftArm = 86500054, LeftLeg = 86500064, RightLeg = 86500078 },
 }
 
 Config.Name = { Min = 3, Max = 16 }

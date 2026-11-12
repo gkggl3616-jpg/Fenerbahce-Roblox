@@ -157,29 +157,46 @@ local function color(character: Model, names: { string }, c: Color3)
 	end
 end
 
--- Saç: baş üstüne kaynaklı basit hacim. Gerçek saç aksesuarları yüklenince burası değişir.
-local HAIR = {
-	[1] = { 1.04, 0.5, 0.2 }, -- Sıfır: ince kabuk
-	[2] = { 1.1, 0.62, 0.24 }, -- Kısa
-	[3] = { 1.16, 0.8, 0.3 }, -- Hacimli
-	[4] = { 1.2, 0.95, 0.12 }, -- Uzun
-	[5] = { 1.28, 0.9, 0.3 }, -- Kıvırcık
-	[6] = { 1.1, 0.62, 0.24 }, -- Topuz (ek top ile)
-	[7] = { 0.92, 0.7, 0.34 }, -- Yanlar kısa
-}
+-- Yuvarlak hacim: her ölçüde elips çizen küre ağı (saç, burun, kulak için)
+local function blob(character: Model, to: BasePart, size: Vector3, offset: CFrame, c: Color3): BasePart
+	local p = weldPart(character, to, size, offset, c)
+	local m = Instance.new("SpecialMesh")
+	m.MeshType = Enum.MeshType.Sphere
+	m.Parent = p
+	return p
+end
+
+-- Saç: başın ölçüsüne göre birkaç yuvarlak hacimden kurulur (ön = -Z, yüzün olduğu taraf)
 local function hair(character: Model, head: BasePart, style: number, c: Color3)
-	local h = HAIR[style]
-	if not h then
-		return -- Kel
-	end
 	local s = head.Size
-	local w = math.max(s.X, s.Z)
-	local cap =
-		weldPart(character, head, Vector3.new(w * h[1], s.Y * h[2], w * h[1]), CFrame.new(0, s.Y * h[3], w * 0.06), c, Enum.PartType.Ball)
-	cap.Material = Enum.Material.Sand
-	if style == 6 then
-		weldPart(character, head, Vector3.new(w * 0.45, w * 0.45, w * 0.45), CFrame.new(0, s.Y * 0.45, w * 0.5), c, Enum.PartType.Ball).Material =
-			Enum.Material.Sand
+	local w, h = math.max(s.X, s.Z), s.Y
+	local function lock(sx: number, sy: number, sz: number, x: number, y: number, z: number): BasePart
+		return blob(character, head, Vector3.new(w * sx, h * sy, w * sz), CFrame.new(w * x, h * y, w * z), c)
+	end
+	if style == 1 then
+		lock(1.03, 0.62, 1.03, 0, 0.24, 0.03).Transparency = 0.2 -- sıfıra yakın
+	elseif style == 2 then
+		lock(1.08, 0.66, 1.1, 0, 0.27, 0.05) -- kısa
+		lock(0.9, 0.3, 0.5, 0, 0.42, -0.3) -- perçem
+	elseif style == 3 then
+		lock(1.12, 0.8, 1.12, 0, 0.3, 0.05) -- hacimli
+		lock(0.8, 0.5, 0.6, 0, 0.52, -0.26)
+	elseif style == 4 then
+		lock(1.1, 0.7, 1.12, 0, 0.27, 0.06) -- uzun: enseye iner
+		lock(1.06, 1.0, 0.5, 0, -0.1, 0.38)
+	elseif style == 5 then
+		lock(1.1, 0.7, 1.1, 0, 0.28, 0.05) -- kıvırcık: çevrede bukleler
+		for i = 0, 7 do
+			local a = i / 8 * math.pi * 2
+			lock(0.42, 0.34, 0.42, math.sin(a) * 0.42, 0.44, 0.04 + math.cos(a) * 0.42)
+		end
+		lock(0.5, 0.36, 0.5, 0, 0.6, 0.02)
+	elseif style == 6 then
+		lock(1.08, 0.66, 1.1, 0, 0.27, 0.05) -- topuz
+		lock(0.44, 0.4, 0.44, 0, 0.5, 0.44)
+	elseif style == 7 then
+		lock(1.03, 0.56, 1.03, 0, 0.2, 0.03).Transparency = 0.25 -- yanlar kısa
+		lock(0.56, 0.5, 1.02, 0, 0.47, 0.0) -- üstte uzun şerit
 	end
 end
 
@@ -269,6 +286,15 @@ local function dress(character: Model?, look)
 	local ok = pcall(function()
 		hum:ApplyDescription(desc)
 	end)
+	if not ok then
+		-- gövde paketi yüklenemedi: standart gövdeyle yeniden dene
+		for key in pairs(B.Parts) do
+			(desc :: any)[key] = 0
+		end
+		ok = pcall(function()
+			hum:ApplyDescription(desc)
+		end)
+	end
 	if not ok or not character.Parent then
 		return
 	end
@@ -305,6 +331,19 @@ local function dress(character: Model?, look)
 	local head = character:FindFirstChild("Head")
 	if head and head:IsA("BasePart") then
 		paintFace(head, a.face or 1, a.beard or 0, hex(a.hairColor), skin)
+		-- burun ve kulaklar (yüze derinlik verir)
+		local hs = head.Size
+		local hw = math.max(hs.X, hs.Z)
+		blob(
+			character,
+			head,
+			Vector3.new(hw * 0.15, hs.Y * 0.2, hw * 0.16),
+			CFrame.new(0, -hs.Y * 0.04, -hw * 0.5),
+			skin:Lerp(Color3.new(0, 0, 0), 0.06)
+		)
+		for _, sx in ipairs({ -1, 1 }) do
+			blob(character, head, Vector3.new(hw * 0.1, hs.Y * 0.22, hw * 0.18), CFrame.new(sx * hw * 0.51, hs.Y * 0.02, hw * 0.02), skin)
+		end
 		hair(character, head, a.hairStyle, hex(a.hairColor))
 		if acc.SacBandi then
 			local s = head.Size

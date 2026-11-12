@@ -217,6 +217,55 @@ function Squads.Opponent(tier: number, seasonNumber: number, played: number)
 	return list[1 + (played + seasonNumber * 2) % #list]
 end
 
+--[[ Puan durumu. Oyuncunun kulübünün puanı gerçek sonuçlardan gelir; diğer kulüplerin sonuçları
+	sezona ve kulübe bağlı tohumla üretilir (aynı sezon hep aynı tabloyu verir).
+	Döner: { { club, played, won, drawn, lost, points, mine }, ... } puana göre sıralı ]]
+function Squads.Table(data)
+	local tierId = if data.career and data.career.atFenerbahce then 6 else data.club.tier
+	local season = data.club.season or { number = 1, played = 0, points = 0 }
+	local rows = {}
+	for _, club in ipairs(Squads.Clubs[math.clamp(tierId, 1, #Squads.Clubs)]) do
+		local R = rng(hash(club.Name) + season.number * 131)
+		local strength = 0.3 + R() * 0.3 -- kulübün o sezonki formu
+		local won, drawn, lost = 0, 0, 0
+		for _ = 1, season.played do
+			local x = R()
+			if x < strength then
+				won += 1
+			elseif x < strength + 0.26 then
+				drawn += 1
+			else
+				lost += 1
+			end
+		end
+		table.insert(rows, { club = club, played = season.played, won = won, drawn = drawn, lost = lost, points = won * 3 + drawn })
+	end
+	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
+	table.insert(rows, {
+		club = {
+			Name = homeName,
+			Abbr = if tierId == 6 then "FB" elseif data.club.abbr ~= "" then data.club.abbr else "EV",
+			A = Config.Colors.Yellow,
+			B = Config.Colors.Navy,
+			Crest = data.club.crestShape or 1,
+			CrestSpec = if tierId == 6 then nil else data.club.crest,
+		},
+		played = season.played,
+		points = season.points or 0,
+		mine = true,
+	})
+	table.sort(rows, function(x, y)
+		if x.points ~= y.points then
+			return x.points > y.points
+		end
+		if x.mine ~= y.mine then
+			return x.mine == true -- eşitlikte oyuncunun kulübü üstte
+		end
+		return x.club.Name < y.club.Name
+	end)
+	return rows, Config.Tiers[tierId].League, season.number
+end
+
 -- Maç eşleşmesi: iki kulüp, kadrolar ve teknik direktörler
 function Squads.Fixture(data)
 	local tierId = if data.career and data.career.atFenerbahce then 6 else data.club.tier

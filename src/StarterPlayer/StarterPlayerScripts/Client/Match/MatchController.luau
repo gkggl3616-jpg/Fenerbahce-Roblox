@@ -949,6 +949,7 @@ local function update(dt: number, ctx)
 		if ui.clock then
 			ui.clock.Text = M.minute .. "'"
 		end
+		MatchAI.SetScore(M.home, M.away, M.minute) -- rakip, skora ve dakikaya göre oyununu ayarlar
 		if M.elapsed >= half then
 			if M.half == 1 then
 				M.phase = "halftime"

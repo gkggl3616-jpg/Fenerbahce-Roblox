@@ -16,6 +16,9 @@ Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 
 - Takım emirleri: maçta **T** ile Dengeli > Atak > Defans > Pres (sol paneldeki düğmelerle de seçilir). Topsuzken **sağ tık** "pas ver!" çağrısıdır. Kaptanlık bandı (seviye 10) emirleri tam etkili yapar.
 - Stadyum: kulübün kademesine göre kurulur (6 kademe), en büyük üç statta dev ekran hakem kararlarını da gösterir: `src/ReplicatedStorage/Shared/Stadium.luau`
 - Kulüp arması: lobi > "Kulüp arması". Biçim, desen, simge ve iki renk seçilir (`Shared/Crest.luau`). Forma göğsünde, kadro ekranında ve takım arkadaşlarının formasında görünür; rakiplerin armaları hazırdır.
+- Karakter gövdesi: Roblox'un "Man" gövde paketi (`Config.Body.Parts`); yüklenemezse standart köşeli gövdeye döner. Saç modelleri, burun ve kulak yuvarlak hacimlerle kurulur.
+- Botlar: şutta kalecinin uzak köşesi, kapalı pas yolundan kaçınma, koşan oyuncunun önüne ve ara pası, adam tutma, baskı altında topu uzaklaştırma; rakip skora ve dakikaya göre öne çıkar ya da geri yaslanır. Maç başına gol sayısı ölçülerek ayarlandı (beceriye göre 2-6).
+- Puan durumu: lobi > "Puan durumu" (`Screens/League.luau`). Diğer kulüplerin sonuçları sezona bağlı tohumla üretilir.
 - Maç öncesi kadro ekranı: iki kulüp, armalar, teknik direktörler, 11'ler ve oyuncu özellikleri (`Shared/Squads.luau`).
 
 ## Çalıştırma

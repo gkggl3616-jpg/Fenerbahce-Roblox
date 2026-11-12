@@ -924,6 +924,11 @@ do
 	check("lobi çevresi kuruldu", workspace:FindFirstChild("FK_LobbyWorld") ~= nil)
 end
 
+local function __snapIf(name, gui)
+	if __snap then
+		__snap(name, gui)
+	end
+end
 section("Yetenek ağacı, kadrolar ve maç öncesi ekranı")
 do
 	local Poses = require(__tree.Anim.Poses)
@@ -1008,6 +1013,28 @@ do
 	check("oyuncunun tasarımı kendi kulübünde kullanılır", mine.shape == 4 and mine.a == CrestM.Colors[6])
 	d.club.crest = nil
 
+	-- puan durumu
+	d.club.season = { number = 2, played = 6, points = 13 }
+	local tableRows, leagueName = Squads.Table(d)
+	check("puan durumunda 6 kulüp var", #tableRows == 6, #tableRows)
+	local sorted, mineRow, plausible = true, nil, true
+	for i, row in ipairs(tableRows) do
+		if i > 1 and tableRows[i - 1].points < row.points then
+			sorted = false
+		end
+		if row.mine then
+			mineRow = row
+		else
+			plausible = plausible and row.won + row.drawn + row.lost == 6 and row.points == row.won * 3 + row.drawn
+		end
+	end
+	check("tablo puana göre sıralı", sorted)
+	check("oyuncunun kulübü gerçek puanıyla tabloda", mineRow ~= nil and mineRow.points == 13)
+	check("diğer kulüplerin sonuçları tutarlı", plausible)
+	check("lig adı gelir", leagueName == Config.Tiers[1].League, leagueName)
+	check("aynı sezon aynı tabloyu verir", Squads.Table(d)[1].club.Name == tableRows[1].club.Name)
+	d.club.season = { number = 1, played = 0, points = 0 }
+
 	local sg = Instance.new("ScreenGui")
 	local Lineup = require(__tree.Screens.Lineup)
 	local started = false
@@ -1058,6 +1085,28 @@ do
 	SkillTree.Refresh()
 	SkillTree.Close()
 	frames(30)
+
+	local LeagueScreen = require(__tree.Screens.League)
+	d.club.season = { number = 1, played = 4, points = 7 }
+	LeagueScreen.Open(sg, function()
+		return d
+	end)
+	local lp = sg:FindFirstChild("League")
+	check("puan durumu ekranı açıldı", lp ~= nil)
+	local mineRows, otherRows = 0, 0
+	for _, t in ipairs(lp:GetDescendants()) do
+		if t.Name == "Mine" then
+			mineRows += 1
+		elseif t.Name == "Row" then
+			otherRows += 1
+		end
+	end
+	check("tabloda 5 rakip ve oyuncunun satırı var", mineRows == 1 and otherRows == 5, mineRows .. "/" .. otherRows)
+	frames(60)
+	__snapIf("lig", sg)
+	LeagueScreen.Close()
+	frames(30)
+	d.club.season = { number = 1, played = 0, points = 0 }
 
 	local Designer = require(__tree.Screens.CrestDesigner)
 	Designer.Open(sg, function()
