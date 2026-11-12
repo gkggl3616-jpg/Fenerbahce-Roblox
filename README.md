@@ -11,6 +11,8 @@ Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 
 - Avatar R15 olmalı (Studio: Home > Game Settings > Avatar > R15). Yayınlanmamış dosyada kayıt bellekte tutulur.
 - Herkes aynı varsayılan gövdeyle oynar; oyuncunun kendi Roblox avatarı yüklenmez.
 - Yetenek ağacı: lobi > "Yetenek ağacı". Aynı tuş, zincirde açılan en üst hareketi oynatır (Q çalım, Boşluk hava, C müdahale, V blok).
+- PC kontrolleri: WASD koş, Shift sprint, **sol tık** şut (top sende değilse müdahale), **sağ tık** pas (topsuzken top iste), **Boşluk** çalım (topsuzken kafa). Eski tuşlar (F, E, Q, C, V) da çalışır.
+- Hakem: düdük, faul, sarı/kırmızı kart (ikinci sarı = kırmızı), serbest vuruş (baraj 9,15 m), ceza sahasında penaltı. Düdük sesi için `Config.Assets.Whistle` alanına ses kimliği yazılabilir; boşsa yedek ses çalar. Ofsayt ve elle oynama yok.
 - Maç öncesi kadro ekranı: iki kulüp, armalar, teknik direktörler, 11'ler ve oyuncu özellikleri (`Shared/Squads.luau`).
 
 ## Çalıştırma

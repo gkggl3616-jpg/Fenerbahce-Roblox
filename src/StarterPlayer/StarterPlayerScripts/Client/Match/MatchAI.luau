@@ -32,7 +32,7 @@ local frozenUntil = 0
 local skill = { home = 0.4, away = 0.4 }
 local humanSlot = 11
 local humanKeeper = false
-local listeners = { steal = {}, save = {}, shot = {}, telegraph = {} }
+local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {} }
 local plans: { [any]: any } = {} -- kaleci -> kurtarış planı
 local stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 
@@ -235,6 +235,57 @@ function MatchAI.ResetPositions()
 	plans = {}
 end
 
+-- Kırmızı kart: oyuncu sahadan çıkar
+function MatchAI.SendOff(bot)
+	local i = table.find(bots, bot)
+	if i then
+		table.remove(bots, i)
+		bot.animator:Destroy()
+		bot.model:Destroy()
+	end
+end
+
+--[[ Duran top düzeni. spot: topun yeri, team: vuruşu kullanan takım.
+	Rakipler 9,15 m (28 stud) açılır; penaltıda kaleciler dışında herkes ceza sahasının dışına çıkar.
+	humanTakes: vuruşu oyuncu kullanacaksa yapay zeka topun başına geçmez. ]]
+function MatchAI.SetPiece(spot: Vector3, team: string, penalty: boolean, humanTakes: boolean)
+	local d = dirOf(team)
+	local taker, best = nil, math.huge
+	for _, bot in ipairs(bots) do
+		if not bot.keeper then
+			if penalty then
+				-- ceza sahası dışı: topun en az 30 stud gerisi, yanlara dağılmış
+				local x = (bot.slot - 6) * 16
+				bot.pos = Vector3.new(x, P.GroundY, spot.Z - d * (30 + (bot.slot % 3) * 6))
+			elseif bot.team ~= team then
+				local away = flat(bot.pos - spot)
+				if away.Magnitude < 28 then
+					local dir = if away.Magnitude > 0.5 then away.Unit else Vector3.new(0, 0, d)
+					bot.pos = Vector3.new(spot.X + dir.X * 28, P.GroundY, spot.Z + dir.Z * 28)
+				end
+			end
+			bot.pos = Vector3.new(math.clamp(bot.pos.X, P.MinX + 2, P.MaxX - 2), P.GroundY, math.clamp(bot.pos.Z, P.MinZ + 2, P.MaxZ - 2))
+			bot.state = "play"
+			bot.speed = 0
+			bot.cd = 1
+			bot.ring.Transparency = 1
+			if bot.team == team then
+				local dist = flat(bot.pos - spot).Magnitude
+				if dist < best then
+					taker, best = bot, dist
+				end
+			end
+		end
+		place(bot)
+	end
+	if taker and not humanTakes then
+		taker.pos = Vector3.new(spot.X, P.GroundY, spot.Z - d * 3)
+		taker.dir = Vector3.new(0, 0, d)
+		place(taker)
+	end
+	plans = {}
+end
+
 function MatchAI.Freeze(seconds: number)
 	frozenUntil = clock + seconds
 end
@@ -311,6 +362,7 @@ function MatchAI.Tackle(playerPos: Vector3, look: Vector3, sliding: boolean): st
 	end
 	if bot and d < (if sliding then D.FoulRange + 1.4 else D.FoulRange) then
 		local fromBehind = bot.dir:Dot(flat(look).Unit) > 0.45
+		MatchAI.LastFoul = { bot = bot, fromBehind = fromBehind, sliding = sliding, pos = bot.pos }
 		bot.state = "down"
 		bot.t = 1.4
 		bot.animator:Play("Stagger")
@@ -626,6 +678,10 @@ function MatchAI.Update(dt: number, ctx)
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(bot.dir.X * 14, 0, d * 20))
 					fire("steal")
+				elseif live and flat(ctx.playerPos - bot.pos).Magnitude < 4.2 and math.random() < 0.4 then
+					-- topu kaçırıp oyuncuya girdi: faul
+					local r = math.random()
+					fire("foul", bot, if r < 0.05 then "violent" elseif r < 0.3 then "reckless" else "careless", "home", ctx.playerPos)
 				end
 			end
 		elseif bot == carrier and live then
@@ -658,6 +714,12 @@ function MatchAI.Update(dt: number, ctx)
 					carrier.animator:Play("Stagger")
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(0, 0, d * 12))
+				elseif math.random() < 0.12 then
+					-- botlar arası faul
+					carrier.state = "down"
+					carrier.t = 1.2
+					carrier.animator:Play("Stagger")
+					fire("foul", bot, if math.random() < 0.22 then "reckless" else "careless", carrier.team, carrier.pos)
 				end
 			elseif low and dBall < 2.8 and live and Ball.Speed() >= 60 and Ball.SinceKick() > 0.2 then
 				-- hızlı gelen topu kontrol et

@@ -361,6 +361,81 @@ local function doJump()
 	end
 end
 
+--------------------------------------------------------------------------------
+-- Basit kontrol: fare + boşluk. Aynı tuş, topun sende olup olmamasına göre iş değiştirir.
+--   Sol tık  : top sendeyse şut (basılı tut, bırak) · değilse müdahale · kaleciysen plonjon
+--   Sağ tık  : top sendeyse pas · değilse top iste
+--   Boşluk   : top sendeyse çalım · değilse zıpla / kafa
+--------------------------------------------------------------------------------
+local function ballInfo(): (number, number)
+	local hrp = state.hrp
+	if not hrp then
+		return math.huge, 0
+	end
+	local bp = Ball.Position()
+	local feet = hrp.Position - Vector3.new(0, 3, 0)
+	return Vector3.new(bp.X - feet.X, 0, bp.Z - feet.Z).Magnitude, bp.Y - feet.Y
+end
+local function hasBall(): boolean
+	local dist, height = ballInfo()
+	return dist < SH.Reach + 1.5 and height < 3
+end
+local function isKeeper(): boolean
+	local data = state.getData and state.getData()
+	return matchApi ~= nil and data ~= nil and data.position == "Kaleci"
+end
+local primaryShooting = false
+local function primaryDown()
+	if not state.hud then
+		return
+	end
+	local dist, height = ballInfo()
+	if isKeeper() and not hasBall() then
+		-- topun geldiği yana uzan
+		local hrp = state.hrp
+		if hrp then
+			state.lastMirror = (Ball.Position() - hrp.Position):Dot(hrp.CFrame.RightVector) < 0
+			play("Plonjon", { Mirror = state.lastMirror })
+		end
+	elseif hasBall() then
+		primaryShooting = true
+		shootDown()
+	elseif dist < 9 and height >= 3 then
+		-- havadaki top: açıksa gelişine vur, değilse kafa
+		if unlocked("Vole") then
+			play(best({ "Vole", "Rovesata" }))
+		else
+			doJump()
+		end
+	else
+		doTackle()
+	end
+end
+local function primaryUp()
+	if primaryShooting then
+		primaryShooting = false
+		shootUp()
+	end
+end
+local function secondary()
+	if not state.hud then
+		return
+	end
+	if hasBall() then
+		state.passPower = 0.4
+		play("Pass")
+	else
+		play("TopIste")
+	end
+end
+local function contextSpace()
+	if hasBall() then
+		doDribble()
+	else
+		doJump()
+	end
+end
+
 local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Shoot] = shootDown,
 	[Config.Keys.Pass] = passDown,
@@ -370,7 +445,7 @@ local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Special] = function()
 		play("VucutCalimi", { Mirror = math.random() < 0.5 }) -- hızlı, sade çalım her zaman elde
 	end,
-	[Config.Keys.Jump] = doJump,
+	[Config.Keys.Jump] = contextSpace,
 	[Config.Keys.Tackle] = doTackle,
 	[Enum.KeyCode.V] = doBlock,
 	[Config.Keys.Celebrate] = doCelebrate,
@@ -502,13 +577,17 @@ local function onEvent(event: string, action: string)
 					Remotes.Get("TrainingGoal"):FireServer("Tackle")
 				end
 			elseif result == "foul" then
-				banner("Faul!", C.Bad)
+				if not matchApi then
+					banner("Faul!", C.Bad)
+				end
 				UIMotion.Sound("ErrorSound")
 				shake(0.5)
 			elseif result == "card" then
 				UIMotion.Sound("ErrorSound")
 				shake(0.7)
-				if state.yellow then
+				if matchApi then
+					-- maçta kararı hakem verir (MatchController)
+				elseif state.yellow then
 					state.yellow = false
 					showCard(C.Bad, "Kırmızı kart!")
 					if matchApi then
@@ -1010,15 +1089,14 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		hp.Parent = root
 		ui.keysPanel = hp
 		local lines = {
-			{ "Shift", "Sprint" },
-			{ "F", "Şut: basılı tut, yeşilde bırak" },
-			{ "E", "Pas (uzun bas: sert)" },
-			{ "B / N", "Orta aç / Topu getir" },
-			{ "Q / R", "Çalım (en üst hareket) / sade çalım" },
-			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
-			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
-			{ "Z / X", "Plonjon sol / sağ" },
-			{ "G / H", "Sevinç / Top iste" },
+			{ "WASD", "Koş  ·  Shift: sprint" },
+			{ "Sol tık", "Şut: basılı tut, yeşilde bırak" },
+			{ "", "Top sende değilse: müdahale" },
+			{ "Sağ tık", "Pas  ·  topsuzken: top iste" },
+			{ "Boşluk", "Çalım  ·  topsuzken: kafa" },
+			{ "1 - 6", "Şut türü" },
+			{ "B / G", "Orta aç  /  sevinç" },
+			{ "N", "Topu getir (deneme sahası)" },
 		}
 		for i, ln in ipairs(lines) do
 			local k =
@@ -1357,6 +1435,13 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 			state.sprintHeld = true
 			return
 		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			return primaryDown()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			-- sağ tık: kısa dokunuş pas sayılır; basılı sürükleme kamerayı çevirmeye devam eder
+			state.rmb = { at = os.clock(), pos = input.Position }
+			return
+		end
 		local idx = table.find(NUMBER_KEYS, input.KeyCode)
 		if idx and state.hud then
 			return selectShot(idx)
@@ -1374,6 +1459,17 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Config.Keys.Sprint or input.KeyCode == Enum.KeyCode.ButtonR2 then
 			state.sprintHeld = false
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+			primaryUp()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			local r = state.rmb
+			state.rmb = nil
+			if r and os.clock() - r.at < 0.3 then
+				local moved = if r.pos and input.Position then (input.Position - r.pos).Magnitude else 0
+				if moved < 12 then
+					secondary()
+				end
+			end
 		elseif input.KeyCode == Config.Keys.Shoot then
 			shootUp()
 		elseif input.KeyCode == Config.Keys.Pass then

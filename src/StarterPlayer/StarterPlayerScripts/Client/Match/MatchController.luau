@@ -25,6 +25,7 @@ local UIMotion = require(ReplicatedStorage.UI.UIMotion)
 local Components = require(ReplicatedStorage.UI.Components)
 local Ball = require(script.Parent.Ball)
 local MatchAI = require(script.Parent.MatchAI)
+local Referee = require(script.Parent.Referee)
 local PlayerController = require(script.Parent.Parent.Controllers.PlayerController)
 
 local P = Config.MatchPitch
@@ -292,6 +293,7 @@ local function kickoff(team: string)
 	Ball.LastTeam = team
 	MatchAI.Freeze(MC.RestartPause)
 	M.phase = "play"
+	Referee.Whistle("short")
 end
 
 -- Top dışarı çıktı
@@ -607,6 +609,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 	M.phase = "over"
 	MatchAI.Freeze(999)
 	big(if forfeit then "Maç bırakıldı" else "Maç bitti", C.White, 2)
+	Referee.Whistle("long")
 	local done = false
 	local conn
 	local function show(result)
@@ -622,6 +625,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 			PlayerController.SetMatch(nil, nil)
 			PlayerController.SetHud(false)
 			MatchAI.Clear()
+			Referee.Clear()
 			Stadium.Clear()
 			Ball.SetPitch(Config.TestPitch)
 			if ui.root then
@@ -644,11 +648,191 @@ end
 --------------------------------------------------------------------------------
 -- PlayerController kancaları
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Hakem kararları: faul, kart, serbest vuruş, penaltı
+--------------------------------------------------------------------------------
+local REASON = {
+	careless = "Kontrolsüz müdahale",
+	reckless = "Sert müdahale",
+	violent = "Ciddi faullü oyun",
+}
+
+-- Ekranın üstünde karar kartı: kart rengi, oyuncu, sebep ve karar
+local function decision(cardColor: Color3?, title: string, who: string, reason: string, verdict: string)
+	if not ui.root then
+		return
+	end
+	if ui.decision then
+		ui.decision:Destroy()
+	end
+	local f = Instance.new("Frame")
+	f.Name = "Decision"
+	f.AnchorPoint = Vector2.new(0.5, 0)
+	f.Position = UDim2.new(0.5, 0, 0, 150)
+	f.Size = UDim2.fromOffset(560, 116)
+	f.BackgroundColor3 = C.Navy
+	f.BackgroundTransparency = 0.08
+	f.BorderSizePixel = 0
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(0, 10)
+	u.Parent = f
+	local st = Instance.new("UIStroke")
+	st.Color = cardColor or C.White
+	st.Thickness = 2
+	st.Parent = f
+	local card = Instance.new("Frame")
+	card.Size = UDim2.fromOffset(54, 76)
+	card.Position = UDim2.fromOffset(22, 20)
+	card.Rotation = -8
+	card.BackgroundColor3 = cardColor or C.White
+	card.BorderSizePixel = 0
+	local cu = Instance.new("UICorner")
+	cu.CornerRadius = UDim.new(0, 6)
+	cu.Parent = card
+	card.Parent = f
+	if not cardColor then
+		-- kartsız karar: düdük simgesi yerine "F" (faul)
+		local l = Components.Label({
+			Text = "F",
+			Size = 40,
+			Font = Theme.Font.Display,
+			Color = C.Navy,
+			Align = Enum.TextXAlignment.Center,
+			Frame = UDim2.fromScale(1, 1),
+		})
+		l.Parent = card
+	end
+	local function line(text: string, size: number, color: Color3, y: number, font: Font)
+		local l = Components.Label({ Text = text, Size = size, Font = font, Color = color, Frame = UDim2.new(1, -110, 0, size + 6) })
+		l.Position = UDim2.fromOffset(98, y)
+		l.Parent = f
+	end
+	line(Theme.Upper(title), 24, cardColor or C.White, 10, Theme.Font.Display)
+	line(who, 17, C.Text, 42, Theme.Font.Title)
+	line(reason, 14, C.Muted, 66, Theme.Font.Body)
+	line("KARAR: " .. Theme.Upper(verdict), 14, C.Yellow, 88, Theme.Font.Title)
+	f.Parent = ui.root
+	ui.decision = f
+	UIMotion.In(f, Vector2.new(0, -30))
+	task.delay(3.4, function()
+		if ui.decision == f then
+			ui.decision = nil
+			UIMotion.Out(f, Vector2.new(0, -20), true)
+		end
+	end)
+end
+
+--[[ Faul. by: faulü yapan takım, offender: { name, number, human?, bot? },
+	severity: "careless" (kartsız) | "reckless" (sarı) | "violent" (kırmızı),
+	victim: faul yapılan takım, pos: faulün yeri ]]
+local function foul(by: string, offender, severity: string, victim: string, pos: Vector3, reason: string?)
+	if not M or M.phase ~= "play" then
+		return
+	end
+	M.phase = "restart"
+	MatchAI.Freeze(4)
+	Referee.Whistle("short")
+
+	local key = by .. ":" .. tostring(offender.number)
+	local card: string? = nil
+	local why = reason or REASON[severity]
+	if severity == "violent" then
+		card = "red"
+	elseif severity == "reckless" then
+		if M.cards[key] == "yellow" then
+			card = "red"
+			why = why .. " · ikinci sarı kart"
+		else
+			card = "yellow"
+		end
+	end
+	if card then
+		M.cards[key] = card
+	end
+	-- Faul, yapanın kendi ceza sahasındaysa penaltı
+	local ownGoalZ = if by == "home" then P.MinZ else P.MaxZ
+	local inBox = math.abs(pos.X) <= 66 and math.abs(pos.Z - ownGoalZ) <= 54
+	local verdict = if inBox then "Penaltı" else "Serbest vuruş"
+	local club = if by == "home" then M.homeName else M.awayName
+	local who = string.format("%d  %s  ·  %s", offender.number, offender.name, club)
+	local color = if card == "red" then C.Bad elseif card == "yellow" then C.Yellow else nil
+	local title = if card == "red" then "Kırmızı kart" elseif card == "yellow" then "Sarı kart" else "Faul"
+	decision(color, title, who, why, verdict)
+	Stadium.Screen(Theme.Upper(title), who .. "  ·  " .. why .. "  ·  " .. verdict, color, 6)
+	if color then
+		task.delay(0.6, function()
+			Referee.Card(color)
+		end)
+	end
+	UIMotion.Sound("ErrorSound")
+
+	task.delay(3, function()
+		if not M or M.phase ~= "restart" then
+			return
+		end
+		if card == "red" then
+			if offender.human then
+				-- oyuncu atıldı: maç onun için biter
+				Components.Toast("error", "Kırmızı kart gördün, oyundan atıldın.")
+				finish(M.gui, true)
+				return
+			elseif offender.bot then
+				MatchAI.SendOff(offender.bot)
+			end
+		end
+		local d = if victim == "home" then 1 else -1 -- vuruşu kullanan takımın hücum yönü
+		local spot = if inBox
+			then Vector3.new(0, 0, ownGoalZ + (if by == "home" then 36 else -36))
+			else Vector3.new(math.clamp(pos.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(pos.Z, P.MinZ + 6, P.MaxZ - 6))
+		Ball.Reset(spot)
+		Ball.LastTeam = victim
+		local humanTakes = victim == "home" and M.position ~= "Kaleci"
+		MatchAI.SetPiece(spot, victim, inBox, humanTakes)
+		local h = hrp()
+		if humanTakes then
+			-- vuruşu sen kullanırsın: topun arkasına geç
+			teleport(Vector3.new(spot.X, 0, spot.Z - d * 4.5), Vector3.new(0, 0, if d > 0 then P.MaxZ else P.MinZ))
+			big(if inBox then "Penaltı: vuruş senin" else "Serbest vuruş: senin", C.Yellow, 1.6)
+		elseif h and M.position ~= "Kaleci" then
+			-- rakibin vuruşu: baraj mesafesine açıl (9,15 m)
+			local away = Vector3.new(h.Position.X - spot.X, 0, h.Position.Z - spot.Z)
+			if inBox then
+				teleport(Vector3.new(30, 0, spot.Z - d * 34), spot)
+			elseif away.Magnitude < 28 then
+				local dir = if away.Magnitude > 0.5 then away.Unit else Vector3.new(0, 0, -d)
+				teleport(Vector3.new(spot.X + dir.X * 28, 0, spot.Z + dir.Z * 28), spot)
+			end
+			big(verdict, C.White, 1.2)
+		end
+		MatchAI.Freeze(if humanTakes then 1.8 else 1)
+		Referee.Whistle("short")
+		M.phase = "play"
+	end)
+end
+
+-- Oyuncunun müdahalesi: sonucu yapay zeka verir, cezayı hakem
+local function humanTackle(pos: Vector3, look: Vector3, sliding: boolean): string
+	local result = MatchAI.Tackle(pos, look, sliding)
+	local f = MatchAI.LastFoul
+	if M and f and (result == "foul" or result == "card") then
+		local severity = if f.sliding and f.fromBehind then "violent" elseif f.sliding or f.fromBehind then "reckless" else "careless"
+		local reason = if f.sliding and f.fromBehind
+			then "Arkadan kayarak müdahale: ciddi faullü oyun"
+			elseif f.fromBehind then "Arkadan müdahale"
+			elseif f.sliding then "Topa değil, rakibe kayarak müdahale"
+			else "Kontrolsüz müdahale"
+		foul("home", M.me, severity, "away", f.pos, reason)
+	end
+	MatchAI.LastFoul = nil
+	return result
+end
+
 local function update(dt: number, ctx)
 	if not M then
 		return
 	end
 	MatchAI.Update(dt, ctx)
+	Referee.Update(dt, M.phase == "play")
 	updateRadar()
 	if M.phase == "play" then
 		M.elapsed += dt
@@ -662,6 +846,7 @@ local function update(dt: number, ctx)
 			if M.half == 1 then
 				M.phase = "halftime"
 				big("Devre arası", C.White, 2.2)
+				Referee.Whistle("double")
 				MatchAI.Freeze(3.2)
 				task.delay(3, function()
 					if M and M.phase == "halftime" then
@@ -705,6 +890,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		myHeaderGoals = 0,
 		lastHumanKick = nil,
 		position = data.position,
+		cards = {}, -- cards["home:9"] = "yellow" | "red"
+		me = { name = data.name, number = data.number or 9, human = true },
 		homeName = if fixture then fixture.home.club.Abbr elseif data.club.abbr ~= "" then data.club.abbr else "EV",
 		awayName = if fixture then fixture.away.club.Abbr else "RKP",
 	}
@@ -726,7 +913,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	PlayerController.SetMatch({
 		Update = update,
 		Feint = MatchAI.Feint,
-		Tackle = MatchAI.Tackle,
+		Tackle = humanTackle,
 		HumanSave = MatchAI.HumanSave,
 		OnHumanKick = function()
 			if M then
@@ -737,6 +924,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 			finish(gui, true)
 		end,
 	}, P)
+	Referee.Spawn()
 	PlayerController.SetHud(true)
 	buildHud(gui)
 	setScore(false)
@@ -753,6 +941,11 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	end)
 end
 
+-- Sınamalar için: süren maçın durumu ve hakem kararı
+function MatchController.Debug()
+	return { state = M, foul = foul }
+end
+
 -- Bir kez bağlanır
 Ball.On("goal", function(kind, side)
 	if M then
@@ -762,6 +955,18 @@ end)
 Ball.On("dead", function(kind, pos)
 	if M then
 		onDead(kind, pos)
+	end
+end)
+MatchAI.On("foul", function(bot, severity, victim, pos)
+	if M then
+		local info = bot.info
+		foul(
+			bot.team,
+			{ name = if info then info.name else "Oyuncu", number = if info then info.number else bot.slot, bot = bot },
+			severity,
+			victim,
+			pos
+		)
 	end
 end)
 MatchAI.On("steal", function()

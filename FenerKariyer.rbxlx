@@ -19,6 +19,7 @@ Config.Assets = {
 	ErrorSound = "",
 	RewardSound = "",
 	WhooshSound = "",
+	Whistle = "", -- hakem düdüğü ("rbxassetid://..."); boşsa yedek ses çalar
 }
 
 Config.Performance = {
@@ -540,6 +541,17 @@ Kits.Rival = {
 	Sock = Color3.fromRGB(238, 243, 244),
 	Ink = Color3.fromRGB(12, 90, 80),
 	InkStroke = C.White,
+}
+Kits.Referee = {
+	Pattern = "Duz",
+	Shirt = Color3.fromRGB(22, 22, 26),
+	Stripe = Color3.fromRGB(22, 22, 26),
+	Sleeve = Color3.fromRGB(22, 22, 26),
+	Trim = Color3.fromRGB(190, 255, 60),
+	Shorts = Color3.fromRGB(22, 22, 26),
+	Sock = Color3.fromRGB(22, 22, 26),
+	Ink = C.White,
+	InkStroke = Color3.fromRGB(22, 22, 26),
 }
 Kits.RivalKeeper = {
 	Pattern = "Duz",
@@ -2676,6 +2688,7 @@ function CharacterService.BuildBotTemplates()
 		{ Name = "Mate", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 10, Skin = 4, Hair = 3 },
 		{ Name = "Mate2", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 8, Skin = 2, Hair = 2 },
 		{ Name = "MateKeeper", Kit = Kits.Keeper, Position = "Kaleci", Number = 1, Skin = 3, Hair = 1 },
+		{ Name = "Referee", Kit = Kits.Referee, Position = "OrtaSaha", Number = 0, Skin = 2, Hair = 2 },
 	}
 	for i, d in ipairs(defs) do
 		local ok, rig = pcall(function()
@@ -2705,7 +2718,7 @@ function CharacterService.BuildBotTemplates()
 				position = d.Position,
 				kit = d.Kit,
 				number = d.Number,
-				name = if d.Name == "Mate" then "TAKIM" else "RAKIP",
+				name = if d.Name == "Referee" then "HAKEM" elseif d.Name == "Mate" then "TAKIM" else "RAKIP",
 				abbr = "RK",
 				level = 1,
 			})
@@ -3680,7 +3693,7 @@ return PlayerService
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX39"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX36"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX35"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX20"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterPlayer" referent="RBX40"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX37"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX36"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX20"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
 	Animator
 	Kodla çalışan katmanlı animasyon motoru (R15).
 	- Alt katman: duruş ve koşu döngüsü hızdan üretilir (yürüyüşten sprinte kesintisiz).
@@ -5766,6 +5779,81 @@ local function doJump()
 	end
 end
 
+--------------------------------------------------------------------------------
+-- Basit kontrol: fare + boşluk. Aynı tuş, topun sende olup olmamasına göre iş değiştirir.
+--   Sol tık  : top sendeyse şut (basılı tut, bırak) · değilse müdahale · kaleciysen plonjon
+--   Sağ tık  : top sendeyse pas · değilse top iste
+--   Boşluk   : top sendeyse çalım · değilse zıpla / kafa
+--------------------------------------------------------------------------------
+local function ballInfo(): (number, number)
+	local hrp = state.hrp
+	if not hrp then
+		return math.huge, 0
+	end
+	local bp = Ball.Position()
+	local feet = hrp.Position - Vector3.new(0, 3, 0)
+	return Vector3.new(bp.X - feet.X, 0, bp.Z - feet.Z).Magnitude, bp.Y - feet.Y
+end
+local function hasBall(): boolean
+	local dist, height = ballInfo()
+	return dist < SH.Reach + 1.5 and height < 3
+end
+local function isKeeper(): boolean
+	local data = state.getData and state.getData()
+	return matchApi ~= nil and data ~= nil and data.position == "Kaleci"
+end
+local primaryShooting = false
+local function primaryDown()
+	if not state.hud then
+		return
+	end
+	local dist, height = ballInfo()
+	if isKeeper() and not hasBall() then
+		-- topun geldiği yana uzan
+		local hrp = state.hrp
+		if hrp then
+			state.lastMirror = (Ball.Position() - hrp.Position):Dot(hrp.CFrame.RightVector) < 0
+			play("Plonjon", { Mirror = state.lastMirror })
+		end
+	elseif hasBall() then
+		primaryShooting = true
+		shootDown()
+	elseif dist < 9 and height >= 3 then
+		-- havadaki top: açıksa gelişine vur, değilse kafa
+		if unlocked("Vole") then
+			play(best({ "Vole", "Rovesata" }))
+		else
+			doJump()
+		end
+	else
+		doTackle()
+	end
+end
+local function primaryUp()
+	if primaryShooting then
+		primaryShooting = false
+		shootUp()
+	end
+end
+local function secondary()
+	if not state.hud then
+		return
+	end
+	if hasBall() then
+		state.passPower = 0.4
+		play("Pass")
+	else
+		play("TopIste")
+	end
+end
+local function contextSpace()
+	if hasBall() then
+		doDribble()
+	else
+		doJump()
+	end
+end
+
 local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Shoot] = shootDown,
 	[Config.Keys.Pass] = passDown,
@@ -5775,7 +5863,7 @@ local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 	[Config.Keys.Special] = function()
 		play("VucutCalimi", { Mirror = math.random() < 0.5 }) -- hızlı, sade çalım her zaman elde
 	end,
-	[Config.Keys.Jump] = doJump,
+	[Config.Keys.Jump] = contextSpace,
 	[Config.Keys.Tackle] = doTackle,
 	[Enum.KeyCode.V] = doBlock,
 	[Config.Keys.Celebrate] = doCelebrate,
@@ -5907,13 +5995,17 @@ local function onEvent(event: string, action: string)
 					Remotes.Get("TrainingGoal"):FireServer("Tackle")
 				end
 			elseif result == "foul" then
-				banner("Faul!", C.Bad)
+				if not matchApi then
+					banner("Faul!", C.Bad)
+				end
 				UIMotion.Sound("ErrorSound")
 				shake(0.5)
 			elseif result == "card" then
 				UIMotion.Sound("ErrorSound")
 				shake(0.7)
-				if state.yellow then
+				if matchApi then
+					-- maçta kararı hakem verir (MatchController)
+				elseif state.yellow then
 					state.yellow = false
 					showCard(C.Bad, "Kırmızı kart!")
 					if matchApi then
@@ -6415,15 +6507,14 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		hp.Parent = root
 		ui.keysPanel = hp
 		local lines = {
-			{ "Shift", "Sprint" },
-			{ "F", "Şut: basılı tut, yeşilde bırak" },
-			{ "E", "Pas (uzun bas: sert)" },
-			{ "B / N", "Orta aç / Topu getir" },
-			{ "Q / R", "Çalım (en üst hareket) / sade çalım" },
-			{ "Boşluk", "Kafa (koşarken uçan kafa)" },
-			{ "C / V", "Müdahale (koşarken kayma) / Blok" },
-			{ "Z / X", "Plonjon sol / sağ" },
-			{ "G / H", "Sevinç / Top iste" },
+			{ "WASD", "Koş  ·  Shift: sprint" },
+			{ "Sol tık", "Şut: basılı tut, yeşilde bırak" },
+			{ "", "Top sende değilse: müdahale" },
+			{ "Sağ tık", "Pas  ·  topsuzken: top iste" },
+			{ "Boşluk", "Çalım  ·  topsuzken: kafa" },
+			{ "1 - 6", "Şut türü" },
+			{ "B / G", "Orta aç  /  sevinç" },
+			{ "N", "Topu getir (deneme sahası)" },
 		}
 		for i, ln in ipairs(lines) do
 			local k =
@@ -6762,6 +6853,13 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 			state.sprintHeld = true
 			return
 		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			return primaryDown()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			-- sağ tık: kısa dokunuş pas sayılır; basılı sürükleme kamerayı çevirmeye devam eder
+			state.rmb = { at = os.clock(), pos = input.Position }
+			return
+		end
 		local idx = table.find(NUMBER_KEYS, input.KeyCode)
 		if idx and state.hud then
 			return selectShot(idx)
@@ -6779,6 +6877,17 @@ function Controller.Start(gui: ScreenGui, getData: () -> any, onExit: () -> ())
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Config.Keys.Sprint or input.KeyCode == Enum.KeyCode.ButtonR2 then
 			state.sprintHeld = false
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+			primaryUp()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			local r = state.rmb
+			state.rmb = nil
+			if r and os.clock() - r.at < 0.3 then
+				local moved = if r.pos and input.Position then (input.Position - r.pos).Magnitude else 0
+				if moved < 12 then
+					secondary()
+				end
+			end
 		elseif input.KeyCode == Config.Keys.Shoot then
 			shootUp()
 		elseif input.KeyCode == Config.Keys.Pass then
@@ -7236,7 +7345,7 @@ showLoading(function()
 	end
 end)
 ]]></ProtectedString></Properties></Item>
-<Item class="Folder" referent="RBX30"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX24"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX31"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX24"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
 	Ball
 	Top fiziği ve topla oynama. Top ayrı bir nesnedir; oyuncuya yapışmaz, her dokunuşla itilir.
 	- Fizik: yerçekimi, hava direnci, yuvarlanma sürtünmesi, sekme, falso, saha sınırları, kale ve direk.
@@ -8207,7 +8316,7 @@ local frozenUntil = 0
 local skill = { home = 0.4, away = 0.4 }
 local humanSlot = 11
 local humanKeeper = false
-local listeners = { steal = {}, save = {}, shot = {}, telegraph = {} }
+local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {} }
 local plans: { [any]: any } = {} -- kaleci -> kurtarış planı
 local stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 
@@ -8410,6 +8519,57 @@ function MatchAI.ResetPositions()
 	plans = {}
 end
 
+-- Kırmızı kart: oyuncu sahadan çıkar
+function MatchAI.SendOff(bot)
+	local i = table.find(bots, bot)
+	if i then
+		table.remove(bots, i)
+		bot.animator:Destroy()
+		bot.model:Destroy()
+	end
+end
+
+--[[ Duran top düzeni. spot: topun yeri, team: vuruşu kullanan takım.
+	Rakipler 9,15 m (28 stud) açılır; penaltıda kaleciler dışında herkes ceza sahasının dışına çıkar.
+	humanTakes: vuruşu oyuncu kullanacaksa yapay zeka topun başına geçmez. ]]
+function MatchAI.SetPiece(spot: Vector3, team: string, penalty: boolean, humanTakes: boolean)
+	local d = dirOf(team)
+	local taker, best = nil, math.huge
+	for _, bot in ipairs(bots) do
+		if not bot.keeper then
+			if penalty then
+				-- ceza sahası dışı: topun en az 30 stud gerisi, yanlara dağılmış
+				local x = (bot.slot - 6) * 16
+				bot.pos = Vector3.new(x, P.GroundY, spot.Z - d * (30 + (bot.slot % 3) * 6))
+			elseif bot.team ~= team then
+				local away = flat(bot.pos - spot)
+				if away.Magnitude < 28 then
+					local dir = if away.Magnitude > 0.5 then away.Unit else Vector3.new(0, 0, d)
+					bot.pos = Vector3.new(spot.X + dir.X * 28, P.GroundY, spot.Z + dir.Z * 28)
+				end
+			end
+			bot.pos = Vector3.new(math.clamp(bot.pos.X, P.MinX + 2, P.MaxX - 2), P.GroundY, math.clamp(bot.pos.Z, P.MinZ + 2, P.MaxZ - 2))
+			bot.state = "play"
+			bot.speed = 0
+			bot.cd = 1
+			bot.ring.Transparency = 1
+			if bot.team == team then
+				local dist = flat(bot.pos - spot).Magnitude
+				if dist < best then
+					taker, best = bot, dist
+				end
+			end
+		end
+		place(bot)
+	end
+	if taker and not humanTakes then
+		taker.pos = Vector3.new(spot.X, P.GroundY, spot.Z - d * 3)
+		taker.dir = Vector3.new(0, 0, d)
+		place(taker)
+	end
+	plans = {}
+end
+
 function MatchAI.Freeze(seconds: number)
 	frozenUntil = clock + seconds
 end
@@ -8486,6 +8646,7 @@ function MatchAI.Tackle(playerPos: Vector3, look: Vector3, sliding: boolean): st
 	end
 	if bot and d < (if sliding then D.FoulRange + 1.4 else D.FoulRange) then
 		local fromBehind = bot.dir:Dot(flat(look).Unit) > 0.45
+		MatchAI.LastFoul = { bot = bot, fromBehind = fromBehind, sliding = sliding, pos = bot.pos }
 		bot.state = "down"
 		bot.t = 1.4
 		bot.animator:Play("Stagger")
@@ -8801,6 +8962,10 @@ function MatchAI.Update(dt: number, ctx)
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(bot.dir.X * 14, 0, d * 20))
 					fire("steal")
+				elseif live and flat(ctx.playerPos - bot.pos).Magnitude < 4.2 and math.random() < 0.4 then
+					-- topu kaçırıp oyuncuya girdi: faul
+					local r = math.random()
+					fire("foul", bot, if r < 0.05 then "violent" elseif r < 0.3 then "reckless" else "careless", "home", ctx.playerPos)
 				end
 			end
 		elseif bot == carrier and live then
@@ -8833,6 +8998,12 @@ function MatchAI.Update(dt: number, ctx)
 					carrier.animator:Play("Stagger")
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(0, 0, d * 12))
+				elseif math.random() < 0.12 then
+					-- botlar arası faul
+					carrier.state = "down"
+					carrier.t = 1.2
+					carrier.animator:Play("Stagger")
+					fire("foul", bot, if math.random() < 0.22 then "reckless" else "careless", carrier.team, carrier.pos)
 				end
 			elseif low and dBall < 2.8 and live and Ball.Speed() >= 60 and Ball.SinceKick() > 0.2 then
 				-- hızlı gelen topu kontrol et
@@ -8911,6 +9082,7 @@ local UIMotion = require(ReplicatedStorage.UI.UIMotion)
 local Components = require(ReplicatedStorage.UI.Components)
 local Ball = require(script.Parent.Ball)
 local MatchAI = require(script.Parent.MatchAI)
+local Referee = require(script.Parent.Referee)
 local PlayerController = require(script.Parent.Parent.Controllers.PlayerController)
 
 local P = Config.MatchPitch
@@ -9178,6 +9350,7 @@ local function kickoff(team: string)
 	Ball.LastTeam = team
 	MatchAI.Freeze(MC.RestartPause)
 	M.phase = "play"
+	Referee.Whistle("short")
 end
 
 -- Top dışarı çıktı
@@ -9493,6 +9666,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 	M.phase = "over"
 	MatchAI.Freeze(999)
 	big(if forfeit then "Maç bırakıldı" else "Maç bitti", C.White, 2)
+	Referee.Whistle("long")
 	local done = false
 	local conn
 	local function show(result)
@@ -9508,6 +9682,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 			PlayerController.SetMatch(nil, nil)
 			PlayerController.SetHud(false)
 			MatchAI.Clear()
+			Referee.Clear()
 			Stadium.Clear()
 			Ball.SetPitch(Config.TestPitch)
 			if ui.root then
@@ -9530,11 +9705,191 @@ end
 --------------------------------------------------------------------------------
 -- PlayerController kancaları
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Hakem kararları: faul, kart, serbest vuruş, penaltı
+--------------------------------------------------------------------------------
+local REASON = {
+	careless = "Kontrolsüz müdahale",
+	reckless = "Sert müdahale",
+	violent = "Ciddi faullü oyun",
+}
+
+-- Ekranın üstünde karar kartı: kart rengi, oyuncu, sebep ve karar
+local function decision(cardColor: Color3?, title: string, who: string, reason: string, verdict: string)
+	if not ui.root then
+		return
+	end
+	if ui.decision then
+		ui.decision:Destroy()
+	end
+	local f = Instance.new("Frame")
+	f.Name = "Decision"
+	f.AnchorPoint = Vector2.new(0.5, 0)
+	f.Position = UDim2.new(0.5, 0, 0, 150)
+	f.Size = UDim2.fromOffset(560, 116)
+	f.BackgroundColor3 = C.Navy
+	f.BackgroundTransparency = 0.08
+	f.BorderSizePixel = 0
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(0, 10)
+	u.Parent = f
+	local st = Instance.new("UIStroke")
+	st.Color = cardColor or C.White
+	st.Thickness = 2
+	st.Parent = f
+	local card = Instance.new("Frame")
+	card.Size = UDim2.fromOffset(54, 76)
+	card.Position = UDim2.fromOffset(22, 20)
+	card.Rotation = -8
+	card.BackgroundColor3 = cardColor or C.White
+	card.BorderSizePixel = 0
+	local cu = Instance.new("UICorner")
+	cu.CornerRadius = UDim.new(0, 6)
+	cu.Parent = card
+	card.Parent = f
+	if not cardColor then
+		-- kartsız karar: düdük simgesi yerine "F" (faul)
+		local l = Components.Label({
+			Text = "F",
+			Size = 40,
+			Font = Theme.Font.Display,
+			Color = C.Navy,
+			Align = Enum.TextXAlignment.Center,
+			Frame = UDim2.fromScale(1, 1),
+		})
+		l.Parent = card
+	end
+	local function line(text: string, size: number, color: Color3, y: number, font: Font)
+		local l = Components.Label({ Text = text, Size = size, Font = font, Color = color, Frame = UDim2.new(1, -110, 0, size + 6) })
+		l.Position = UDim2.fromOffset(98, y)
+		l.Parent = f
+	end
+	line(Theme.Upper(title), 24, cardColor or C.White, 10, Theme.Font.Display)
+	line(who, 17, C.Text, 42, Theme.Font.Title)
+	line(reason, 14, C.Muted, 66, Theme.Font.Body)
+	line("KARAR: " .. Theme.Upper(verdict), 14, C.Yellow, 88, Theme.Font.Title)
+	f.Parent = ui.root
+	ui.decision = f
+	UIMotion.In(f, Vector2.new(0, -30))
+	task.delay(3.4, function()
+		if ui.decision == f then
+			ui.decision = nil
+			UIMotion.Out(f, Vector2.new(0, -20), true)
+		end
+	end)
+end
+
+--[[ Faul. by: faulü yapan takım, offender: { name, number, human?, bot? },
+	severity: "careless" (kartsız) | "reckless" (sarı) | "violent" (kırmızı),
+	victim: faul yapılan takım, pos: faulün yeri ]]
+local function foul(by: string, offender, severity: string, victim: string, pos: Vector3, reason: string?)
+	if not M or M.phase ~= "play" then
+		return
+	end
+	M.phase = "restart"
+	MatchAI.Freeze(4)
+	Referee.Whistle("short")
+
+	local key = by .. ":" .. tostring(offender.number)
+	local card: string? = nil
+	local why = reason or REASON[severity]
+	if severity == "violent" then
+		card = "red"
+	elseif severity == "reckless" then
+		if M.cards[key] == "yellow" then
+			card = "red"
+			why = why .. " · ikinci sarı kart"
+		else
+			card = "yellow"
+		end
+	end
+	if card then
+		M.cards[key] = card
+	end
+	-- Faul, yapanın kendi ceza sahasındaysa penaltı
+	local ownGoalZ = if by == "home" then P.MinZ else P.MaxZ
+	local inBox = math.abs(pos.X) <= 66 and math.abs(pos.Z - ownGoalZ) <= 54
+	local verdict = if inBox then "Penaltı" else "Serbest vuruş"
+	local club = if by == "home" then M.homeName else M.awayName
+	local who = string.format("%d  %s  ·  %s", offender.number, offender.name, club)
+	local color = if card == "red" then C.Bad elseif card == "yellow" then C.Yellow else nil
+	local title = if card == "red" then "Kırmızı kart" elseif card == "yellow" then "Sarı kart" else "Faul"
+	decision(color, title, who, why, verdict)
+	Stadium.Screen(Theme.Upper(title), who .. "  ·  " .. why .. "  ·  " .. verdict, color, 6)
+	if color then
+		task.delay(0.6, function()
+			Referee.Card(color)
+		end)
+	end
+	UIMotion.Sound("ErrorSound")
+
+	task.delay(3, function()
+		if not M or M.phase ~= "restart" then
+			return
+		end
+		if card == "red" then
+			if offender.human then
+				-- oyuncu atıldı: maç onun için biter
+				Components.Toast("error", "Kırmızı kart gördün, oyundan atıldın.")
+				finish(M.gui, true)
+				return
+			elseif offender.bot then
+				MatchAI.SendOff(offender.bot)
+			end
+		end
+		local d = if victim == "home" then 1 else -1 -- vuruşu kullanan takımın hücum yönü
+		local spot = if inBox
+			then Vector3.new(0, 0, ownGoalZ + (if by == "home" then 36 else -36))
+			else Vector3.new(math.clamp(pos.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(pos.Z, P.MinZ + 6, P.MaxZ - 6))
+		Ball.Reset(spot)
+		Ball.LastTeam = victim
+		local humanTakes = victim == "home" and M.position ~= "Kaleci"
+		MatchAI.SetPiece(spot, victim, inBox, humanTakes)
+		local h = hrp()
+		if humanTakes then
+			-- vuruşu sen kullanırsın: topun arkasına geç
+			teleport(Vector3.new(spot.X, 0, spot.Z - d * 4.5), Vector3.new(0, 0, if d > 0 then P.MaxZ else P.MinZ))
+			big(if inBox then "Penaltı: vuruş senin" else "Serbest vuruş: senin", C.Yellow, 1.6)
+		elseif h and M.position ~= "Kaleci" then
+			-- rakibin vuruşu: baraj mesafesine açıl (9,15 m)
+			local away = Vector3.new(h.Position.X - spot.X, 0, h.Position.Z - spot.Z)
+			if inBox then
+				teleport(Vector3.new(30, 0, spot.Z - d * 34), spot)
+			elseif away.Magnitude < 28 then
+				local dir = if away.Magnitude > 0.5 then away.Unit else Vector3.new(0, 0, -d)
+				teleport(Vector3.new(spot.X + dir.X * 28, 0, spot.Z + dir.Z * 28), spot)
+			end
+			big(verdict, C.White, 1.2)
+		end
+		MatchAI.Freeze(if humanTakes then 1.8 else 1)
+		Referee.Whistle("short")
+		M.phase = "play"
+	end)
+end
+
+-- Oyuncunun müdahalesi: sonucu yapay zeka verir, cezayı hakem
+local function humanTackle(pos: Vector3, look: Vector3, sliding: boolean): string
+	local result = MatchAI.Tackle(pos, look, sliding)
+	local f = MatchAI.LastFoul
+	if M and f and (result == "foul" or result == "card") then
+		local severity = if f.sliding and f.fromBehind then "violent" elseif f.sliding or f.fromBehind then "reckless" else "careless"
+		local reason = if f.sliding and f.fromBehind
+			then "Arkadan kayarak müdahale: ciddi faullü oyun"
+			elseif f.fromBehind then "Arkadan müdahale"
+			elseif f.sliding then "Topa değil, rakibe kayarak müdahale"
+			else "Kontrolsüz müdahale"
+		foul("home", M.me, severity, "away", f.pos, reason)
+	end
+	MatchAI.LastFoul = nil
+	return result
+end
+
 local function update(dt: number, ctx)
 	if not M then
 		return
 	end
 	MatchAI.Update(dt, ctx)
+	Referee.Update(dt, M.phase == "play")
 	updateRadar()
 	if M.phase == "play" then
 		M.elapsed += dt
@@ -9548,6 +9903,7 @@ local function update(dt: number, ctx)
 			if M.half == 1 then
 				M.phase = "halftime"
 				big("Devre arası", C.White, 2.2)
+				Referee.Whistle("double")
 				MatchAI.Freeze(3.2)
 				task.delay(3, function()
 					if M and M.phase == "halftime" then
@@ -9591,6 +9947,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		myHeaderGoals = 0,
 		lastHumanKick = nil,
 		position = data.position,
+		cards = {}, -- cards["home:9"] = "yellow" | "red"
+		me = { name = data.name, number = data.number or 9, human = true },
 		homeName = if fixture then fixture.home.club.Abbr elseif data.club.abbr ~= "" then data.club.abbr else "EV",
 		awayName = if fixture then fixture.away.club.Abbr else "RKP",
 	}
@@ -9612,7 +9970,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	PlayerController.SetMatch({
 		Update = update,
 		Feint = MatchAI.Feint,
-		Tackle = MatchAI.Tackle,
+		Tackle = humanTackle,
 		HumanSave = MatchAI.HumanSave,
 		OnHumanKick = function()
 			if M then
@@ -9623,6 +9981,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 			finish(gui, true)
 		end,
 	}, P)
+	Referee.Spawn()
 	PlayerController.SetHud(true)
 	buildHud(gui)
 	setScore(false)
@@ -9639,6 +9998,11 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	end)
 end
 
+-- Sınamalar için: süren maçın durumu ve hakem kararı
+function MatchController.Debug()
+	return { state = M, foul = foul }
+end
+
 -- Bir kez bağlanır
 Ball.On("goal", function(kind, side)
 	if M then
@@ -9648,6 +10012,18 @@ end)
 Ball.On("dead", function(kind, pos)
 	if M then
 		onDead(kind, pos)
+	end
+end)
+MatchAI.On("foul", function(bot, severity, victim, pos)
+	if M then
+		local info = bot.info
+		foul(
+			bot.team,
+			{ name = if info then info.name else "Oyuncu", number = if info then info.number else bot.slot, bot = bot },
+			severity,
+			victim,
+			pos
+		)
 	end
 end)
 MatchAI.On("steal", function()
@@ -9670,7 +10046,184 @@ end)
 
 return MatchController
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX28"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX28"><Properties><string name="Name">Referee</string><ProtectedString name="Source"><![CDATA[--[[
+	Referee
+	Sahadaki hakem: oyunu çaprazdan takip eder, düdük çalar, kart gösterir.
+	Kurallar ve cezalar MatchController'da uygulanır; burası hakemin sahadaki bedeni ve sesidir.
+
+	Referee.Spawn()            hakemi orta sahaya koyar
+	Referee.Update(dt, live)   her karede: topu takip eder (live = oyun oynanıyor mu)
+	Referee.Whistle(kind)      "short" (faul, başlama) | "double" (devre) | "long" (maç sonu)
+	Referee.Card(color)        kartı havaya kaldırır
+	Referee.Clear()
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
+local Workspace = game:GetService("Workspace")
+
+local Config = require(ReplicatedStorage.Shared.Config)
+local Animator = require(script.Parent.Parent.Anim.Animator)
+local Ball = require(script.Parent.Ball)
+
+local P = Config.MatchPitch
+
+local Referee = {}
+
+local ref: any = nil
+
+local function flat(v: Vector3): Vector3
+	return Vector3.new(v.X, 0, v.Z)
+end
+
+function Referee.Clear()
+	if ref then
+		ref.animator:Destroy()
+		ref.model:Destroy()
+		ref = nil
+	end
+end
+
+function Referee.Spawn()
+	Referee.Clear()
+	local folder = ReplicatedStorage:WaitForChild("FK_BotTemplates", 30)
+	local tpl = folder and (folder:FindFirstChild("Referee") or folder:FindFirstChild("RivalKeeper"))
+	if not tpl then
+		return
+	end
+	local model = tpl:Clone()
+	model.Name = "FK_Referee"
+	local hrp = model:FindFirstChild("HumanoidRootPart") :: BasePart
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	hrp.Anchored = true
+	local offsetY = 3
+	if hum then
+		offsetY = hum.HipHeight + hrp.Size.Y / 2
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		pcall(function()
+			hum.EvaluateStateMachine = false
+		end)
+	end
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.CanCollide = false
+			d.CanQuery = false
+		elseif d:IsA("TextLabel") and tonumber(d.Text) then
+			d.Text = "" -- hakemin forma numarası olmaz
+		end
+	end
+	model.Parent = Workspace
+	local midZ = (P.MinZ + P.MaxZ) / 2
+	ref = {
+		model = model,
+		hrp = hrp,
+		animator = Animator.new(model),
+		pos = Vector3.new(26, P.GroundY, midZ - 10),
+		dir = Vector3.new(-1, 0, 0),
+		speed = 0,
+		offsetY = offsetY,
+	}
+end
+
+function Referee.Position(): Vector3?
+	return ref and ref.pos
+end
+
+function Referee.Update(dt: number, live: boolean)
+	if not ref then
+		return
+	end
+	local ball = flat(Ball.Position())
+	-- Topun çaprazında, oyunu önünde tutacak şekilde durur; oyunculara karışmaz
+	local side = if ball.X > 0 then -1 else 1
+	local target = Vector3.new(math.clamp(ball.X + side * 26, P.MinX + 8, P.MaxX - 8), 0, math.clamp(ball.Z - 16, P.MinZ + 14, P.MaxZ - 14))
+	local to = flat(target - ref.pos)
+	local dist = to.Magnitude
+	local want = if live and dist > 6 then math.min(21, dist * 1.6) else 0
+	ref.speed += (want - ref.speed) * math.min(1, dt * 5)
+	if dist > 0.1 then
+		ref.pos += to.Unit * ref.speed * dt
+	end
+	ref.pos = Vector3.new(ref.pos.X, P.GroundY, ref.pos.Z)
+	local look = flat(ball - ref.pos)
+	if look.Magnitude > 0.5 then
+		local nd = ref.dir:Lerp(look.Unit, math.min(1, dt * 6))
+		ref.dir = if nd.Magnitude > 0.01 then nd.Unit else look.Unit
+	end
+	local base = ref.pos + Vector3.new(0, ref.offsetY, 0)
+	ref.hrp.CFrame = CFrame.lookAt(base, base + ref.dir)
+	ref.animator:Update(dt, { speed = ref.speed, grounded = true, tired = false, turn = 0, vy = 0 })
+end
+
+-- Düdük. Config.Assets.Whistle doluysa o ses çalar; boşsa kısa, tiz bir yedek ses kullanılır.
+local function beep(speed: number, volume: number)
+	local custom = Config.Assets.Whistle
+	local s = Instance.new("Sound")
+	if custom and custom ~= "" then
+		s.SoundId = custom
+		s.PlaybackSpeed = 1
+	else
+		s.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+		s.PlaybackSpeed = speed
+	end
+	s.Volume = volume
+	SoundService:PlayLocalSound(s)
+	s:Destroy()
+end
+
+function Referee.Whistle(kind: string?)
+	local custom = Config.Assets.Whistle
+	local count = if kind == "long" then 3 elseif kind == "double" then 2 else 1
+	if not custom or custom == "" then
+		count *= 3 -- yedek ses kısa olduğu için art arda çalınarak düdük gibi uzatılır
+	end
+	for i = 0, count - 1 do
+		task.delay(i * (if custom and custom ~= "" then 0.7 else 0.085), function()
+			beep(2.7, 0.9)
+		end)
+	end
+	if ref then
+		ref.animator:Play("TopIste") -- kol havada
+	end
+end
+
+-- Kart: hakemin başının üstünde, elinde tutuyormuş gibi görünür
+function Referee.Card(color: Color3)
+	if not ref then
+		return
+	end
+	local head = ref.model:FindFirstChild("Head")
+	if not head then
+		return
+	end
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "Card"
+	bb.Size = UDim2.fromScale(1.5, 2.1)
+	bb.StudsOffset = Vector3.new(1.2, 2.6, 0)
+	bb.AlwaysOnTop = true
+	bb.Adornee = head
+	local f = Instance.new("Frame")
+	f.Size = UDim2.fromScale(1, 1)
+	f.BackgroundColor3 = color
+	f.BorderSizePixel = 0
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(0.12, 0)
+	u.Parent = f
+	local st = Instance.new("UIStroke")
+	st.Color = Color3.fromRGB(20, 20, 24)
+	st.Thickness = 2
+	st.Parent = f
+	f.Parent = bb
+	bb.Parent = head
+	ref.animator:Play("TopIste")
+	task.delay(2.6, function()
+		bb:Destroy()
+	end)
+end
+
+return Referee
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
 	RemoteAnim
 	Aynı sunucudaki diğer oyuncuların karakterlerini de kodla canlandırır.
 	Koşu döngüsü onların hızından üretilir; eylemler sunucudan gelen bildirimle oynar.
@@ -9737,7 +10290,7 @@ end
 
 return RemoteAnim
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX30"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
 	TimeScale
 	Oyunun kendi zaman çarpanı: yavaş çekim ve vuruş anı duraksaması (hit-stop).
 	Animasyon, top ve oyuncu hızı bu çarpanla çalışır. Maç tek oyunculu ve istemcide
@@ -9763,7 +10316,7 @@ end
 return TimeScale
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX34"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX35"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
 	Creator (karakter ve kulüp oluşturma ekranı)
 	Solda sekmeli seçenek paneli, sağda stüdyo sahnesinde dönen gerçek karakter.
 	Her seçim sunucuya önizleme isteği gönderir; sunucu doğrular ve karaktere uygular.
@@ -10474,7 +11027,7 @@ end
 
 return Creator
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
 	Lineup
 	Maç öncesi tanıtım: iki kulüp, armalar, teknik direktörler, diziliş ve 11'ler.
 	Her futbolcunun genel gücü ve altı özelliği görünür. "Maça çık" ile santraya geçilir.
@@ -10821,7 +11374,7 @@ end
 
 return Lineup
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
 	SkillTree
 	Yetenek ağacı sayfası. Solda zincirler (Şut, Çalım, Hava, Defans, kaleciyse Kaleci): her zincirde
 	hareketler sırayla açılır ve aynı tuş, açılan en üst hareketi oynatır. Sağda özellikler
@@ -11181,7 +11734,7 @@ return SkillTree
 </Item>
 </Item>
 </Item>
-<Item class="StarterCharacterScripts" referent="RBX38"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX37"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterCharacterScripts" referent="RBX39"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX38"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
 	Animate (boş)
 	Bu ad, Roblox'un varsayılan "Animate" betiğinin yerine geçer: hazır yürüme/koşma animasyonları
 	hiç yüklenmez. Bütün hareketler Client/Anim/Animator tarafından eklemlere doğrudan yazılır.
@@ -11189,7 +11742,7 @@ return SkillTree
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterGui" referent="RBX40"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
-<Item class="Workspace" referent="RBX41"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
-<Item class="Lighting" referent="RBX42"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
+<Item class="StarterGui" referent="RBX41"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
+<Item class="Workspace" referent="RBX42"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="Lighting" referent="RBX43"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
 </roblox>

@@ -80,6 +80,17 @@ Kits.Rival = {
 	Ink = Color3.fromRGB(12, 90, 80),
 	InkStroke = C.White,
 }
+Kits.Referee = {
+	Pattern = "Duz",
+	Shirt = Color3.fromRGB(22, 22, 26),
+	Stripe = Color3.fromRGB(22, 22, 26),
+	Sleeve = Color3.fromRGB(22, 22, 26),
+	Trim = Color3.fromRGB(190, 255, 60),
+	Shorts = Color3.fromRGB(22, 22, 26),
+	Sock = Color3.fromRGB(22, 22, 26),
+	Ink = C.White,
+	InkStroke = Color3.fromRGB(22, 22, 26),
+}
 Kits.RivalKeeper = {
 	Pattern = "Duz",
 	Shirt = Color3.fromRGB(240, 138, 36),

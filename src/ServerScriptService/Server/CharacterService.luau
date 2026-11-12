@@ -433,6 +433,7 @@ function CharacterService.BuildBotTemplates()
 		{ Name = "Mate", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 10, Skin = 4, Hair = 3 },
 		{ Name = "Mate2", Kit = Kits.Club.Cubuklu, Position = "OrtaSaha", Number = 8, Skin = 2, Hair = 2 },
 		{ Name = "MateKeeper", Kit = Kits.Keeper, Position = "Kaleci", Number = 1, Skin = 3, Hair = 1 },
+		{ Name = "Referee", Kit = Kits.Referee, Position = "OrtaSaha", Number = 0, Skin = 2, Hair = 2 },
 	}
 	for i, d in ipairs(defs) do
 		local ok, rig = pcall(function()
@@ -462,7 +463,7 @@ function CharacterService.BuildBotTemplates()
 				position = d.Position,
 				kit = d.Kit,
 				number = d.Number,
-				name = if d.Name == "Mate" then "TAKIM" else "RAKIP",
+				name = if d.Name == "Referee" then "HAKEM" elseif d.Name == "Mate" then "TAKIM" else "RAKIP",
 				abbr = "RK",
 				level = 1,
 			})

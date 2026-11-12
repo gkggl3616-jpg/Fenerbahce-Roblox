@@ -831,6 +831,51 @@ frames(80)
 key(Config.Keys.Shoot, 6)
 frames(140)
 check("röveşata akışı hatasız", true)
+-- basit kontrol: sol tık top sendeyse şut, değilse müdahale; boşluk top sendeyse çalım
+local function mouse(button, hold)
+	UIS.InputBegan:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = button, Position = Vector3.new(400, 300, 0) }, false)
+	frames(hold or 2)
+	UIS.InputEnded:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = button, Position = Vector3.new(400, 300, 0) }, false)
+end
+hum.MoveDirection = Vector3.zero
+frames(90)
+key(Enum.KeyCode.One, 2)
+local feetNow = hrpPart.Position - Vector3.new(0, 3, 0)
+Ball2.Reset(Vector3.new(feetNow.X, 0, feetNow.Z + 2))
+frames(4)
+UIS.InputBegan:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = Enum.UserInputType.MouseButton1 }, false)
+frames(20)
+check("sol tık (top sende): şut gücü dolar", PC.Debug().charge > 0.1, PC.Debug().charge)
+UIS.InputEnded:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = Enum.UserInputType.MouseButton1 }, false)
+frames(3)
+check("sol tık bırakılınca şut başlar", PC.Debug().action == "Shoot", PC.Debug().action)
+frames(120)
+-- top sahanın içinde ama oyuncudan uzakta
+local far = if math.abs(feetNow.Z - 120) > 30 then Vector3.new(0, 0, 120) else Vector3.new(60, 0, 70)
+Ball2.Reset(far)
+frames(4)
+UIS.InputBegan:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = Enum.UserInputType.MouseButton1 }, false)
+frames(3)
+check("sol tık (top uzakta): müdahale", PC.Debug().action == "AyaktaMudahale", PC.Debug().action)
+UIS.InputEnded:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = Enum.UserInputType.MouseButton1 }, false)
+frames(90)
+Ball2.Reset(far)
+frames(2)
+key(Config.Keys.Jump, 2)
+check("boşluk (top uzakta): zıplama", PC.Debug().action == "Jump", PC.Debug().action)
+frames(120)
+feetNow = hrpPart.Position - Vector3.new(0, 3, 0)
+Ball2.Reset(Vector3.new(feetNow.X, 0, feetNow.Z + 2))
+frames(4)
+key(Config.Keys.Jump, 2)
+check("boşluk (top sende): çalım", PC.Debug().action == "VucutCalimi", PC.Debug().action)
+frames(90)
+feetNow = hrpPart.Position - Vector3.new(0, 3, 0)
+Ball2.Reset(Vector3.new(feetNow.X, 0, feetNow.Z + 2))
+frames(4)
+mouse(Enum.UserInputType.MouseButton2, 3)
+check("sağ tık (top sende): pas", PC.Debug().action == "Pass", PC.Debug().action)
+frames(90)
 PC.SetHud(false)
 frames(30)
 
@@ -958,6 +1003,51 @@ end)
 frames(30)
 check("maç sahasına ışınlanır", hrpPart.Position.Z > Config.MatchPitch.MinZ, hrpPart.Position.Z)
 check("skor tabelası ve radar kurulur", gui2:FindFirstChild("MatchHud") ~= nil)
+-- hakem ve cezalar
+frames(120)
+local dbg = MCtl.Debug()
+local Ref = require(__tree.Match.Referee)
+check("hakem sahada", Ref.Position() ~= nil)
+check("oyun başladı", dbg.state.phase == "play", dbg.state.phase)
+local PM = Config.MatchPitch
+local mid = Vector3.new(10, 0, (PM.MinZ + PM.MaxZ) / 2 + 20)
+dbg.foul("away", { name = "A. Deneme", number = 5 }, "reckless", "home", mid)
+check("faulde oyun durur", dbg.state.phase == "restart")
+check("sert müdahaleye sarı kart", dbg.state.cards["away:5"] == "yellow")
+local decisionShown = false
+for _, d in ipairs(gui2:GetDescendants()) do
+	if d.Name == "Decision" then
+		decisionShown = true
+	end
+end
+check("karar kartı ekranda", decisionShown)
+frames(186)
+check("serbest vuruşla oyun devam eder", dbg.state.phase == "play", dbg.state.phase)
+local bp0 = Ball2.Position()
+check("top faul yerine konur", math.abs(bp0.X - mid.X) < 4 and math.abs(bp0.Z - mid.Z) < 4, tostring(bp0))
+check("vuruşu oyuncu kullanır: topun arkasında", math.abs(hrpPart.Position.Z - (mid.Z - 4.5)) < 3, hrpPart.Position.Z)
+frames(150)
+dbg.foul("away", { name = "A. Deneme", number = 5 }, "reckless", "home", mid)
+check("ikinci sarı kart kırmızıdır", dbg.state.cards["away:5"] == "red")
+frames(186)
+frames(150)
+dbg.foul("away", { name = "B. Deneme", number = 4 }, "careless", "home", Vector3.new(20, 0, PM.MaxZ - 20))
+check("kontrolsüz faulde kart çıkmaz", dbg.state.cards["away:4"] == nil)
+frames(186)
+local bp1 = Ball2.Position()
+check(
+	"ceza sahasındaki faul penaltıdır (top penaltı noktasında)",
+	math.abs(bp1.X) < 4 and math.abs(bp1.Z - (PM.MaxZ - 36)) < 5,
+	tostring(bp1)
+)
+local outside = true
+for _, b in ipairs(require(__tree.Match.MatchAI).Positions()) do
+	if not b[8] and math.abs(b[2] - PM.MaxZ) < 54 and math.abs(b[1]) < 66 and math.abs(b[2] - bp1.Z) < 20 then
+		outside = false
+	end
+end
+check("penaltıda oyuncular topun gerisinde", outside)
+frames(120)
 hum.MoveDirection = Vector3.new(0, 0, 1)
 for i = 1, 20 do
 	frames(60)

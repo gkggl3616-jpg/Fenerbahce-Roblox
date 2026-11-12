@@ -18,6 +18,7 @@ Config.Assets = {
 	ErrorSound = "",
 	RewardSound = "",
 	WhooshSound = "",
+	Whistle = "", -- hakem düdüğü ("rbxassetid://..."); boşsa yedek ses çalar
 }
 
 Config.Performance = {
