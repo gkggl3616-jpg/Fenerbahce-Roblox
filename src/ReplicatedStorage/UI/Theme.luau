@@ -16,7 +16,7 @@ Theme.Font = {
 	Display = Font.new(FAMILY, Enum.FontWeight.Heavy),
 	Title = Font.new(FAMILY, Enum.FontWeight.Bold),
 	Body = Font.new(FAMILY, Enum.FontWeight.Medium),
-	Number = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Bold),
+	Number = Font.new(FAMILY, Enum.FontWeight.Heavy), -- sayılar da aynı aileden: oyunda tek yazı tipi
 }
 
 Theme.Corner = { Small = 6, Medium = 10, Large = 14 }

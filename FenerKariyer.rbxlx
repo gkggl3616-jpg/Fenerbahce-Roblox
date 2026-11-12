@@ -127,7 +127,7 @@ Config.SkillChains = {
 		Skills = {
 			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0, Info = "Ayağı uzatıp topu çelme" },
 			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 3, Cost = 200, Info = "Omuzla dengesini boz, topu al" },
-			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
+			{ Id = "Kayma", Name = "Kayarak giriş", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
 			{ Id = "Blok", Name = "Blok", Level = 10, Cost = 900, Info = "Şutun önüne gövdeyle gir" },
 			{ Id = "UcanBlok", Name = "Uçan blok", Level = 15, Cost = 1800, Info = "Şuta doğru atlayarak kapat" },
 		},
@@ -551,7 +551,8 @@ function Crest.FromClub(club)
 end
 
 local function color(v: any): Color3
-	return if typeof(v) == "Color3" then v else (Crest.Colors[v] or Crest.Colors[1])
+	-- sayı: paletteki sıra; değilse doğrudan renk (hazır kulüpler)
+	return if type(v) == "number" then (Crest.Colors[v] or Crest.Colors[1]) else v
 end
 
 local function frame(parent: Instance, size: UDim2, pos: UDim2, c: Color3, rot: number?): Frame
@@ -1054,6 +1055,14 @@ local function hash(text: string): number
 	return h
 end
 
+-- Adın baş harfi (Türkçe harfler birden çok bayt tutar; bayt olarak kesilmez)
+local function initial(name: string): string
+	for _, code in utf8.codes(name) do
+		return utf8.char(code)
+	end
+	return ""
+end
+
 -- Bir kulübün 11'i. avg: ortalama güç (0-99)
 function Squads.Build(club, avg: number)
 	local R = rng(hash(club.Name) + 17)
@@ -1069,7 +1078,7 @@ function Squads.Build(club, avg: number)
 		players[slot] = {
 			slot = slot,
 			number = NUMBERS[slot],
-			name = string.sub(FIRST[1 + math.floor(R() * #FIRST)], 1, 1) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
+			name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
 			full = "",
 			role = role,
 			rating = rating,
@@ -2200,6 +2209,50 @@ function Components.Label(props)
 	return l
 end
 
+--[[ Kabartmalı (3B gölgeli) yazı: arkasında tabela olmadan, sahnenin üstünde okunur.
+	Altında koyu katmanlar (kalınlık), çevresinde koyu kontur, yüzünde hafif ışık geçişi vardır.
+	props: Label ile aynı + Depth (kalınlık, piksel; varsayılan boyuta göre)
+	Döner: holder (yerleştirilecek kutu), label (Text / TextColor3 buradan değiştirilir) ]]
+function Components.Label3D(props)
+	local size = props.Size or 16
+	local depth = props.Depth or math.clamp(math.floor(size / 9 + 0.5), 1, 5)
+	local holder = Instance.new("Frame")
+	holder.Name = props.Name or "Label3D"
+	holder.BackgroundTransparency = 1
+	holder.Size = props.Frame or UDim2.new(1, 0, 0, size + 6 + depth)
+	holder.LayoutOrder = props.Order or 0
+	local inner = table.clone(props)
+	inner.Frame = UDim2.new(1, 0, 1, -depth)
+	inner.Font = props.Font or Theme.Font.Display
+	local layers = {}
+	-- kalınlık: aşağı doğru kayan koyu kopyalar
+	for i = depth, 1, -1 do
+		local s = Components.Label(inner)
+		s.Name = "Depth"
+		s.TextColor3 = Color3.fromRGB(4, 8, 28)
+		s.TextTransparency = if i == depth then 0.45 else 0.1
+		s.Position = UDim2.fromOffset(0, i)
+		stroke(s, Color3.fromRGB(4, 8, 28), math.max(1.5, size / 14), if i == depth then 0.45 else 0.1).ApplyStrokeMode =
+			Enum.ApplyStrokeMode.Contextual
+		s.Parent = holder
+		table.insert(layers, s)
+	end
+	local label = Components.Label(inner)
+	label.Name = "Face"
+	stroke(label, Color3.fromRGB(4, 8, 28), math.max(1.5, size / 14), 0).ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	local shade = Instance.new("UIGradient")
+	shade.Rotation = 90
+	shade.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(196, 200, 214))
+	shade.Parent = label
+	label.Parent = holder
+	label:GetPropertyChangedSignal("Text"):Connect(function()
+		for _, s in ipairs(layers) do
+			s.Text = label.Text
+		end
+	end)
+	return holder, label
+end
+
 -- Eğik sarı-lacivert çubuk şeridi (panel köşesi süsü). Üst öğe CanvasGroup olmalı ki kırpılsın.
 function Components.Stripes(count: number?, width: number?)
 	local holder = Instance.new("Frame")
@@ -3092,7 +3145,7 @@ Theme.Font = {
 	Display = Font.new(FAMILY, Enum.FontWeight.Heavy),
 	Title = Font.new(FAMILY, Enum.FontWeight.Bold),
 	Body = Font.new(FAMILY, Enum.FontWeight.Medium),
-	Number = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Bold),
+	Number = Font.new(FAMILY, Enum.FontWeight.Heavy), -- sayılar da aynı aileden: oyunda tek yazı tipi
 }
 
 Theme.Corner = { Small = 6, Medium = 10, Large = 14 }
@@ -7608,49 +7661,56 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	root.Parent = gui
 	ui.root = root
 
-	-- Dayanıklılık (sol alt)
-	local sp, sc = Components.Panel({
-		Name = "Stamina",
-		Size = UDim2.fromOffset(320, 78),
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 20, 1, -20),
-		Accent = false,
-	})
-	sp.Parent = root
-	local cap = Components.Label({
-		Text = "Dayanıklılık",
-		Size = 12,
-		Color = C.Muted,
-		Font = Theme.Font.Title,
-		Upper = true,
-		Frame = UDim2.new(1, -80, 0, 14),
-	})
+	-- Dayanıklılık (sol alt): tabela yok; kabartmalı yazı ve konturlu çubuk doğrudan sahnenin üstünde
+	local sc = Instance.new("Frame")
+	sc.Name = "Stamina"
+	sc.BackgroundTransparency = 1
+	sc.Size = UDim2.fromOffset(330, 70)
+	sc.AnchorPoint = Vector2.new(0, 1)
+	sc.Position = UDim2.new(0, 24, 1, -24)
+	sc.Parent = root
+	local cap =
+		Components.Label3D({ Text = "Dayanıklılık", Size = 17, Upper = true, Color = C.White, Frame = UDim2.fromOffset(230, 26) })
 	cap.Parent = sc
-	ui.stamina = Components.Bar({ Size = UDim2.new(1, -80, 0, 12), Color = C.Good, Value = 1 })
-	ui.stamina.Frame.Position = UDim2.fromOffset(0, 22)
+	ui.stamina = Components.Bar({ Size = UDim2.fromOffset(236, 14), Color = C.Good, Value = 1 })
+	ui.stamina.Frame.Position = UDim2.fromOffset(0, 34)
+	ui.stamina.Frame.BackgroundColor3 = Color3.fromRGB(4, 8, 28)
+	Components.Stroke(ui.stamina.Frame, Color3.fromRGB(4, 8, 28), 3, 0)
+	-- çubuğun altındaki gölge (kalınlık hissi)
+	local barShadow = Instance.new("Frame")
+	barShadow.Name = "BarShadow"
+	barShadow.BackgroundColor3 = Color3.fromRGB(4, 8, 28)
+	barShadow.BackgroundTransparency = 0.45
+	barShadow.BorderSizePixel = 0
+	barShadow.Size = UDim2.fromOffset(242, 14)
+	barShadow.Position = UDim2.fromOffset(-3, 41)
+	local bsc = Instance.new("UICorner")
+	bsc.CornerRadius = UDim.new(0, 6)
+	bsc.Parent = barShadow
+	barShadow.Parent = sc
 	ui.stamina.Frame.Parent = sc
 	ui.staminaFill = ui.stamina.Frame:FindFirstChildOfClass("Frame")
-	ui.speed = Components.Label({
+	local speedHolder, speedLabel = Components.Label3D({
 		Text = "0",
-		Size = 30,
-		Font = Theme.Font.Number,
+		Size = 36,
 		Color = C.Yellow,
 		Align = Enum.TextXAlignment.Right,
-		Frame = UDim2.fromOffset(70, 34),
+		Frame = UDim2.fromOffset(78, 46),
 	})
-	ui.speed.AnchorPoint = Vector2.new(1, 0)
-	ui.speed.Position = UDim2.fromScale(1, 0)
-	ui.speed.Parent = sc
-	local unit = Components.Label({
+	speedHolder.AnchorPoint = Vector2.new(1, 0)
+	speedHolder.Position = UDim2.new(1, 0, 0, -2)
+	speedHolder.Parent = sc
+	ui.speed = speedLabel
+	local unit = Components.Label3D({
 		Text = "hız",
-		Size = 11,
-		Color = C.Muted,
+		Size = 13,
+		Color = C.White,
 		Upper = true,
 		Align = Enum.TextXAlignment.Right,
-		Frame = UDim2.fromOffset(70, 14),
+		Frame = UDim2.fromOffset(78, 20),
 	})
 	unit.AnchorPoint = Vector2.new(1, 0)
-	unit.Position = UDim2.new(1, 0, 0, 34)
+	unit.Position = UDim2.new(1, 0, 0, 44)
 	unit.Parent = sc
 
 	-- Şut yuvaları (alt orta)

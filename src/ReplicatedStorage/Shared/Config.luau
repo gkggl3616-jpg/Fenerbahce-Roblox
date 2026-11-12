@@ -126,7 +126,7 @@ Config.SkillChains = {
 		Skills = {
 			{ Id = "AyaktaMudahale", Name = "Ayakta müdahale", Level = 1, Cost = 0, Info = "Ayağı uzatıp topu çelme" },
 			{ Id = "Omuz", Name = "Omuz mücadelesi", Level = 3, Cost = 200, Info = "Omuzla dengesini boz, topu al" },
-			{ Id = "Kayma", Name = "Kayarak müdahale", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
+			{ Id = "Kayma", Name = "Kayarak giriş", Level = 6, Cost = 450, Info = "Koşarken yerden kayarak" },
 			{ Id = "Blok", Name = "Blok", Level = 10, Cost = 900, Info = "Şutun önüne gövdeyle gir" },
 			{ Id = "UcanBlok", Name = "Uçan blok", Level = 15, Cost = 1800, Info = "Şuta doğru atlayarak kapat" },
 		},

@@ -937,49 +937,56 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	root.Parent = gui
 	ui.root = root
 
-	-- Dayanıklılık (sol alt)
-	local sp, sc = Components.Panel({
-		Name = "Stamina",
-		Size = UDim2.fromOffset(320, 78),
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 20, 1, -20),
-		Accent = false,
-	})
-	sp.Parent = root
-	local cap = Components.Label({
-		Text = "Dayanıklılık",
-		Size = 12,
-		Color = C.Muted,
-		Font = Theme.Font.Title,
-		Upper = true,
-		Frame = UDim2.new(1, -80, 0, 14),
-	})
+	-- Dayanıklılık (sol alt): tabela yok; kabartmalı yazı ve konturlu çubuk doğrudan sahnenin üstünde
+	local sc = Instance.new("Frame")
+	sc.Name = "Stamina"
+	sc.BackgroundTransparency = 1
+	sc.Size = UDim2.fromOffset(330, 70)
+	sc.AnchorPoint = Vector2.new(0, 1)
+	sc.Position = UDim2.new(0, 24, 1, -24)
+	sc.Parent = root
+	local cap =
+		Components.Label3D({ Text = "Dayanıklılık", Size = 17, Upper = true, Color = C.White, Frame = UDim2.fromOffset(230, 26) })
 	cap.Parent = sc
-	ui.stamina = Components.Bar({ Size = UDim2.new(1, -80, 0, 12), Color = C.Good, Value = 1 })
-	ui.stamina.Frame.Position = UDim2.fromOffset(0, 22)
+	ui.stamina = Components.Bar({ Size = UDim2.fromOffset(236, 14), Color = C.Good, Value = 1 })
+	ui.stamina.Frame.Position = UDim2.fromOffset(0, 34)
+	ui.stamina.Frame.BackgroundColor3 = Color3.fromRGB(4, 8, 28)
+	Components.Stroke(ui.stamina.Frame, Color3.fromRGB(4, 8, 28), 3, 0)
+	-- çubuğun altındaki gölge (kalınlık hissi)
+	local barShadow = Instance.new("Frame")
+	barShadow.Name = "BarShadow"
+	barShadow.BackgroundColor3 = Color3.fromRGB(4, 8, 28)
+	barShadow.BackgroundTransparency = 0.45
+	barShadow.BorderSizePixel = 0
+	barShadow.Size = UDim2.fromOffset(242, 14)
+	barShadow.Position = UDim2.fromOffset(-3, 41)
+	local bsc = Instance.new("UICorner")
+	bsc.CornerRadius = UDim.new(0, 6)
+	bsc.Parent = barShadow
+	barShadow.Parent = sc
 	ui.stamina.Frame.Parent = sc
 	ui.staminaFill = ui.stamina.Frame:FindFirstChildOfClass("Frame")
-	ui.speed = Components.Label({
+	local speedHolder, speedLabel = Components.Label3D({
 		Text = "0",
-		Size = 30,
-		Font = Theme.Font.Number,
+		Size = 36,
 		Color = C.Yellow,
 		Align = Enum.TextXAlignment.Right,
-		Frame = UDim2.fromOffset(70, 34),
+		Frame = UDim2.fromOffset(78, 46),
 	})
-	ui.speed.AnchorPoint = Vector2.new(1, 0)
-	ui.speed.Position = UDim2.fromScale(1, 0)
-	ui.speed.Parent = sc
-	local unit = Components.Label({
+	speedHolder.AnchorPoint = Vector2.new(1, 0)
+	speedHolder.Position = UDim2.new(1, 0, 0, -2)
+	speedHolder.Parent = sc
+	ui.speed = speedLabel
+	local unit = Components.Label3D({
 		Text = "hız",
-		Size = 11,
-		Color = C.Muted,
+		Size = 13,
+		Color = C.White,
 		Upper = true,
 		Align = Enum.TextXAlignment.Right,
-		Frame = UDim2.fromOffset(70, 14),
+		Frame = UDim2.fromOffset(78, 20),
 	})
 	unit.AnchorPoint = Vector2.new(1, 0)
-	unit.Position = UDim2.new(1, 0, 0, 34)
+	unit.Position = UDim2.new(1, 0, 0, 44)
 	unit.Parent = sc
 
 	-- Şut yuvaları (alt orta)

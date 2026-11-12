@@ -61,6 +61,50 @@ function Components.Label(props)
 	return l
 end
 
+--[[ Kabartmalı (3B gölgeli) yazı: arkasında tabela olmadan, sahnenin üstünde okunur.
+	Altında koyu katmanlar (kalınlık), çevresinde koyu kontur, yüzünde hafif ışık geçişi vardır.
+	props: Label ile aynı + Depth (kalınlık, piksel; varsayılan boyuta göre)
+	Döner: holder (yerleştirilecek kutu), label (Text / TextColor3 buradan değiştirilir) ]]
+function Components.Label3D(props)
+	local size = props.Size or 16
+	local depth = props.Depth or math.clamp(math.floor(size / 9 + 0.5), 1, 5)
+	local holder = Instance.new("Frame")
+	holder.Name = props.Name or "Label3D"
+	holder.BackgroundTransparency = 1
+	holder.Size = props.Frame or UDim2.new(1, 0, 0, size + 6 + depth)
+	holder.LayoutOrder = props.Order or 0
+	local inner = table.clone(props)
+	inner.Frame = UDim2.new(1, 0, 1, -depth)
+	inner.Font = props.Font or Theme.Font.Display
+	local layers = {}
+	-- kalınlık: aşağı doğru kayan koyu kopyalar
+	for i = depth, 1, -1 do
+		local s = Components.Label(inner)
+		s.Name = "Depth"
+		s.TextColor3 = Color3.fromRGB(4, 8, 28)
+		s.TextTransparency = if i == depth then 0.45 else 0.1
+		s.Position = UDim2.fromOffset(0, i)
+		stroke(s, Color3.fromRGB(4, 8, 28), math.max(1.5, size / 14), if i == depth then 0.45 else 0.1).ApplyStrokeMode =
+			Enum.ApplyStrokeMode.Contextual
+		s.Parent = holder
+		table.insert(layers, s)
+	end
+	local label = Components.Label(inner)
+	label.Name = "Face"
+	stroke(label, Color3.fromRGB(4, 8, 28), math.max(1.5, size / 14), 0).ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	local shade = Instance.new("UIGradient")
+	shade.Rotation = 90
+	shade.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(196, 200, 214))
+	shade.Parent = label
+	label.Parent = holder
+	label:GetPropertyChangedSignal("Text"):Connect(function()
+		for _, s in ipairs(layers) do
+			s.Text = label.Text
+		end
+	end)
+	return holder, label
+end
+
 -- Eğik sarı-lacivert çubuk şeridi (panel köşesi süsü). Üst öğe CanvasGroup olmalı ki kırpılsın.
 function Components.Stripes(count: number?, width: number?)
 	local holder = Instance.new("Frame")

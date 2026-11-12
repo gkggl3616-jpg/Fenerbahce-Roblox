@@ -89,7 +89,8 @@ function Crest.FromClub(club)
 end
 
 local function color(v: any): Color3
-	return if typeof(v) == "Color3" then v else (Crest.Colors[v] or Crest.Colors[1])
+	-- sayı: paletteki sıra; değilse doğrudan renk (hazır kulüpler)
+	return if type(v) == "number" then (Crest.Colors[v] or Crest.Colors[1]) else v
 end
 
 local function frame(parent: Instance, size: UDim2, pos: UDim2, c: Color3, rot: number?): Frame

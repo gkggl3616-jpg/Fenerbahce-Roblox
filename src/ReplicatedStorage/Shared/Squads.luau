@@ -177,6 +177,14 @@ local function hash(text: string): number
 	return h
 end
 
+-- Adın baş harfi (Türkçe harfler birden çok bayt tutar; bayt olarak kesilmez)
+local function initial(name: string): string
+	for _, code in utf8.codes(name) do
+		return utf8.char(code)
+	end
+	return ""
+end
+
 -- Bir kulübün 11'i. avg: ortalama güç (0-99)
 function Squads.Build(club, avg: number)
 	local R = rng(hash(club.Name) + 17)
@@ -192,7 +200,7 @@ function Squads.Build(club, avg: number)
 		players[slot] = {
 			slot = slot,
 			number = NUMBERS[slot],
-			name = string.sub(FIRST[1 + math.floor(R() * #FIRST)], 1, 1) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
+			name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
 			full = "",
 			role = role,
 			rating = rating,
