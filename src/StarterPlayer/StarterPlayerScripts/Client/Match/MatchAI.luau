@@ -32,6 +32,9 @@ local frozenUntil = 0
 local skill = { home = 0.4, away = 0.4 }
 local humanSlot = 11
 local humanKeeper = false
+-- Takım emri (kaptanın verdiği): "Dengeli" | "Atak" | "Defans" | "Pres"; strength 0-1 (kaptansa 1)
+local order = { name = "Dengeli", strength = 1 }
+local lastCarrier: any = nil
 local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {} }
 local plans: { [any]: any } = {} -- kaleci -> kurtarış planı
 local stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
@@ -195,6 +198,8 @@ function MatchAI.Start(opts)
 	skill.away = math.clamp(opts.awaySkill, 0.05, 1)
 	skill.home = math.clamp(opts.homeSkill, 0.05, 1)
 	humanSlot = Config.FormationSlot[opts.position] or 11
+	order = { name = "Dengeli", strength = 1 }
+	lastCarrier = nil
 	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
 	humanKeeper = humanSlot == 1
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
@@ -233,6 +238,39 @@ function MatchAI.ResetPositions()
 		place(bot)
 	end
 	plans = {}
+end
+
+function MatchAI.SetOrder(name: string, strength: number?)
+	order = { name = name, strength = math.clamp(strength or 1, 0, 1) }
+end
+
+-- Emrin takım hattına etkisi (stud): atakta öne, defansta geriye, preste biraz öne
+function MatchAI.OrderPush(): number
+	local o = order.name
+	return (if o == "Atak" then 30 elseif o == "Defans" then -30 elseif o == "Pres" then 12 else 0) * order.strength
+end
+
+function MatchAI.Order(): string
+	return order.name
+end
+
+-- "Pas ver!": top bir takım arkadaşındaysa oyuncuya pas atar. Atıldıysa true döner.
+function MatchAI.CallPass(playerPos: Vector3): boolean
+	local c = lastCarrier
+	if not c or c.team ~= "home" or c.state == "down" or not c.model.Parent then
+		return false
+	end
+	if flat(c.pos - Ball.Position()).Magnitude > 4.5 or clock < frozenUntil then
+		return false
+	end
+	local dist = flat(playerPos - c.pos).Magnitude
+	if dist < 6 or dist > 190 then
+		return false
+	end
+	c.animator:Play("Pass")
+	c.cd = 0.7
+	kickTo(playerPos + Vector3.new(0, 0.6, 0), math.clamp(42 + dist * 0.5, 48, 92), "Pass", "home", if dist > 90 then 1.25 else 1)
+	return true
 end
 
 -- Kırmızı kart: oyuncu sahadan çıkar
@@ -621,6 +659,7 @@ function MatchAI.Update(dt: number, ctx)
 			end
 		end
 	end
+	lastCarrier = carrier
 	local humanDist = flat(ctx.playerPos - ballFlat).Magnitude
 	local humanHas = live and low and humanDist < 4 and (not carrier or humanDist < cd)
 	if humanHas then
@@ -707,6 +746,10 @@ function MatchAI.Update(dt: number, ctx)
 				-- bota karşı top kapma: beceri farkına bağlı şans
 				bot.cd = 0.7
 				local chance = 0.3 + (skill[team] - skill[carrier.team]) * 0.35
+				if team == "home" then
+					-- pres ve defans emirleri top kapma şansını artırır
+					chance += (if order.name == "Pres" then 0.2 elseif order.name == "Defans" then 0.1 else 0) * order.strength
+				end
 				if math.random() < chance then
 					bot.animator:Play("AyaktaMudahale")
 					carrier.state = "down"
@@ -730,10 +773,13 @@ function MatchAI.Update(dt: number, ctx)
 			-- dizilişteki yer: top ilerledikçe takım kayar
 			local shift = math.clamp((ballPos.Z - MID_Z) * 0.55, -110, 110)
 			local push = if possession == team then 14 * d else -10 * d
+			if team == "home" then
+				push += MatchAI.OrderPush() * d
+			end
 			local depth = Config.Formation[bot.slot][2] -- geridekiler daha az kayar
 			local target = Vector3.new(bot.home.X + ballPos.X * 0.22, 0, bot.home.Z + shift * (0.55 + depth * 0.7) + push)
 			-- hücumda forvetler boşa kaçar
-			if possession == team and bot.slot >= 10 then
+			if possession == team and bot.slot >= (if team == "home" and order.name == "Atak" then 6 else 10) then
 				target += Vector3.new(math.sin(clock * 0.9 + bot.slot) * 10, 0, d * 12)
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))

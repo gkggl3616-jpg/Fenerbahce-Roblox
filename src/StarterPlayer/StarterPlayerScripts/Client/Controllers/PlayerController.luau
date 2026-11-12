@@ -425,7 +425,12 @@ local function secondary()
 		state.passPower = 0.4
 		play("Pass")
 	else
+		-- "Pas ver!": top takım arkadaşındaysa sana atar
 		play("TopIste")
+		local hrp = state.hrp
+		if hrp and matchApi and matchApi.CallPass then
+			matchApi.CallPass(hrp.Position - Vector3.new(0, 3, 0))
+		end
 	end
 end
 local function contextSpace()
@@ -446,11 +451,18 @@ local KEYMAP: { [Enum.KeyCode]: () -> () } = {
 		play("VucutCalimi", { Mirror = math.random() < 0.5 }) -- hızlı, sade çalım her zaman elde
 	end,
 	[Config.Keys.Jump] = contextSpace,
+	[Enum.KeyCode.T] = function()
+		if matchApi and matchApi.CycleOrder then
+			matchApi.CycleOrder() -- takım emri: Dengeli > Atak > Defans > Pres
+		end
+	end,
 	[Config.Keys.Tackle] = doTackle,
 	[Enum.KeyCode.V] = doBlock,
 	[Config.Keys.Celebrate] = doCelebrate,
 	[Enum.KeyCode.H] = function()
-		play("TopIste")
+		if not hasBall() then
+			secondary()
+		end
 	end,
 	[Enum.KeyCode.Z] = function()
 		play("Plonjon", { Mirror = true })
@@ -1092,8 +1104,9 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 			{ "WASD", "Koş  ·  Shift: sprint" },
 			{ "Sol tık", "Şut: basılı tut, yeşilde bırak" },
 			{ "", "Top sende değilse: müdahale" },
-			{ "Sağ tık", "Pas  ·  topsuzken: top iste" },
+			{ "Sağ tık", 'Pas  ·  topsuzken: "pas ver!"' },
 			{ "Boşluk", "Çalım  ·  topsuzken: kafa" },
+			{ "T", "Takım emri: atak / defans / pres" },
 			{ "1 - 6", "Şut türü" },
 			{ "B / G", "Orta aç  /  sevinç" },
 			{ "N", "Topu getir (deneme sahası)" },

@@ -827,6 +827,113 @@ local function humanTackle(pos: Vector3, look: Vector3, sliding: boolean): strin
 	return result
 end
 
+--------------------------------------------------------------------------------
+-- Takım emirleri: Dengeli / Atak / Defans / Pres ve "pas ver"
+--------------------------------------------------------------------------------
+local ORDERS = { "Dengeli", "Atak", "Defans", "Pres" }
+local ORDER_INFO = {
+	Dengeli = "Normal diziliş",
+	Atak = "Hat öne çıkar, kanatlar da koşu yapar",
+	Defans = "Takım geri çekilir, top kapma artar",
+	Pres = "Rakibe yüklenir, top kapma çok artar",
+}
+
+local function paintOrders()
+	for name, b in pairs(ui.orderButtons or {}) do
+		local on = M and M.order == name
+		b.BackgroundColor3 = if on then C.Yellow else C.Navy
+		b.BackgroundTransparency = if on then 0 else 0.25
+		b.Label.TextColor3 = if on then C.Navy else C.Text
+	end
+end
+
+local function setOrder(name: string)
+	if not M or M.order == name then
+		return
+	end
+	M.order = name
+	MatchAI.SetOrder(name, if M.captain then 1 else 0.6)
+	paintOrders()
+	Components.Toast("info", "Takım emri: " .. name .. "  ·  " .. ORDER_INFO[name])
+	UIMotion.Sound("ClickSound")
+end
+
+local function cycleOrder()
+	if M then
+		setOrder(ORDERS[(table.find(ORDERS, M.order) or 1) % #ORDERS + 1])
+	end
+end
+
+-- "Pas ver!": kaptan her zaman dinlenir, diğerleri çoğu zaman
+local function callPass(playerPos: Vector3): boolean
+	if not M or M.phase ~= "play" then
+		return false
+	end
+	if not M.captain and math.random() > 0.75 then
+		return false
+	end
+	local ok = MatchAI.CallPass(playerPos)
+	if ok then
+		big("Pas geliyor", C.Good, 0.7)
+	end
+	return ok
+end
+
+local function buildOrders()
+	if not ui.root then
+		return
+	end
+	local panel = Instance.new("Frame")
+	panel.Name = "Orders"
+	panel.Position = UDim2.fromOffset(20, 380)
+	panel.Size = UDim2.fromOffset(220, 98)
+	panel.BackgroundColor3 = C.Ground
+	panel.BackgroundTransparency = 0.35
+	panel.BorderSizePixel = 0
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(0, 8)
+	u.Parent = panel
+	panel.Parent = ui.root
+	local title = Components.Label({
+		Text = if M.captain then "TAKIM EMRİ  ·  T  ·  KAPTAN" else "TAKIM EMRİ  ·  T",
+		Size = 11,
+		Font = Theme.Font.Title,
+		Color = C.Muted,
+		Frame = UDim2.new(1, -16, 0, 16),
+	})
+	title.Position = UDim2.fromOffset(8, 4)
+	title.Parent = panel
+	ui.orderButtons = {}
+	for i, name in ipairs(ORDERS) do
+		local b = Instance.new("TextButton")
+		b.Name = name
+		b.AutoButtonColor = false
+		b.Text = ""
+		b.Size = UDim2.fromOffset(100, 32)
+		b.Position = UDim2.fromOffset(8 + ((i - 1) % 2) * 104, 24 + math.floor((i - 1) / 2) * 36)
+		b.BorderSizePixel = 0
+		local bu = Instance.new("UICorner")
+		bu.CornerRadius = UDim.new(0, 6)
+		bu.Parent = b
+		local l = Components.Label({
+			Text = name,
+			Upper = true,
+			Size = 13,
+			Font = Theme.Font.Title,
+			Align = Enum.TextXAlignment.Center,
+			Frame = UDim2.fromScale(1, 1),
+		})
+		l.Name = "Label"
+		l.Parent = b
+		b.Activated:Connect(function()
+			setOrder(name)
+		end)
+		b.Parent = panel
+		ui.orderButtons[name] = b
+	end
+	paintOrders()
+end
+
 local function update(dt: number, ctx)
 	if not M then
 		return
@@ -891,6 +998,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		lastHumanKick = nil,
 		position = data.position,
 		cards = {}, -- cards["home:9"] = "yellow" | "red"
+		order = "Dengeli",
+		captain = (data.level or 1) >= Config.CaptainBandLevel,
 		me = { name = data.name, number = data.number or 9, human = true },
 		homeName = if fixture then fixture.home.club.Abbr elseif data.club.abbr ~= "" then data.club.abbr else "EV",
 		awayName = if fixture then fixture.away.club.Abbr else "RKP",
@@ -914,6 +1023,8 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		Update = update,
 		Feint = MatchAI.Feint,
 		Tackle = humanTackle,
+		CallPass = callPass,
+		CycleOrder = cycleOrder,
 		HumanSave = MatchAI.HumanSave,
 		OnHumanKick = function()
 			if M then
@@ -927,6 +1038,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	Referee.Spawn()
 	PlayerController.SetHud(true)
 	buildHud(gui)
+	buildOrders()
 	setScore(false)
 	kickoff("home")
 	M.phase = "intro"
@@ -943,7 +1055,7 @@ end
 
 -- Sınamalar için: süren maçın durumu ve hakem kararı
 function MatchController.Debug()
-	return { state = M, foul = foul }
+	return { state = M, foul = foul, setOrder = setOrder }
 end
 
 -- Bir kez bağlanır

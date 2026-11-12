@@ -355,6 +355,16 @@ end
 local MatchController = require(script.Parent.Match.MatchController)
 local Lineup = require(script.Parent.Screens.Lineup)
 
+-- Stat modülü varsa lobi çevresini ve ışığını o kurar
+do
+	local stadiumModule = ReplicatedStorage.Shared:FindFirstChild("Stadium")
+	if stadiumModule then
+		task.defer(function()
+			(require(stadiumModule) :: any).Lobby()
+		end)
+	end
+end
+
 -- Lobi ışığı: aydınlık gündüz (varsayılan ışık sahneyi karanlık bırakıyordu)
 do
 	local Lighting = game:GetService("Lighting")

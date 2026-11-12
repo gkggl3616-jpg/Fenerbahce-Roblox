@@ -879,6 +879,39 @@ frames(90)
 PC.SetHud(false)
 frames(30)
 
+section("Stadyum (altı kademe kurulur, ışık ayarlanır, ekran ve seyirci çalışır)")
+do
+	local Stadium = require(__tree.Shared.Stadium)
+	local Lighting = game:GetService("Lighting")
+	local last = 0
+	for tier = 1, 6 do
+		local model = Stadium.Build(tier, { club = "Moda Gençlik", abbr = "MOD", facilities = { TribunEki = 1, Aydinlatma = 1 } })
+		local n, seats = 0, 0
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("BasePart") then
+				n += 1
+				if d.Name == "Seats" then
+					seats += 1
+				end
+			end
+		end
+		check("kademe " .. tier .. ": parça sayısı makul (" .. n .. ")", n > 80 and n < 2500)
+		check("kademe " .. tier .. ": tribün var (" .. seats .. ")", seats >= 2)
+		check("kademe " .. tier .. ": tribün önceki kademeden küçük değil", seats >= last)
+		last = seats
+		check("kademe " .. tier .. ": dev ekran yalnızca en büyük üç statta", Stadium.HasScreen() == (tier >= 4))
+		Stadium.Score("MOD", "RKP", 2, 1, 55)
+		Stadium.Screen("GOL!", "MOD 55'", nil, 1)
+		Stadium.Cheer()
+	end
+	check("gece maçında saha aydınlık (parlaklık " .. Lighting.Brightness .. ")", Lighting.Brightness >= 3)
+	Stadium.Clear()
+	check("stat kaldırıldı", workspace:FindFirstChild("FK_Stadium") == nil)
+	check("lobi ışığı gündüz", Lighting.ClockTime > 12 and Lighting.ClockTime < 16)
+	Stadium.Lobby()
+	check("lobi çevresi kuruldu", workspace:FindFirstChild("FK_LobbyWorld") ~= nil)
+end
+
 section("Yetenek ağacı, kadrolar ve maç öncesi ekranı")
 do
 	local Poses = require(__tree.Anim.Poses)
@@ -1048,6 +1081,33 @@ for _, b in ipairs(require(__tree.Match.MatchAI).Positions()) do
 end
 check("penaltıda oyuncular topun gerisinde", outside)
 frames(120)
+-- takım emirleri
+dbg.state.elapsed = 0
+local MAI2 = require(__tree.Match.MatchAI)
+check("maç dengeli emirle başlar", MAI2.Order() == "Dengeli")
+Ball2.Reset(Vector3.new(0, 0, (PM.MinZ + PM.MaxZ) / 2))
+dbg.setOrder("Defans")
+check("emir yapay zekaya ulaşır", MAI2.Order() == "Defans")
+local ordersPanel = false
+for _, d in ipairs(gui2:GetDescendants()) do
+	if d.Name == "Orders" then
+		ordersPanel = true
+	end
+end
+check("takım emri paneli ekranda", ordersPanel)
+check("defans emri hattı geri çeker", MAI2.OrderPush() < -10, MAI2.OrderPush())
+dbg.setOrder("Pres")
+check("pres emri hattı biraz öne alır", MAI2.OrderPush() > 4, MAI2.OrderPush())
+dbg.setOrder("Atak")
+check("atak emri hattı öne çıkarır", MAI2.OrderPush() > 10, MAI2.OrderPush())
+frames(120)
+check("emir altında oyun sürer", dbg.state.phase == "play" or dbg.state.phase == "restart", dbg.state.phase)
+key(Enum.KeyCode.T, 2)
+check("T tuşu sıradaki emre geçer (Atak > Defans)", MAI2.Order() == "Defans", MAI2.Order())
+dbg.setOrder("Dengeli")
+dbg.state.elapsed = 0
+check("oyun hâlâ sürüyor", dbg.state.phase == "play" or dbg.state.phase == "restart", dbg.state.phase)
+check("topsuzken pas çağrısı hata vermez", type(MAI2.CallPass(hrpPart.Position - Vector3.new(0, 3, 0))) == "boolean")
 hum.MoveDirection = Vector3.new(0, 0, 1)
 for i = 1, 20 do
 	frames(60)
