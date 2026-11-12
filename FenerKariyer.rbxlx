@@ -1,5 +1,5 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
-<Item class="ReplicatedStorage" referent="RBX12"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX6"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ReplicatedStorage" referent="RBX13"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX7"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[--[[
 	Config
 	Oyundaki bütün ayar sayıları, renkler, kademeler ve yetenek zincirleri burada durur.
 	Başka hiçbir modül sabit sayı gömmez; hepsi buradan okur.
@@ -460,7 +460,243 @@ end
 
 return Config
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX2"><Properties><string name="Name">Kits</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX2"><Properties><string name="Name">Crest</string><ProtectedString name="Source"><![CDATA[--[[
+	Crest
+	Kulüp arması: biçim + desen + iki renk + simge. Hem arayüzde hem forma göğsünde aynı kodla çizilir
+	(ölçüler orantılıdır; içine konduğu kutuyu doldurur). Oyuncu kendi armasını tasarlar,
+	rakip kulüplerin armaları hazırdır.
+
+	spec = { shape, pattern, a, b, symbol }   a ve b: Crest.Colors içindeki sıra numaraları
+	Crest.Fill(parent, spec, abbr)            armayı parent kutusuna çizer
+	Crest.Build(spec, abbr, pixels) -> Frame  sabit ölçülü arma
+	Crest.Clean(spec) -> spec | nil           sunucu doğrulaması
+	Crest.FromClub(club) -> spec, abbr        hazır kulüp tanımından (Squads) arma
+]]
+
+local Crest = {}
+
+local rgb = Color3.fromRGB
+local FONT = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy)
+
+Crest.Shapes = { "Kalkan", "Daire", "Altıgen", "Flama", "Elmas" }
+Crest.Patterns = { "Düz", "Çapraz şerit", "Dikey çubuk", "Yatay kuşak", "Yarı yarıya", "Çerçeve" }
+Crest.Symbols = { "Kısaltma", "Baş harf", "Yıldızlı", "Toplu" }
+Crest.Colors = {
+	rgb(255, 230, 0), -- sarı
+	rgb(11, 23, 71), -- lacivert
+	rgb(250, 250, 250), -- beyaz
+	rgb(20, 20, 24), -- siyah
+	rgb(200, 36, 44), -- kırmızı
+	rgb(120, 20, 46), -- bordo
+	rgb(232, 120, 24), -- turuncu
+	rgb(28, 140, 84), -- yeşil
+	rgb(18, 84, 60), -- koyu yeşil
+	rgb(40, 110, 200), -- mavi
+	rgb(96, 190, 235), -- açık mavi
+	rgb(112, 60, 160), -- mor
+	rgb(196, 160, 72), -- altın
+	rgb(130, 136, 148), -- gri
+}
+
+function Crest.Default()
+	return { shape = 1, pattern = 2, a = 2, b = 1, symbol = 1 }
+end
+
+local function isInt(v: any, min: number, max: number): boolean
+	return type(v) == "number" and v == math.floor(v) and v >= min and v <= max
+end
+
+-- İstemciden gelen tasarımı doğrular; geçersizse nil
+function Crest.Clean(spec: any)
+	if type(spec) ~= "table" then
+		return nil
+	end
+	if
+		not isInt(spec.shape, 1, #Crest.Shapes)
+		or not isInt(spec.pattern, 1, #Crest.Patterns)
+		or not isInt(spec.a, 1, #Crest.Colors)
+		or not isInt(spec.b, 1, #Crest.Colors)
+		or not isInt(spec.symbol, 1, #Crest.Symbols)
+	then
+		return nil
+	end
+	if spec.a == spec.b then
+		return nil -- iki renk aynı olursa desen ve yazı görünmez
+	end
+	return { shape = spec.shape, pattern = spec.pattern, a = spec.a, b = spec.b, symbol = spec.symbol }
+end
+
+local function hash(text: string): number
+	local h = 7
+	for i = 1, #text do
+		h = (h * 31 + string.byte(text, i)) % 2147483647
+	end
+	return h
+end
+
+-- Hazır kulüp (Squads.Clubs) ya da oyuncunun kulübü için çizim bilgisi
+function Crest.FromClub(club)
+	if club.CrestSpec then
+		local s = club.CrestSpec
+		return { shape = s.shape, pattern = s.pattern, a = Crest.Colors[s.a], b = Crest.Colors[s.b], symbol = s.symbol }, club.Abbr
+	end
+	return {
+		shape = club.Crest or 1,
+		pattern = 1 + hash(club.Name or "") % #Crest.Patterns,
+		a = club.A,
+		b = club.B,
+		symbol = 1 + hash(club.Abbr or "") % 2 * 2, -- kısaltma ya da yıldızlı
+	},
+		club.Abbr
+end
+
+local function color(v: any): Color3
+	return if typeof(v) == "Color3" then v else (Crest.Colors[v] or Crest.Colors[1])
+end
+
+local function frame(parent: Instance, size: UDim2, pos: UDim2, c: Color3, rot: number?): Frame
+	local f = Instance.new("Frame")
+	f.AnchorPoint = Vector2.new(0.5, 0.5)
+	f.Size = size
+	f.Position = pos
+	f.BackgroundColor3 = c
+	f.BorderSizePixel = 0
+	f.Rotation = rot or 0
+	f.Parent = parent
+	return f
+end
+
+local function round(o: Instance, r: number)
+	local u = Instance.new("UICorner")
+	u.CornerRadius = UDim.new(r, 0)
+	u.Parent = o
+end
+
+-- Açık renk üstüne koyu, koyu renk üstüne açık yazı
+local function ink(bg: Color3): Color3
+	local lum = bg.R * 0.299 + bg.G * 0.587 + bg.B * 0.114
+	return if lum > 0.6 then rgb(12, 16, 40) else rgb(255, 255, 255)
+end
+
+function Crest.Fill(parent: Instance, spec, abbr: string?)
+	local a, b = color(spec.a), color(spec.b)
+	local kind = spec.shape or 1
+	-- gövde: köşeleri yuvarlatılmış ve içeriği kırpan tuval
+	local body = Instance.new("CanvasGroup")
+	body.Name = "CrestBody"
+	body.AnchorPoint = Vector2.new(0.5, 0.5)
+	body.Position = UDim2.fromScale(0.5, 0.5)
+	body.BackgroundColor3 = a
+	body.BorderSizePixel = 0
+	local diamond = kind == 5
+	if kind == 2 then
+		body.Size = UDim2.fromScale(0.92, 0.92)
+		round(body, 0.5)
+	elseif kind == 3 then
+		body.Size = UDim2.fromScale(0.86, 0.94)
+		round(body, 0.28)
+	elseif kind == 4 then
+		body.Size = UDim2.fromScale(0.72, 0.96)
+		round(body, 0.1)
+	elseif diamond then
+		body.Size = UDim2.fromScale(0.68, 0.68)
+		body.Rotation = 45
+		round(body, 0.12)
+	else
+		body.Size = UDim2.fromScale(0.8, 0.94)
+		round(body, 0.3)
+	end
+	local edge = Instance.new("UIStroke")
+	edge.Color = b
+	edge.Thickness = 2
+	edge.Parent = body
+	body.Parent = parent
+	-- elmasta desen, döndürülmüş gövdenin içinde düz dursun diye ters çevrilir
+	local back = if diamond then -45 else 0
+
+	local p = spec.pattern or 1
+	if p == 2 then
+		frame(body, UDim2.fromScale(0.3, 2.2), UDim2.fromScale(0.5, 0.5), b, 28 + back)
+	elseif p == 3 then
+		for _, x in ipairs({ 0.22, 0.5, 0.78 }) do
+			frame(body, UDim2.fromScale(0.13, 2.2), UDim2.fromScale(x, 0.5), b, back)
+		end
+	elseif p == 4 then
+		frame(body, UDim2.fromScale(2.2, 0.3), UDim2.fromScale(0.5, 0.5), b, back)
+	elseif p == 5 then
+		frame(body, UDim2.fromScale(1.2, 2.4), UDim2.fromScale(1.1, 0.5), b, back)
+	elseif p == 6 then
+		local inner = frame(body, UDim2.fromScale(0.74, 0.74), UDim2.fromScale(0.5, 0.5), a)
+		round(inner, if kind == 2 then 0.5 else 0.2)
+		local st = Instance.new("UIStroke")
+		st.Color = b
+		st.Thickness = 3
+		st.Parent = inner
+	end
+
+	-- simge: gövdenin üstünde, hep düz durur
+	local sym = spec.symbol or 1
+	local textValue = abbr or ""
+	if sym == 2 then
+		textValue = string.sub(textValue, 1, 1)
+		-- Türkçe harfler iki bayt olabilir
+		for _, code in utf8.codes(abbr or "") do
+			textValue = utf8.char(code)
+			break
+		end
+	end
+	local onColor = if p == 1 or p == 6 then a else b:Lerp(a, 0.5)
+	local label = Instance.new("TextLabel")
+	label.Name = "CrestText"
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(0.5, if sym >= 3 then 0.62 else 0.5)
+	label.Size = if sym == 2 then UDim2.fromScale(0.5, 0.56) else UDim2.fromScale(0.62, if sym >= 3 then 0.26 else 0.34)
+	label.FontFace = FONT
+	label.Text = textValue
+	label.TextScaled = true
+	label.TextColor3 = ink(onColor)
+	local ts = Instance.new("UIStroke")
+	ts.Color = if ink(onColor).R > 0.5 then rgb(12, 16, 40) else rgb(255, 255, 255)
+	ts.Thickness = 1.5
+	ts.Parent = label
+	label.Parent = parent
+	if sym == 3 then
+		-- yıldız: üst üste iki kare (sekiz köşeli)
+		for _, rot in ipairs({ 0, 45 }) do
+			local s = frame(parent, UDim2.fromScale(0.2, 0.2), UDim2.fromScale(0.5, 0.33), rgb(255, 214, 64), rot)
+			local st = Instance.new("UIStroke")
+			st.Color = rgb(12, 16, 40)
+			st.Thickness = 1
+			st.Parent = s
+		end
+		frame(parent, UDim2.fromScale(0.16, 0.16), UDim2.fromScale(0.5, 0.33), rgb(255, 214, 64), 22)
+	elseif sym == 4 then
+		-- top: beyaz daire, ortasında koyu beşgen yerine nokta
+		local ball = frame(parent, UDim2.fromScale(0.24, 0.24), UDim2.fromScale(0.5, 0.33), rgb(250, 250, 250))
+		round(ball, 0.5)
+		local st = Instance.new("UIStroke")
+		st.Color = rgb(12, 16, 40)
+		st.Thickness = 1.5
+		st.Parent = ball
+		local dot = frame(ball, UDim2.fromScale(0.42, 0.42), UDim2.fromScale(0.5, 0.5), rgb(12, 16, 40), 45)
+		round(dot, 0.2)
+	end
+	return body
+end
+
+function Crest.Build(spec, abbr: string?, pixels: number): Frame
+	local holder = Instance.new("Frame")
+	holder.Name = "Crest"
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromOffset(pixels, pixels)
+	Crest.Fill(holder, spec, abbr)
+	return holder
+end
+
+return Crest
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX3"><Properties><string name="Name">Kits</string><ProtectedString name="Source"><![CDATA[--[[
 	Kits
 	Forma tanımları. Bir oyuncunun verisinden hangi formayı giyeceğini hesaplar.
 	Renkler sarı-lacivert ailesiyle sınırlıdır.
@@ -577,7 +813,7 @@ end
 
 return Kits
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX3"><Properties><string name="Name">Remotes</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Remotes</string><ProtectedString name="Source"><![CDATA[--[[
 	Remotes
 	Bütün RemoteEvent ve RemoteFunction nesnelerini tek yerden oluşturur (sunucu) veya bulur (istemci).
 ]]
@@ -592,6 +828,7 @@ local EVENTS = {
 	"UpgradeStat",
 	"UnlockSkill",
 	"UpgradeFacility",
+	"SetCrest",
 	"PreviewAppearance",
 	"Anim",
 	"TrainingGoal",
@@ -638,7 +875,7 @@ end
 
 return Remotes
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Squads</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX5"><Properties><string name="Name">Squads</string><ProtectedString name="Source"><![CDATA[--[[
 	Squads
 	Kulüpler, teknik direktörler ve kadrolar. Rakip kulüplerin adı, renkleri ve arması hazırdır;
 	oyuncunun kulübü kendi adını ve renklerini kullanır. Her futbolcunun kendi özellikleri vardır.
@@ -864,6 +1101,7 @@ function Squads.Fixture(data)
 		A = Config.Colors.Yellow,
 		B = Config.Colors.Navy,
 		Crest = data.club.crestShape or 1,
+		CrestSpec = if tierId == 6 then nil else data.club.crest, -- oyuncunun tasarladığı arma
 	}
 	local R = rng(hash(homeName) + 99)
 	homeDef.Coach = FIRST[1 + math.floor(R() * #FIRST)] .. " " .. LAST[1 + math.floor(R() * #LAST)]
@@ -898,7 +1136,7 @@ end
 
 return Squads
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX5"><Properties><string name="Name">Stadium</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">Stadium</string><ProtectedString name="Source"><![CDATA[--[[
 	Stadium
 	Kulübün kademesine göre maç sahasının çevresini kurar: tribünler, seyirci, çatı,
 	projektörler, LED panolar, dev ekran, şehir ve ağaçlar. Işık ve atmosfer de buradan ayarlanır.
@@ -1899,7 +2137,7 @@ end
 return Stadium
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX11"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">Components</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX12"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX8"><Properties><string name="Name">Components</string><ProtectedString name="Source"><![CDATA[--[[
 	Components
 	Ortak arayüz parçaları: Panel, Button, Bar, Badge, Label, Stripes, Toast.
 	Hepsi Theme ve UIMotion kullanır. Ekranlar bu parçalardan kurulur.
@@ -2340,7 +2578,7 @@ end
 
 return Components
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX8"><Properties><string name="Name">Forms</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX9"><Properties><string name="Name">Forms</string><ProtectedString name="Source"><![CDATA[--[[
 	Forms
 	Girdi bileşenleri: TextInput, Chips (tekli/çoklu seçim), Slider, Stepper, Swatches, Tabs, Modal.
 	Hepsi Theme ve UIMotion kullanır; her değişiklikte küçük bir tepki animasyonu oynar.
@@ -2836,7 +3074,7 @@ end
 
 return Forms
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX9"><Properties><string name="Name">Theme</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX10"><Properties><string name="Name">Theme</string><ProtectedString name="Source"><![CDATA[--[[
 	Theme
 	Arayüzün tasarım dili: renkler, yazı tipleri, köşe ve çizgi ölçüleri.
 	Bütün bileşenler buradan okur; ekranlarda sabit renk yazılmaz.
@@ -2886,7 +3124,7 @@ end
 
 return Theme
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX10"><Properties><string name="Name">UIMotion</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX11"><Properties><string name="Name">UIMotion</string><ProtectedString name="Source"><![CDATA[--[[
 	UIMotion
 	Arayüzdeki bütün hareketlerin tek kaynağı. Kural: hiçbir şey aniden belirmez.
 	FadeSlide (giriş/çıkış), Stagger (sıralı giriş), Pop, CountUp, Shine, Shake, Pulse, Wipe, Ripple.
@@ -3253,7 +3491,7 @@ return UIMotion
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="ServerScriptService" referent="RBX18"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX17"><Properties><string name="Name">Server</string></Properties><Item class="ModuleScript" referent="RBX13"><Properties><string name="Name">CharacterService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ServerScriptService" referent="RBX19"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX18"><Properties><string name="Name">Server</string></Properties><Item class="ModuleScript" referent="RBX14"><Properties><string name="Name">CharacterService</string><ProtectedString name="Source"><![CDATA[--[[
 	CharacterService
 	Karakterin görünümünü sunucuda uygular: gövde ölçüleri, ten, saç, forma, isim ve numara, aksesuarlar.
 	Ayrıca karakter oluşturma ekranı için küçük bir stüdyo sahnesi kurar.
@@ -3266,6 +3504,7 @@ local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Kits = require(ReplicatedStorage.Shared.Kits)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 
 local CharacterService = {}
 
@@ -3337,7 +3576,7 @@ local function text(parent: Instance, str: string, size: UDim2, pos: UDim2, colo
 end
 
 -- Forma desenini gövdenin ön ve arka yüzüne çizer
-local function paintTorso(torso: BasePart, kit, name: string, number: number, abbr: string)
+local function paintTorso(torso: BasePart, kit, name: string, number: number, abbr: string, crest: any?)
 	for _, face in ipairs({ Enum.NormalId.Front, Enum.NormalId.Back }) do
 		local sg = surface(torso, face)
 		if kit.Pattern == "Cubuklu" then
@@ -3387,20 +3626,14 @@ local function paintTorso(torso: BasePart, kit, name: string, number: number, ab
 				img.Position = UDim2.fromScale(0.12, 0.14)
 				img.Parent = sg
 			else
-				local sh = Instance.new("Frame")
-				sh.BorderSizePixel = 0
-				sh.BackgroundColor3 = C.Navy
-				sh.Size = UDim2.fromScale(0.22, 0.2)
-				sh.Position = UDim2.fromScale(0.13, 0.15)
-				local cr = Instance.new("UICorner")
-				cr.CornerRadius = UDim.new(0.25, 0)
-				cr.Parent = sh
-				local st = Instance.new("UIStroke")
-				st.Color = C.Yellow
-				st.Thickness = 2
-				st.Parent = sh
-				sh.Parent = sg
-				text(sh, if abbr ~= "" then abbr else "FB", UDim2.fromScale(0.86, 0.7), UDim2.fromScale(0.07, 0.15), C.Yellow, C.Navy)
+				-- kulüp arması (oyuncunun tasarımı ya da varsayılan); maçta istemci bunu kulübe göre yeniden çizer
+				local holder = Instance.new("Frame")
+				holder.Name = "FK_Crest"
+				holder.BackgroundTransparency = 1
+				holder.Size = UDim2.fromScale(0.24, 0.24)
+				holder.Position = UDim2.fromScale(0.12, 0.13)
+				holder.Parent = sg
+				Crest.Fill(holder, crest or Crest.Default(), if abbr ~= "" then abbr else "FB")
 			end
 			text(sg, tostring(number), UDim2.fromScale(0.2, 0.2), UDim2.fromScale(0.66, 0.15), kit.Ink, kit.InkStroke)
 		end
@@ -3559,7 +3792,7 @@ local function dress(character: Model?, look)
 
 	local torso = character:FindFirstChild("UpperTorso")
 	if torso and torso:IsA("BasePart") then
-		paintTorso(torso, kit, look.name or "", look.number or 9, if look.atFenerbahce then "" else (look.abbr or ""))
+		paintTorso(torso, kit, look.name or "", look.number or 9, if look.atFenerbahce then "" else (look.abbr or ""), look.crest)
 	end
 
 	local head = character:FindFirstChild("Head")
@@ -3766,6 +3999,7 @@ function CharacterService.LookFromData(data)
 		number = data.number,
 		name = data.name,
 		abbr = data.club.abbr,
+		crest = data.club.crest,
 		atFenerbahce = data.career.atFenerbahce,
 		level = data.level,
 	}
@@ -3977,7 +4211,7 @@ end
 
 return CharacterService
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX14"><Properties><string name="Name">DataService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX15"><Properties><string name="Name">DataService</string><ProtectedString name="Source"><![CDATA[--[[
 	DataService
 	Oyuncu verisini DataStore'dan yükler ve kaydeder.
 	- Oturum kilidi: aynı hesap iki sunucuda aynı anda açılamaz.
@@ -4197,7 +4431,7 @@ end
 
 return DataService
 ]]></ProtectedString></Properties></Item>
-<Item class="Script" referent="RBX15"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Script" referent="RBX16"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
 	Main (sunucu)
 	Servisleri sırayla başlatır.
 ]]
@@ -4222,7 +4456,7 @@ task.spawn(CharacterService.BuildBotTemplates)
 
 print("[FenerKariyer] Sunucu hazır")
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX16"><Properties><string name="Name">PlayerService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX17"><Properties><string name="Name">PlayerService</string><ProtectedString name="Source"><![CDATA[--[[
 	PlayerService
 	İstemciden gelen bütün istekleri doğrular ve veriyi yalnızca sunucuda değiştirir.
 	- Kariyer oluşturma: isim filtresi, mevki kilidi, görünüm aralık kontrolü
@@ -4235,6 +4469,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local DataService = require(script.Parent.DataService)
 local CharacterService = require(script.Parent.CharacterService)
@@ -4470,6 +4705,23 @@ local function onUnlockSkill(player: Player, chainId)
 	notify(player, "unlock", skill.Name .. " açıldı")
 end
 
+-- Kulüp arması tasarımı
+local function onSetCrest(player: Player, spec)
+	local data = DataService.Get(player)
+	if not data or not data.created or not allowed(player, "crest") then
+		return
+	end
+	local clean = Crest.Clean(spec)
+	if not clean then
+		return notify(player, "error", "Arma kaydedilemedi: iki farklı renk seç.")
+	end
+	data.club.crest = clean
+	data.club.crestShape = clean.shape
+	push(player)
+	CharacterService.Apply(player, CharacterService.LookFromData(data))
+	notify(player, "success", "Kulüp arması kaydedildi.")
+end
+
 local function onUpgradeFacility(player: Player, id)
 	local data = DataService.Get(player)
 	if not data or not data.created or not allowed(player, "facility") then
@@ -4632,6 +4884,7 @@ function PlayerService.Init()
 	Remotes.Get("UpgradeStat").OnServerEvent:Connect(onUpgradeStat)
 	Remotes.Get("UnlockSkill").OnServerEvent:Connect(onUnlockSkill)
 	Remotes.Get("UpgradeFacility").OnServerEvent:Connect(onUpgradeFacility)
+	Remotes.Get("SetCrest").OnServerEvent:Connect(onSetCrest)
 	Remotes.Get("GetData").OnServerInvoke = function(player)
 		local t0 = os.clock()
 		while not DataService.Get(player) and os.clock() - t0 < 10 do
@@ -4693,7 +4946,7 @@ return PlayerService
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX41"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX38"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX37"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX21"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX19"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterPlayer" referent="RBX43"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX40"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX39"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX22"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
 	Animator
 	Kodla çalışan katmanlı animasyon motoru (R15).
 	- Alt katman: duruş ve koşu döngüsü hızdan üretilir (yürüyüşten sprinte kesintisiz).
@@ -5044,7 +5297,7 @@ end
 
 return Animator
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">Poses</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX21"><Properties><string name="Name">Poses</string><ProtectedString name="Source"><![CDATA[--[[
 	Poses
 	Kodla tanımlanan animasyonlar. Hiçbir animasyon dosyası yüklenmez.
 	Her eylem anahtar karelerden oluşur; açılar derece cinsindendir.
@@ -6416,7 +6669,7 @@ Poses.Names = {
 return Poses
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX23"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX22"><Properties><string name="Name">PlayerController</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX24"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX23"><Properties><string name="Name">PlayerController</string><ProtectedString name="Source"><![CDATA[--[[
 	PlayerController
 	Oyuncunun hareketi, dayanıklılığı, eylem girdileri, efektleri ve saha içi arayüzü.
 	- Hareket: ivmelenme, yavaşlama, ani dönüşte hız kaybı ve fren animasyonu, sprint ve yorgunluk.
@@ -7921,7 +8174,7 @@ end
 return Controller
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="LocalScript" referent="RBX24"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="LocalScript" referent="RBX25"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
 	Main (istemci)
 	Adım 1-2 vitrini: yükleme ekranı, çubuklu perde geçişi ve bileşen kütüphanesini kullanan
 	lobi katmanı (oyuncu kartı, bakiye, menü, görevler, bildirimler). Sunucu verisiyle canlı çalışır.
@@ -8081,6 +8334,7 @@ end
 -- LOBİ KATMANI (bileşen vitrini)
 --------------------------------------------------------------------------------
 local SkillTree = require(script.Parent.Screens.SkillTree)
+local CrestDesigner = require(script.Parent.Screens.CrestDesigner)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -8168,9 +8422,11 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Hareket aç, özellik yükselt")
-	add("Kulüp", "Ghost", nil, function()
-		Components.Toast("info", "Kulüp binası 13. adımda geliyor.")
-	end, "Lig, tesisler, transfer")
+	add("Kulüp arması", "Secondary", nil, function()
+		CrestDesigner.Open(gui, function()
+			return state.data
+		end)
+	end, "Biçim, desen, renk, simge")
 	add("Sıralama", "Secondary", "Dünya sıralaması için önce bir maç oyna.", nil, "Dünya genelinde yerin")
 
 	-- Görevler (sağ)
@@ -8306,6 +8562,7 @@ enterMatch = function()
 		return
 	end
 	SkillTree.Close()
+	CrestDesigner.Close()
 	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
 	local fixture = Squads.Fixture(state.data)
 	local function back()
@@ -8368,7 +8625,7 @@ showLoading(function()
 	end
 end)
 ]]></ProtectedString></Properties></Item>
-<Item class="Folder" referent="RBX32"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX25"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX33"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX26"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
 	Ball
 	Top fiziği ve topla oynama. Top ayrı bir nesnedir; oyuncuya yapışmaz, her dokunuşla itilir.
 	- Fizik: yerçekimi, hava direnci, yuvarlanma sürtünmesi, sekme, falso, saha sınırları, kale ve direk.
@@ -8884,7 +9141,7 @@ end
 
 return Ball
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX26"><Properties><string name="Name">Bots</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX27"><Properties><string name="Name">Bots</string><ProtectedString name="Source"><![CDATA[--[[
 	Bots
 	Deneme sahasındaki yapay zekalı oyuncular. Maç tek oyunculu olduğu için istemcide çalışır.
 	- Savunmacı: topun önünü keser (kademe), yaklaşınca müdahale hazırlığı yapar. Hazırlık sırasında
@@ -9305,7 +9562,7 @@ end
 
 return Bots
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX27"><Properties><string name="Name">MatchAI</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX28"><Properties><string name="Name">MatchAI</string><ProtectedString name="Source"><![CDATA[--[[
 	MatchAI
 	11'e 11 maçtaki 21 botun yapay zekası (oyuncu dışındaki herkes). İstemcide çalışır.
 	Her bot bir rol oynar:
@@ -9322,6 +9579,7 @@ local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Animator = require(script.Parent.Parent.Anim.Animator)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Ball = require(script.Parent.Ball)
 
 local P = Config.MatchPitch
@@ -9426,6 +9684,17 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 			end
 		end
 	end
+	if club then
+		local spec, abbr = Crest.FromClub(club)
+		for _, dsc in ipairs(model:GetDescendants()) do
+			if dsc.Name == "FK_Crest" then
+				for _, child in ipairs(dsc:GetChildren()) do
+					child:Destroy()
+				end
+				Crest.Fill(dsc, spec, abbr)
+			end
+		end
+	end
 	model.Parent = Workspace
 	local ring = Instance.new("Part")
 	ring.Shape = Enum.PartType.Cylinder
@@ -9512,7 +9781,13 @@ function MatchAI.Start(opts)
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
-			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot, fx and fx.home.players[slot])
+			spawn(
+				if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2",
+				"home",
+				slot,
+				fx and fx.home.players[slot],
+				fx and fx.home.club
+			)
 		end
 		spawn(
 			if slot == 1
@@ -10124,7 +10399,7 @@ end
 
 return MatchAI
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX28"><Properties><string name="Name">MatchController</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">MatchController</string><ProtectedString name="Source"><![CDATA[--[[
 	MatchController
 	Maçın akışı ve arayüzü:
 	VS ekranı > başlama vuruşu > ilk yarı > devre arası > ikinci yarı > maç sonu > ödüller.
@@ -11227,7 +11502,7 @@ end)
 
 return MatchController
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">Referee</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX30"><Properties><string name="Name">Referee</string><ProtectedString name="Source"><![CDATA[--[[
 	Referee
 	Sahadaki hakem: oyunu çaprazdan takip eder, düdük çalar, kart gösterir.
 	Kurallar ve cezalar MatchController'da uygulanır; burası hakemin sahadaki bedeni ve sesidir.
@@ -11404,7 +11679,7 @@ end
 
 return Referee
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX30"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
 	RemoteAnim
 	Aynı sunucudaki diğer oyuncuların karakterlerini de kodla canlandırır.
 	Koşu döngüsü onların hızından üretilir; eylemler sunucudan gelen bildirimle oynar.
@@ -11471,7 +11746,7 @@ end
 
 return RemoteAnim
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
 	TimeScale
 	Oyunun kendi zaman çarpanı: yavaş çekim ve vuruş anı duraksaması (hit-stop).
 	Animasyon, top ve oyuncu hızı bu çarpanla çalışır. Maç tek oyunculu ve istemcide
@@ -11497,7 +11772,7 @@ end
 return TimeScale
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX36"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX38"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
 	Creator (karakter ve kulüp oluşturma ekranı)
 	Solda sekmeli seçenek paneli, sağda stüdyo sahnesinde dönen gerçek karakter.
 	Her seçim sunucuya önizleme isteği gönderir; sunucu doğrular ve karaktere uygular.
@@ -12208,7 +12483,224 @@ end
 
 return Creator
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX35"><Properties><string name="Name">CrestDesigner</string><ProtectedString name="Source"><![CDATA[--[[
+	CrestDesigner
+	Kulüp arması tasarım ekranı: biçim, desen, simge ve iki renk seçilir; sonuç anında önizlenir.
+	Kaydedilen arma forma göğsünde, maç öncesi kadro ekranında ve takım arkadaşlarının formasında görünür.
+
+	CrestDesigner.Open(gui, getData)
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Crest = require(ReplicatedStorage.Shared.Crest)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Components = require(ReplicatedStorage.UI.Components)
+local Forms = require(ReplicatedStorage.UI.Forms)
+local Theme = require(ReplicatedStorage.UI.Theme)
+local UIMotion = require(ReplicatedStorage.UI.UIMotion)
+
+local CrestDesigner = {}
+
+local C = Theme.Color
+local open: Instance? = nil
+
+local function options(names: { string })
+	local out = {}
+	for i, n in ipairs(names) do
+		out[i] = { Id = i, Text = n }
+	end
+	return out
+end
+
+function CrestDesigner.Close()
+	if open then
+		local root = open
+		open = nil
+		UIMotion.Out(root :: any, Vector2.new(0, 20), true)
+	end
+end
+
+function CrestDesigner.Open(gui: ScreenGui, getData: () -> any)
+	if open then
+		return
+	end
+	local data = getData()
+	if not data then
+		return
+	end
+	local abbr = if data.club.abbr ~= "" then data.club.abbr else "FK"
+	local saved = data.club.crest or Crest.Default()
+	local spec = { shape = saved.shape, pattern = saved.pattern, a = saved.a, b = saved.b, symbol = saved.symbol }
+
+	local dim = Instance.new("TextButton")
+	dim.Name = "CrestDesigner"
+	dim.AutoButtonColor = false
+	dim.Text = ""
+	dim.BackgroundColor3 = C.Ground
+	dim.BackgroundTransparency = 0.25
+	dim.BorderSizePixel = 0
+	dim.Size = UDim2.fromScale(1, 1)
+	dim.ZIndex = 120
+	dim.Parent = gui
+	open = dim
+	local panel, content = Components.Panel({
+		Name = "CrestPanel",
+		Size = UDim2.fromOffset(1080, 660),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Title = "Kulüp Arması",
+	})
+	panel.ZIndex = 121
+	panel.Parent = dim
+
+	-- önizleme (sol)
+	local left = Instance.new("Frame")
+	left.BackgroundColor3 = C.Ground
+	left.BackgroundTransparency = 0.3
+	left.BorderSizePixel = 0
+	left.Position = UDim2.fromOffset(0, 46)
+	left.Size = UDim2.fromOffset(320, 500)
+	local lc = Instance.new("UICorner")
+	lc.CornerRadius = UDim.new(0, 10)
+	lc.Parent = left
+	left.Parent = content
+	local name = Components.Label({
+		Text = if data.club.name ~= "" then data.club.name else "Kulübüm",
+		Upper = true,
+		Size = 20,
+		Font = Theme.Font.Display,
+		Color = C.White,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.new(1, 0, 0, 28),
+	})
+	name.Position = UDim2.fromOffset(0, 300)
+	name.Parent = left
+	local note = Components.Label({
+		Text = "Forma göğsünde, kadro ekranında ve takım arkadaşlarının formasında görünür.",
+		Size = 12,
+		Color = C.Muted,
+		Wrap = true,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.new(1, -30, 0, 40),
+	})
+	note.Position = UDim2.fromOffset(15, 440)
+	note.Parent = left
+	local holders = {}
+	for _, h in ipairs({ { 230, 45, 40 }, { 86, 70, 340 }, { 52, 190, 356 } }) do
+		local f = Instance.new("Frame")
+		f.Name = "Preview"
+		f.BackgroundTransparency = 1
+		f.Size = UDim2.fromOffset(h[1], h[1])
+		f.Position = UDim2.fromOffset(h[2], h[3])
+		f.Parent = left
+		table.insert(holders, f)
+	end
+	local function redraw()
+		for i, f in ipairs(holders) do
+			for _, child in ipairs(f:GetChildren()) do
+				child:Destroy()
+			end
+			Crest.Fill(f, spec, abbr)
+			if i == 1 then
+				UIMotion.Pop(f, 0.94)
+			end
+		end
+	end
+
+	-- seçenekler (sağ)
+	local right = Instance.new("Frame")
+	right.BackgroundTransparency = 1
+	right.Position = UDim2.fromOffset(344, 46)
+	right.Size = UDim2.new(1, -344, 0, 500)
+	right.Parent = content
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = right
+	local controls = {}
+	local function chips(caption: string, key: string, names: { string }, order: number)
+		Forms.Caption(caption, order).Parent = right
+		local api = Forms.Chips({
+			Options = options(names),
+			Value = spec[key],
+			Order = order + 1,
+			OnChange = function(v)
+				spec[key] = v
+				redraw()
+			end,
+		})
+		api.Frame.Parent = right
+		controls[key] = api
+	end
+	local function swatches(caption: string, key: string, order: number)
+		Forms.Caption(caption, order).Parent = right
+		local api = Forms.Swatches({
+			Colors = Crest.Colors,
+			Value = spec[key],
+			Order = order + 1,
+			OnChange = function(i)
+				spec[key] = i
+				redraw()
+			end,
+		})
+		api.Frame.Parent = right
+		controls[key] = api
+	end
+	chips("Biçim", "shape", Crest.Shapes, 1)
+	chips("Desen", "pattern", Crest.Patterns, 3)
+	chips("Simge", "symbol", Crest.Symbols, 5)
+	swatches("Ana renk", "a", 7)
+	swatches("İkinci renk (desen ve çerçeve)", "b", 9)
+
+	-- düğmeler
+	local save = Components.Button({
+		Text = "Kaydet",
+		Style = "Primary",
+		Size = UDim2.fromOffset(240, 56),
+		OnClick = function()
+			if spec.a == spec.b then
+				Components.Toast("error", "İki renk aynı olamaz; desen görünmez.")
+				return
+			end
+			Remotes.Get("SetCrest"):FireServer(spec)
+			UIMotion.Sound("ConfirmSound")
+			CrestDesigner.Close()
+		end,
+	})
+	save.AnchorPoint = Vector2.new(1, 1)
+	save.Position = UDim2.fromScale(1, 1)
+	save.Parent = content
+	local random = Components.Button({
+		Text = "Rastgele",
+		Style = "Ghost",
+		Size = UDim2.fromOffset(170, 56),
+		OnClick = function()
+			spec.shape = math.random(1, #Crest.Shapes)
+			spec.pattern = math.random(1, #Crest.Patterns)
+			spec.symbol = math.random(1, #Crest.Symbols)
+			spec.a = math.random(1, #Crest.Colors)
+			repeat
+				spec.b = math.random(1, #Crest.Colors)
+			until spec.b ~= spec.a
+			redraw()
+		end,
+	})
+	random.AnchorPoint = Vector2.new(1, 1)
+	random.Position = UDim2.new(1, -252, 1, 0)
+	random.Parent = content
+	local close = Components.Button({ Text = "Vazgeç", Style = "Ghost", Size = UDim2.fromOffset(150, 56), OnClick = CrestDesigner.Close })
+	close.AnchorPoint = Vector2.new(0, 1)
+	close.Position = UDim2.fromScale(0, 1)
+	close.Parent = content
+
+	redraw()
+	UIMotion.In(panel, Vector2.new(0, 30))
+end
+
+return CrestDesigner
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX36"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
 	Lineup
 	Maç öncesi tanıtım: iki kulüp, armalar, teknik direktörler, diziliş ve 11'ler.
 	Her futbolcunun genel gücü ve altı özelliği görünür. "Maça çık" ile santraya geçilir.
@@ -12219,6 +12711,7 @@ return Creator
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Squads = require(ReplicatedStorage.Shared.Squads)
 local Components = require(ReplicatedStorage.UI.Components)
 local Theme = require(ReplicatedStorage.UI.Theme)
@@ -12250,63 +12743,10 @@ local function text(
 	return l
 end
 
--- Arma: biçim + çapraz şerit + kısaltma. Crest: 1 kalkan, 2 daire, 3 altıgen, 4 flama, 5 elmas
+-- Arma: kulübün tasarımı (oyuncununki) ya da hazır arması (rakipler)
 function Lineup.Crest(club, size: number): Frame
-	local holder = Instance.new("Frame")
-	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(size, size)
-	local shape = Instance.new("Frame")
-	shape.AnchorPoint = Vector2.new(0.5, 0.5)
-	shape.Position = UDim2.fromScale(0.5, 0.5)
-	shape.BackgroundColor3 = club.A
-	shape.BorderSizePixel = 0
-	shape.ClipsDescendants = true
-	local kind = club.Crest or 1
-	if kind == 2 then
-		shape.Size = UDim2.fromScale(0.92, 0.92)
-		corner(shape, 0.5)
-	elseif kind == 3 then
-		shape.Size = UDim2.fromScale(0.86, 0.94)
-		corner(shape, 0.28)
-	elseif kind == 4 then
-		shape.Size = UDim2.fromScale(0.74, 0.96)
-		corner(shape, 0.12)
-	elseif kind == 5 then
-		shape.Size = UDim2.fromScale(0.7, 0.7)
-		shape.Rotation = 45
-		corner(shape, 0.14)
-	else
-		shape.Size = UDim2.fromScale(0.8, 0.94)
-		corner(shape, 0.3)
-	end
-	local st = Instance.new("UIStroke")
-	st.Color = club.B
-	st.Thickness = math.max(2, size * 0.05)
-	st.Parent = shape
-	local band = Instance.new("Frame")
-	band.AnchorPoint = Vector2.new(0.5, 0.5)
-	band.Position = UDim2.fromScale(0.5, 0.5)
-	band.Size = UDim2.fromScale(0.34, 2)
-	band.Rotation = if kind == 5 then -20 else 25
-	band.BackgroundColor3 = club.B
-	band.BackgroundTransparency = 0.15
-	band.BorderSizePixel = 0
-	band.Parent = shape
-	shape.Parent = holder
-	local abbr = Components.Label({
-		Text = club.Abbr,
-		Size = math.floor(size * 0.3),
-		Font = Theme.Font.Display,
-		Color = Color3.new(1, 1, 1),
-		Align = Enum.TextXAlignment.Center,
-		Frame = UDim2.fromScale(1, 1),
-	})
-	local ts = Instance.new("UIStroke")
-	ts.Color = Color3.fromRGB(10, 12, 30)
-	ts.Thickness = math.max(1.5, size * 0.03)
-	ts.Parent = abbr
-	abbr.Parent = holder
-	return holder
+	local spec, abbr = Crest.FromClub(club)
+	return Crest.Build(spec, abbr, size)
 end
 
 local function average(players): number
@@ -12555,7 +12995,7 @@ end
 
 return Lineup
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX35"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX37"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
 	SkillTree
 	Yetenek ağacı sayfası. Solda zincirler (Şut, Çalım, Hava, Defans, kaleciyse Kaleci): her zincirde
 	hareketler sırayla açılır ve aynı tuş, açılan en üst hareketi oynatır. Sağda özellikler
@@ -12915,7 +13355,7 @@ return SkillTree
 </Item>
 </Item>
 </Item>
-<Item class="StarterCharacterScripts" referent="RBX40"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX39"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterCharacterScripts" referent="RBX42"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX41"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
 	Animate (boş)
 	Bu ad, Roblox'un varsayılan "Animate" betiğinin yerine geçer: hazır yürüme/koşma animasyonları
 	hiç yüklenmez. Bütün hareketler Client/Anim/Animator tarafından eklemlere doğrudan yazılır.
@@ -12923,7 +13363,7 @@ return SkillTree
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterGui" referent="RBX42"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
-<Item class="Workspace" referent="RBX43"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
-<Item class="Lighting" referent="RBX44"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
+<Item class="StarterGui" referent="RBX44"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
+<Item class="Workspace" referent="RBX45"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="Lighting" referent="RBX46"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
 </roblox>

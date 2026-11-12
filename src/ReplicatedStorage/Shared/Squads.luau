@@ -224,6 +224,7 @@ function Squads.Fixture(data)
 		A = Config.Colors.Yellow,
 		B = Config.Colors.Navy,
 		Crest = data.club.crestShape or 1,
+		CrestSpec = if tierId == 6 then nil else data.club.crest, -- oyuncunun tasarladığı arma
 	}
 	local R = rng(hash(homeName) + 99)
 	homeDef.Coach = FIRST[1 + math.floor(R() * #FIRST)] .. " " .. LAST[1 + math.floor(R() * #LAST)]

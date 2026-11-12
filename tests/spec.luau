@@ -660,6 +660,18 @@ fire("UnlockSkill", "Sut")
 check("yetenekler sırayla açılır", data.skills.Sut == 3, data.skills.Sut)
 fire("UnlockSkill", "Kaleci")
 check("başka mevkinin zinciri açılamaz", (data.skills.Kaleci or 0) == 0)
+-- kulüp arması
+local CrestS = require(__tree.Shared.Crest)
+check("geçerli arma temizlenir", CrestS.Clean({ shape = 2, pattern = 3, a = 5, b = 3, symbol = 1 }) ~= nil)
+check("aynı iki renk reddedilir", CrestS.Clean({ shape = 2, pattern = 3, a = 5, b = 5, symbol = 1 }) == nil)
+check("sınır dışı biçim reddedilir", CrestS.Clean({ shape = 9, pattern = 1, a = 1, b = 2, symbol = 1 }) == nil)
+check("kesirli değer reddedilir", CrestS.Clean({ shape = 1.5, pattern = 1, a = 1, b = 2, symbol = 1 }) == nil)
+check("tablo olmayan değer reddedilir", CrestS.Clean("kalkan") == nil)
+fire("SetCrest", { shape = 9, pattern = 1, a = 1, b = 2, symbol = 1 })
+check("geçersiz arma kaydedilmez", data.club.crest == nil)
+fire("SetCrest", { shape = 3, pattern = 4, a = 5, b = 3, symbol = 3, hile = true })
+check("arma sunucuda kaydedilir", data.club.crest ~= nil and data.club.crest.shape == 3 and data.club.crest.a == 5)
+check("fazladan alanlar atılır", data.club.crest ~= nil and data.club.crest.hile == nil)
 -- maç sonucu
 local c1, played0 = data.coins, data.club.season.played
 fire("MatchEnd", { home = 3, away = 1, myGoals = 2, myHeaderGoals = 1 })
@@ -969,6 +981,33 @@ do
 	end
 	check("oyuncuların özellikleri birbirinden farklı", different)
 
+	-- armalar: her biçim, desen ve simge hatasız çizilir
+	local CrestM = require(__tree.Shared.Crest)
+	local drawn = 0
+	for shape = 1, #CrestM.Shapes do
+		for pattern = 1, #CrestM.Patterns do
+			for symbol = 1, #CrestM.Symbols do
+				local f = CrestM.Build({ shape = shape, pattern = pattern, a = 1, b = 2, symbol = symbol }, "MOD", 100)
+				if f:FindFirstChild("CrestBody") and f:FindFirstChild("CrestText") then
+					drawn += 1
+				end
+			end
+		end
+	end
+	check("bütün arma birleşimleri çizilir", drawn == #CrestM.Shapes * #CrestM.Patterns * #CrestM.Symbols, drawn)
+	local letter = CrestM.Build({ shape = 1, pattern = 1, a = 1, b = 2, symbol = 2 }, "ŞKR", 100)
+	check(
+		"baş harf simgesi Türkçe harfi bölmez",
+		letter:FindFirstChild("CrestText").Text == "Ş",
+		letter:FindFirstChild("CrestText").Text
+	)
+	local oppSpec, oppAbbr = CrestM.FromClub(fx.away.club)
+	check("rakibin hazır arması var", oppSpec.shape >= 1 and oppAbbr == fx.away.club.Abbr)
+	d.club.crest = { shape = 4, pattern = 2, a = 6, b = 13, symbol = 1 }
+	local mine = CrestM.FromClub(Squads.Fixture(d).home.club)
+	check("oyuncunun tasarımı kendi kulübünde kullanılır", mine.shape == 4 and mine.a == CrestM.Colors[6])
+	d.club.crest = nil
+
 	local sg = Instance.new("ScreenGui")
 	local Lineup = require(__tree.Screens.Lineup)
 	local started = false
@@ -1019,6 +1058,35 @@ do
 	SkillTree.Refresh()
 	SkillTree.Close()
 	frames(30)
+
+	local Designer = require(__tree.Screens.CrestDesigner)
+	Designer.Open(sg, function()
+		return d
+	end)
+	local dp = sg:FindFirstChild("CrestDesigner")
+	check("arma tasarım ekranı açıldı", dp ~= nil)
+	local previews, saveButton = 0, nil
+	for _, t in ipairs(dp:GetDescendants()) do
+		if t.Name == "CrestBody" then
+			previews += 1
+		elseif t.ClassName == "TextLabel" and (t.Text == "Kaydet" or t.Text == "KAYDET") then
+			saveButton = t.Parent
+		end
+	end
+	check("üç boyutta önizleme çizilir", previews == 3, previews)
+	local sent
+	local conn = Remotes.Get("SetCrest").OnServerEvent:Connect(function(_, spec)
+		sent = spec
+	end)
+	if saveButton then
+		while saveButton and saveButton.ClassName ~= "TextButton" do
+			saveButton = saveButton.Parent
+		end
+		saveButton.Activated:Fire()
+	end
+	frames(30)
+	check("kaydet düğmesi tasarımı sunucuya yollar", sent ~= nil and sent.shape ~= nil)
+	conn:Disconnect()
 end
 
 section("Maç akışı (kısaltılmış maç: santra, devre arası, maç sonu, ödül)")

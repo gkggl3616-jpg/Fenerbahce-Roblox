@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local DataService = require(script.Parent.DataService)
 local CharacterService = require(script.Parent.CharacterService)
@@ -246,6 +247,23 @@ local function onUnlockSkill(player: Player, chainId)
 	notify(player, "unlock", skill.Name .. " açıldı")
 end
 
+-- Kulüp arması tasarımı
+local function onSetCrest(player: Player, spec)
+	local data = DataService.Get(player)
+	if not data or not data.created or not allowed(player, "crest") then
+		return
+	end
+	local clean = Crest.Clean(spec)
+	if not clean then
+		return notify(player, "error", "Arma kaydedilemedi: iki farklı renk seç.")
+	end
+	data.club.crest = clean
+	data.club.crestShape = clean.shape
+	push(player)
+	CharacterService.Apply(player, CharacterService.LookFromData(data))
+	notify(player, "success", "Kulüp arması kaydedildi.")
+end
+
 local function onUpgradeFacility(player: Player, id)
 	local data = DataService.Get(player)
 	if not data or not data.created or not allowed(player, "facility") then
@@ -408,6 +426,7 @@ function PlayerService.Init()
 	Remotes.Get("UpgradeStat").OnServerEvent:Connect(onUpgradeStat)
 	Remotes.Get("UnlockSkill").OnServerEvent:Connect(onUnlockSkill)
 	Remotes.Get("UpgradeFacility").OnServerEvent:Connect(onUpgradeFacility)
+	Remotes.Get("SetCrest").OnServerEvent:Connect(onSetCrest)
 	Remotes.Get("GetData").OnServerInvoke = function(player)
 		local t0 = os.clock()
 		while not DataService.Get(player) and os.clock() - t0 < 10 do

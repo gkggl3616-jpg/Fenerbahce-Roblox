@@ -9,6 +9,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Squads = require(ReplicatedStorage.Shared.Squads)
 local Components = require(ReplicatedStorage.UI.Components)
 local Theme = require(ReplicatedStorage.UI.Theme)
@@ -40,63 +41,10 @@ local function text(
 	return l
 end
 
--- Arma: biçim + çapraz şerit + kısaltma. Crest: 1 kalkan, 2 daire, 3 altıgen, 4 flama, 5 elmas
+-- Arma: kulübün tasarımı (oyuncununki) ya da hazır arması (rakipler)
 function Lineup.Crest(club, size: number): Frame
-	local holder = Instance.new("Frame")
-	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(size, size)
-	local shape = Instance.new("Frame")
-	shape.AnchorPoint = Vector2.new(0.5, 0.5)
-	shape.Position = UDim2.fromScale(0.5, 0.5)
-	shape.BackgroundColor3 = club.A
-	shape.BorderSizePixel = 0
-	shape.ClipsDescendants = true
-	local kind = club.Crest or 1
-	if kind == 2 then
-		shape.Size = UDim2.fromScale(0.92, 0.92)
-		corner(shape, 0.5)
-	elseif kind == 3 then
-		shape.Size = UDim2.fromScale(0.86, 0.94)
-		corner(shape, 0.28)
-	elseif kind == 4 then
-		shape.Size = UDim2.fromScale(0.74, 0.96)
-		corner(shape, 0.12)
-	elseif kind == 5 then
-		shape.Size = UDim2.fromScale(0.7, 0.7)
-		shape.Rotation = 45
-		corner(shape, 0.14)
-	else
-		shape.Size = UDim2.fromScale(0.8, 0.94)
-		corner(shape, 0.3)
-	end
-	local st = Instance.new("UIStroke")
-	st.Color = club.B
-	st.Thickness = math.max(2, size * 0.05)
-	st.Parent = shape
-	local band = Instance.new("Frame")
-	band.AnchorPoint = Vector2.new(0.5, 0.5)
-	band.Position = UDim2.fromScale(0.5, 0.5)
-	band.Size = UDim2.fromScale(0.34, 2)
-	band.Rotation = if kind == 5 then -20 else 25
-	band.BackgroundColor3 = club.B
-	band.BackgroundTransparency = 0.15
-	band.BorderSizePixel = 0
-	band.Parent = shape
-	shape.Parent = holder
-	local abbr = Components.Label({
-		Text = club.Abbr,
-		Size = math.floor(size * 0.3),
-		Font = Theme.Font.Display,
-		Color = Color3.new(1, 1, 1),
-		Align = Enum.TextXAlignment.Center,
-		Frame = UDim2.fromScale(1, 1),
-	})
-	local ts = Instance.new("UIStroke")
-	ts.Color = Color3.fromRGB(10, 12, 30)
-	ts.Thickness = math.max(1.5, size * 0.03)
-	ts.Parent = abbr
-	abbr.Parent = holder
-	return holder
+	local spec, abbr = Crest.FromClub(club)
+	return Crest.Build(spec, abbr, size)
 end
 
 local function average(players): number

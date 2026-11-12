@@ -13,6 +13,7 @@ local EVENTS = {
 	"UpgradeStat",
 	"UnlockSkill",
 	"UpgradeFacility",
+	"SetCrest",
 	"PreviewAppearance",
 	"Anim",
 	"TrainingGoal",

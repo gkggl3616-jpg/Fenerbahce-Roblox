@@ -158,6 +158,7 @@ end
 -- LOBİ KATMANI (bileşen vitrini)
 --------------------------------------------------------------------------------
 local SkillTree = require(script.Parent.Screens.SkillTree)
+local CrestDesigner = require(script.Parent.Screens.CrestDesigner)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -245,9 +246,11 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Hareket aç, özellik yükselt")
-	add("Kulüp", "Ghost", nil, function()
-		Components.Toast("info", "Kulüp binası 13. adımda geliyor.")
-	end, "Lig, tesisler, transfer")
+	add("Kulüp arması", "Secondary", nil, function()
+		CrestDesigner.Open(gui, function()
+			return state.data
+		end)
+	end, "Biçim, desen, renk, simge")
 	add("Sıralama", "Secondary", "Dünya sıralaması için önce bir maç oyna.", nil, "Dünya genelinde yerin")
 
 	-- Görevler (sağ)
@@ -383,6 +386,7 @@ enterMatch = function()
 		return
 	end
 	SkillTree.Close()
+	CrestDesigner.Close()
 	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
 	local fixture = Squads.Fixture(state.data)
 	local function back()

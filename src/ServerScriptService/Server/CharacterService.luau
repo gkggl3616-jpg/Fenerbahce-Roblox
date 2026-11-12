@@ -11,6 +11,7 @@ local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Kits = require(ReplicatedStorage.Shared.Kits)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 
 local CharacterService = {}
 
@@ -82,7 +83,7 @@ local function text(parent: Instance, str: string, size: UDim2, pos: UDim2, colo
 end
 
 -- Forma desenini gövdenin ön ve arka yüzüne çizer
-local function paintTorso(torso: BasePart, kit, name: string, number: number, abbr: string)
+local function paintTorso(torso: BasePart, kit, name: string, number: number, abbr: string, crest: any?)
 	for _, face in ipairs({ Enum.NormalId.Front, Enum.NormalId.Back }) do
 		local sg = surface(torso, face)
 		if kit.Pattern == "Cubuklu" then
@@ -132,20 +133,14 @@ local function paintTorso(torso: BasePart, kit, name: string, number: number, ab
 				img.Position = UDim2.fromScale(0.12, 0.14)
 				img.Parent = sg
 			else
-				local sh = Instance.new("Frame")
-				sh.BorderSizePixel = 0
-				sh.BackgroundColor3 = C.Navy
-				sh.Size = UDim2.fromScale(0.22, 0.2)
-				sh.Position = UDim2.fromScale(0.13, 0.15)
-				local cr = Instance.new("UICorner")
-				cr.CornerRadius = UDim.new(0.25, 0)
-				cr.Parent = sh
-				local st = Instance.new("UIStroke")
-				st.Color = C.Yellow
-				st.Thickness = 2
-				st.Parent = sh
-				sh.Parent = sg
-				text(sh, if abbr ~= "" then abbr else "FB", UDim2.fromScale(0.86, 0.7), UDim2.fromScale(0.07, 0.15), C.Yellow, C.Navy)
+				-- kulüp arması (oyuncunun tasarımı ya da varsayılan); maçta istemci bunu kulübe göre yeniden çizer
+				local holder = Instance.new("Frame")
+				holder.Name = "FK_Crest"
+				holder.BackgroundTransparency = 1
+				holder.Size = UDim2.fromScale(0.24, 0.24)
+				holder.Position = UDim2.fromScale(0.12, 0.13)
+				holder.Parent = sg
+				Crest.Fill(holder, crest or Crest.Default(), if abbr ~= "" then abbr else "FB")
 			end
 			text(sg, tostring(number), UDim2.fromScale(0.2, 0.2), UDim2.fromScale(0.66, 0.15), kit.Ink, kit.InkStroke)
 		end
@@ -304,7 +299,7 @@ local function dress(character: Model?, look)
 
 	local torso = character:FindFirstChild("UpperTorso")
 	if torso and torso:IsA("BasePart") then
-		paintTorso(torso, kit, look.name or "", look.number or 9, if look.atFenerbahce then "" else (look.abbr or ""))
+		paintTorso(torso, kit, look.name or "", look.number or 9, if look.atFenerbahce then "" else (look.abbr or ""), look.crest)
 	end
 
 	local head = character:FindFirstChild("Head")
@@ -511,6 +506,7 @@ function CharacterService.LookFromData(data)
 		number = data.number,
 		name = data.name,
 		abbr = data.club.abbr,
+		crest = data.club.crest,
 		atFenerbahce = data.career.atFenerbahce,
 		level = data.level,
 	}

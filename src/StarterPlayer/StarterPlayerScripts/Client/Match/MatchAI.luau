@@ -15,6 +15,7 @@ local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Animator = require(script.Parent.Parent.Anim.Animator)
+local Crest = require(ReplicatedStorage.Shared.Crest)
 local Ball = require(script.Parent.Ball)
 
 local P = Config.MatchPitch
@@ -119,6 +120,17 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 			end
 		end
 	end
+	if club then
+		local spec, abbr = Crest.FromClub(club)
+		for _, dsc in ipairs(model:GetDescendants()) do
+			if dsc.Name == "FK_Crest" then
+				for _, child in ipairs(dsc:GetChildren()) do
+					child:Destroy()
+				end
+				Crest.Fill(dsc, spec, abbr)
+			end
+		end
+	end
 	model.Parent = Workspace
 	local ring = Instance.new("Part")
 	ring.Shape = Enum.PartType.Cylinder
@@ -205,7 +217,13 @@ function MatchAI.Start(opts)
 	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
-			spawn(if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2", "home", slot, fx and fx.home.players[slot])
+			spawn(
+				if slot == 1 then "MateKeeper" elseif slot % 2 == 0 then "Mate" else "Mate2",
+				"home",
+				slot,
+				fx and fx.home.players[slot],
+				fx and fx.home.club
+			)
 		end
 		spawn(
 			if slot == 1
