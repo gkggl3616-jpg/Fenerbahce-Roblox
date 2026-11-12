@@ -1064,10 +1064,24 @@ local function initial(name: string): string
 	return ""
 end
 
+-- Kadroda aynı ad iki kez çıkmasın: kullanılan adlar tutulur, çakışırsa yeniden çekilir
+local function uniqueName(R: () -> number, used: { [string]: boolean }): string
+	local name = ""
+	for _ = 1, 12 do
+		name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)]
+		if not used[name] then
+			break
+		end
+	end
+	used[name] = true
+	return name
+end
+
 -- Bir kulübün 11'i. avg: ortalama güç (0-99)
 function Squads.Build(club, avg: number)
 	local R = rng(hash(club.Name) + 17)
 	local players = {}
+	local used = {}
 	for slot = 1, 11 do
 		local role = Squads.Roles[slot]
 		local rating = math.clamp(math.floor(avg + (R() - 0.5) * 12 + 0.5), 20, 99)
@@ -1079,12 +1093,39 @@ function Squads.Build(club, avg: number)
 		players[slot] = {
 			slot = slot,
 			number = NUMBERS[slot],
-			name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
+			name = uniqueName(R, used),
 			full = "",
 			role = role,
 			rating = rating,
 			stats = stats,
 			pace = math.clamp(1 + (stats[1] - avg) / 120, 0.9, 1.1), -- takım ortalamasına göre hız çarpanı
+		}
+	end
+	return players
+end
+
+-- Yedek kulübesi: 5 oyuncu (kaleci, stoper, orta saha, kanat, forvet), forma 12-16
+local BENCH_ROLES = { "KL", "STP", "MO", "SLO", "SF" }
+function Squads.Bench(club, avg: number, taken: { any }?)
+	local R = rng(hash(club.Name) + 4001)
+	local players = {}
+	local used = {}
+	for _, p in ipairs(taken or {}) do
+		used[p.name] = true
+	end
+	for i, role in ipairs(BENCH_ROLES) do
+		local rating = math.clamp(math.floor(avg - 2 + (R() - 0.5) * 12 + 0.5), 20, 99)
+		local stats = {}
+		for k = 1, 6 do
+			stats[k] = math.clamp(math.floor(rating + BIAS[role][k] + (R() - 0.5) * 10 + 0.5), 10, 99)
+		end
+		players[i] = {
+			number = 11 + i,
+			name = uniqueName(R, used),
+			role = role,
+			rating = rating,
+			stats = stats,
+			pace = math.clamp(1 + (stats[1] - avg) / 120, 0.9, 1.1),
 		}
 	end
 	return players
@@ -1188,8 +1229,11 @@ function Squads.Fixture(data)
 		stadium = tier.Stadium,
 		avg = avg,
 		matchNo = (season.played or 0) + 1,
-		home = { club = homeDef, players = home },
-		away = { club = oppDef, players = Squads.Build(oppDef, avg) },
+		home = { club = homeDef, players = home, bench = Squads.Bench(homeDef, avg + 1, home) },
+		away = (function()
+			local eleven = Squads.Build(oppDef, avg)
+			return { club = oppDef, players = eleven, bench = Squads.Bench(oppDef, avg, eleven) }
+		end)(),
 	}
 end
 
@@ -5088,7 +5132,7 @@ return PlayerService
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX44"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX41"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX40"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX22"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterPlayer" referent="RBX45"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX42"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX41"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX22"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
 	Animator
 	Kodla çalışan katmanlı animasyon motoru (R15).
 	- Alt katman: duruş ve koşu döngüsü hızdan üretilir (yürüyüşten sprinte kesintisiz).
@@ -9773,10 +9817,28 @@ local frozenUntil = 0
 local skill = { home = 0.4, away = 0.4 }
 local humanSlot = 11
 local humanKeeper = false
+-- Topu hedefe gönderen yardımcı; aşağıda tanımlanır, yukarıdaki işlevler de kullanır
+local kickTo: (Vector3, number, string, string, number?) -> ()
+
 -- Takım emri (kaptanın verdiği): "Dengeli" | "Atak" | "Defans" | "Pres"; strength 0-1 (kaptansa 1)
 local order = { name = "Dengeli", strength = 1 }
 local lastCarrier: any = nil
-local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {} }
+local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {}, offside = {} }
+-- Oyuncu başına maç istatistiği (maç sonu puanları için)
+local function newStats()
+	return { goals = 0, assists = 0, shots = 0, passes = 0, tackles = 0, saves = 0, fouls = 0 }
+end
+local humanSt = newStats()
+local humanInfo: any = nil
+local gone: { any } = {} -- sahadan çıkanlar (değişiklik, kırmızı kart): { team, info, st }
+local pendingKicker: any = nil -- vuruşu yapan bot (vuruş olayından hemen önce yazılır)
+local lastKicker: { [string]: any } = {} -- takım -> son vuran (bot ya da "human")
+local prevKicker: { [string]: any } = {} -- takım -> ondan önce vuran (asist)
+local offsideSnap: any = nil -- son pas anında ofsayt konumunda olanlar
+local offsideGraceUntil = 0 -- duran toplardan sonra ofsayt aranmayan süre
+local offLine = { home = math.huge, away = math.huge } -- takımın geçmemesi gereken çizgi (hücum yönünde)
+local lastCtx: any = nil
+local minuteNow = 0
 local plans: { [any]: any } = {} -- kaleci -> kurtarış planı
 local stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 
@@ -9886,7 +9948,13 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 	local bot = {
 		team = team,
 		slot = slot,
-		info = info,
+		-- kadro verilmediyse (deneme) sade bir kimlik kullanılır
+		info = info or {
+			name = (if team == "home" then "Takım " else "Rakip ") .. tostring(NUMBERS[slot]),
+			number = NUMBERS[slot],
+			role = "",
+			rating = 50,
+		},
 		pace = if info then info.pace or 1 else 1,
 		keeper = slot == 1,
 		model = model,
@@ -9902,6 +9970,8 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 		cd = 0,
 		touch = 0,
 		decideAt = 0,
+		st = newStats(),
+		freshAt = 0,
 		ring = ring,
 		receiveUntil = 0,
 	}
@@ -9932,7 +10002,13 @@ end
 
 -- Her oyuncunun kendi hızı vardır (kadrodaki Hız özelliğinden gelir)
 local function runSpeed(team: string, bot: any?): number
-	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * (if bot then bot.pace or 1 else 1)
+	local pace = 1
+	if bot then
+		-- yorgunluk: sahada kaldıkça hız düşer (90 dakikada %9); yeni giren oyuncu dinçtir
+		local tired = math.clamp((minuteNow - (bot.freshAt or 0)) / 90, 0, 1)
+		pace = (bot.pace or 1) * (1 - 0.09 * tired)
+	end
+	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * pace
 end
 
 function MatchAI.Clear()
@@ -9954,8 +10030,15 @@ function MatchAI.Start(opts)
 	lastCarrier = nil
 	mentality = { home = 0, away = 0 }
 	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
+	humanInfo = (fx and fx.home.players[humanSlot]) or { name = "Sen", number = 9, role = "SF", rating = 50, human = true }
 	humanKeeper = humanSlot == 1
-	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
+	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 }, offsides = { home = 0, away = 0 } }
+	humanSt = newStats()
+	gone = {}
+	lastKicker, prevKicker = {}, {}
+	offsideSnap = nil
+	offsideGraceUntil = 0
+	minuteNow = 0
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
 			spawn(
@@ -10028,6 +10111,8 @@ function MatchAI.CallPass(playerPos: Vector3): boolean
 	end
 	c.animator:Play("Pass")
 	c.cd = 0.7
+	pendingKicker = c
+	c.st.passes += 1
 	kickTo(playerPos + Vector3.new(0, 0.6, 0), math.clamp(42 + dist * 0.5, 48, 92), "Pass", "home", if dist > 90 then 1.25 else 1)
 	return true
 end
@@ -10037,6 +10122,7 @@ function MatchAI.SendOff(bot)
 	local i = table.find(bots, bot)
 	if i then
 		table.remove(bots, i)
+		table.insert(gone, { team = bot.team, info = bot.info, st = bot.st, slot = bot.slot, reason = "red" })
 		bot.animator:Destroy()
 		bot.model:Destroy()
 	end
@@ -10085,6 +10171,151 @@ end
 
 function MatchAI.Freeze(seconds: number)
 	frozenUntil = clock + seconds
+	-- duran toplardan (santra, taç, korner, aut, serbest vuruş) sonraki ilk paslarda ofsayt aranmaz
+	offsideGraceUntil = math.max(offsideGraceUntil, clock + math.min(seconds, 6) + 3)
+	offsideSnap = nil
+end
+
+-- Bir takımın ofsayt çizgisi (hücum yönünde): son ikinci savunmacı, top ve orta sahadan en ilerideki
+local function offsideLimit(team: string, ballPos: Vector3, ctx): number
+	local d = dirOf(team)
+	local opp = if team == "home" then "away" else "home"
+	local first, second = -math.huge, -math.huge
+	local function add(z: number)
+		if z > first then
+			first, second = z, first
+		elseif z > second then
+			second = z
+		end
+	end
+	for _, bot in ipairs(bots) do
+		if bot.team == opp then
+			add(bot.pos.Z * d)
+		end
+	end
+	if opp == "home" and ctx then
+		add(ctx.playerPos.Z * d)
+	end
+	if second == -math.huge then
+		second = first
+	end
+	return math.max(second, ballPos.Z * d, MID_Z * d)
+end
+MatchAI.OffsideLimit = offsideLimit
+
+--[[ Oyuncu değişikliği: dizilişteki yere yeni oyuncu girer (dinç gelir).
+	Çıkan oyuncunun istatistikleri maç sonu puanları için saklanır. ]]
+function MatchAI.Substitute(team: string, slot: number, info): boolean
+	for _, bot in ipairs(bots) do
+		if bot.team == team and bot.slot == slot then
+			table.insert(gone, { team = team, info = bot.info, st = bot.st, slot = slot, reason = "sub" })
+			bot.info = info
+			bot.st = newStats()
+			bot.pace = (info.pace or 1) * 1.02
+			bot.freshAt = minuteNow
+			for _, dsc in ipairs(bot.model:GetDescendants()) do
+				if dsc:IsA("TextLabel") and tonumber(dsc.Text) then
+					dsc.Text = tostring(info.number)
+				end
+			end
+			return true
+		end
+	end
+	return false
+end
+
+-- Sahadaki 11 (insan oyuncu dahil değil): { slot, info, tired (0-1) }
+function MatchAI.Squad(team: string)
+	local out = {}
+	for _, bot in ipairs(bots) do
+		if bot.team == team then
+			table.insert(out, { slot = bot.slot, info = bot.info, tired = math.clamp((minuteNow - (bot.freshAt or 0)) / 90, 0, 1) })
+		end
+	end
+	table.sort(out, function(x, y)
+		return x.slot < y.slot
+	end)
+	return out
+end
+
+-- Gol kimin? Son vuran ve ondan önce vuran (asist) oyuncuya yazılır. Döner: golcü bilgisi, asist bilgisi
+function MatchAI.CreditGoal(team: string)
+	local function info(who: any)
+		if who == "human" then
+			return humanInfo, humanSt
+		elseif who then
+			return who.info, who.st
+		end
+		return nil, nil
+	end
+	local sInfo, sSt = info(lastKicker[team])
+	local aInfo, aSt = info(prevKicker[team])
+	if sSt then
+		sSt.goals += 1
+	end
+	if aSt and aSt ~= sSt then
+		aSt.assists += 1
+	else
+		aInfo = nil
+	end
+	lastKicker, prevKicker = {}, {}
+	return sInfo, aInfo
+end
+
+--[[ Maç sonu oyuncu puanları. cards["home:9"] = "yellow" | "red"
+	Döner: { { team, name, number, role, human, rating, goals, assists, saves, subbed, sentOff }, ... } ]]
+function MatchAI.Report(homeGoals: number, awayGoals: number, cards: { [string]: string }?)
+	local out = {}
+	local function rate(team: string, info, st, slot: number, human: boolean, flag: string?)
+		if not info then
+			return
+		end
+		local mine = if team == "home" then homeGoals else awayGoals
+		local theirs = if team == "home" then awayGoals else homeGoals
+		local r = 6
+			+ st.goals * 1.1
+			+ st.assists * 0.6
+			+ math.min(st.shots * 0.08, 0.5)
+			+ math.min(st.passes * 0.03, 0.8)
+			+ math.min(st.tackles * 0.2, 1)
+			- st.fouls * 0.25
+			+ (if mine > theirs then 0.3 elseif mine < theirs then -0.3 else 0)
+		if slot == 1 then
+			r += st.saves * 0.35 - theirs * 0.25 + (if theirs == 0 then 0.8 else 0)
+		elseif slot <= 5 then
+			r += (if theirs == 0 then 0.4 else -0.1 * theirs)
+		end
+		local card = cards and cards[team .. ":" .. tostring(info.number)]
+		if card == "yellow" then
+			r -= 0.4
+		elseif card == "red" then
+			r -= 1.5
+		end
+		-- küçük, oyuncuya özgü fark (herkes aynı puanı almasın)
+		r += (((info.rating or 50) * 7 + (info.number or 0) * 13) % 10 - 5) * 0.03
+		table.insert(out, {
+			team = team,
+			name = info.name,
+			number = info.number,
+			role = info.role,
+			human = human,
+			rating = math.floor(math.clamp(r, 3.5, 10) * 10 + 0.5) / 10,
+			goals = st.goals,
+			assists = st.assists,
+			saves = st.saves,
+			subbed = flag == "sub",
+			sentOff = flag == "red",
+			slot = slot,
+		})
+	end
+	for _, bot in ipairs(bots) do
+		rate(bot.team, bot.info, bot.st, bot.slot, false, nil)
+	end
+	rate("home", humanInfo, humanSt, humanSlot, true, nil)
+	for _, g in ipairs(gone) do
+		rate(g.team, g.info, g.st, g.slot, false, g.reason)
+	end
+	return out
 end
 
 function MatchAI.Stats()
@@ -10150,13 +10381,14 @@ end
 local mentality = { home = 0, away = 0 }
 local botShot = false
 function MatchAI.SetScore(homeGoals: number, awayGoals: number, minute: number)
+	minuteNow = minute
 	local diff = awayGoals - homeGoals
 	local late = math.clamp((minute - 45) / 45, 0, 1)
 	mentality.away = if diff < 0 then 8 + 16 * late elseif diff > 0 then -6 - 12 * late else 0
 end
 
 -- Topu hedefe yaklaşık hızla gönderir (yerçekimi telafili)
-local function kickTo(target: Vector3, speed: number, kind: string, team: string, loft: number?)
+kickTo = function(target: Vector3, speed: number, kind: string, team: string, loft: number?)
 	local pos = Ball.Position()
 	local delta = target - pos
 	local t = math.max(0.15, flat(delta).Magnitude / speed) * (loft or 1)
@@ -10197,11 +10429,13 @@ function MatchAI.Tackle(playerPos: Vector3, look: Vector3, sliding: boolean): st
 			bot.t = 0.9
 			bot.animator:Play("Stagger")
 		end
+		humanSt.tackles += 1
 		return "win"
 	end
 	if bot and d < (if sliding then D.FoulRange + 1.4 else D.FoulRange) then
 		local fromBehind = bot.dir:Dot(flat(look).Unit) > 0.45
 		MatchAI.LastFoul = { bot = bot, fromBehind = fromBehind, sliding = sliding, pos = bot.pos }
+		humanSt.fouls += 1
 		bot.state = "down"
 		bot.t = 1.4
 		bot.animator:Play("Stagger")
@@ -10219,6 +10453,7 @@ function MatchAI.HumanSave(handPos: Vector3): boolean
 	local v = Ball.Velocity()
 	Ball.LastTeam = "home"
 	Ball.Deflect(Vector3.new((if bp.X > handPos.X then 1 else -1) * 20, 12, math.abs(v.Z) * 0.3 + 12))
+	humanSt.saves += 1
 	return true
 end
 
@@ -10227,7 +10462,52 @@ end
 --------------------------------------------------------------------------------
 Ball.On("kick", function(kind, v)
 	if #bots == 0 or Ball.Pitch() ~= P then
+		pendingKicker = nil
 		return
+	end
+	do
+		-- kim vurdu? bot (vuruştan hemen önce yazılır) ya da topun yanındaki insan oyuncu
+		local team = Ball.LastTeam
+		local bp = Ball.Position()
+		local who: any = pendingKicker
+		pendingKicker = nil
+		if not who and team == "home" and lastCtx and flat(lastCtx.playerPos - bp).Magnitude < 9 then
+			who = "human"
+		end
+		local other = if team == "home" then "away" else "home"
+		lastKicker[other], prevKicker[other] = nil, nil
+		if who then
+			if lastKicker[team] ~= who then
+				prevKicker[team] = lastKicker[team]
+			end
+			lastKicker[team] = who
+			if who == "human" then
+				if kind == "Pass" then
+					humanSt.passes += 1
+				elseif v.Z * dirOf(team) > K.MinShotSpeed * 0.6 then
+					humanSt.shots += 1
+				end
+			end
+		else
+			lastKicker[team], prevKicker[team] = nil, nil -- duran top: gol kimseye yazılmaz
+		end
+		-- ofsayt: pas anında çizginin ilerisindeki takım arkadaşları işaretlenir
+		offsideSnap = nil
+		if who and kind ~= "Clear" and clock >= offsideGraceUntil then
+			local d = dirOf(team)
+			local limit = offsideLimit(team, bp, lastCtx) + 1.2
+			local set, any = {}, false
+			for _, bot in ipairs(bots) do
+				if bot.team == team and not bot.keeper and bot ~= who and bot.pos.Z * d > limit then
+					set[bot] = true
+					any = true
+				end
+			end
+			local human = team == "home" and who ~= "human" and not humanKeeper and lastCtx ~= nil and lastCtx.playerPos.Z * d > limit
+			if any or human then
+				offsideSnap = { team = team, set = set, human = human, at = clock }
+			end
+		end
 	end
 	if v.Magnitude >= K.MinShotSpeed then
 		-- şut istatistiği: kaleye doğru giden sert vuruş
@@ -10297,6 +10577,7 @@ local function updateKeeper(k, dt: number)
 				local v = Ball.Velocity()
 				local out = -plan.sign
 				Ball.LastTeam = k.team
+				k.st.saves += 1
 				if plan.fumble then
 					Ball.Deflect(Vector3.new((math.random() - 0.5) * 20, 10, out * math.abs(v.Z) * 0.18))
 					fire("save", k.team, "fumble")
@@ -10412,6 +10693,8 @@ local function carrierThink(bot, dt: number, ctx)
 			task.delay(0.3, function()
 				if b.model.Parent and flat(Ball.Position() - b.pos).Magnitude < 5 and not Ball.InNet() then
 					botShot = true -- kaleci, botların şutuna karşı daha hazırlıklıdır (maç skoru makul kalsın)
+					pendingKicker = b
+					b.st.shots += 1
 					kickTo(target, 72 + sk * 30, "Shoot", team)
 					botShot = false
 					fire("shot", team)
@@ -10448,6 +10731,9 @@ local function carrierThink(bot, dt: number, ctx)
 			if gap < 3 + dist * 0.04 then
 				score -= 70 * (0.3 + sk) -- pas yolu kapalı: becerikli oyuncu bunu görür
 			end
+			if pos.Z * d > offLine[team] + 1.2 then
+				score -= 5 + 90 * sk * sk -- arkadaşı ofsaytta (becerikli oyuncu görür, acemi çoğu zaman görmez)
+			end
 			if score > bestScore then
 				best, bestScore, bestPos = target, score, lead
 			end
@@ -10477,6 +10763,8 @@ local function carrierThink(bot, dt: number, ctx)
 			local speed = math.clamp(dist * 1.25 + 26, 46, 96)
 			bot.animator:Play("Pass")
 			Ball.LastTeam = team
+			pendingKicker = bot
+			bot.st.passes += 1
 			Ball.Kick(dir * speed + Vector3.new(0, if dist > 75 then 20 else 0, 0), 0, "Pass")
 			if best ~= "human" then
 				best.receiveUntil = clock + 2.2
@@ -10511,10 +10799,32 @@ function MatchAI.Update(dt: number, ctx)
 		end
 	end
 	lastCarrier = carrier
+	lastCtx = ctx
+	offLine.home = offsideLimit("home", ballPos, ctx)
+	offLine.away = offsideLimit("away", ballPos, ctx)
 	local humanDist = flat(ctx.playerPos - ballFlat).Magnitude
 	local humanHas = live and low and humanDist < 4 and (not carrier or humanDist < cd)
 	if humanHas then
 		carrier = nil
+	end
+	-- ofsayt: pas anında ofsayt konumunda olan oyuncu topla buluşursa düdük çalar
+	if offsideSnap then
+		local snap = offsideSnap
+		if clock - snap.at > 7 then
+			offsideSnap = nil
+		elseif humanHas then
+			offsideSnap = nil
+			if snap.team == "home" and snap.human then
+				stats.offsides.home += 1
+				fire("offside", "human", ctx.playerPos)
+			end
+		elseif carrier then
+			offsideSnap = nil
+			if carrier.team == snap.team and snap.set[carrier] then
+				stats.offsides[carrier.team] += 1
+				fire("offside", carrier, carrier.pos)
+			end
+		end
 	end
 	local possession = if humanHas then "home" elseif carrier then carrier.team else Ball.LastTeam
 	stats.possession[possession] += dt
@@ -10567,10 +10877,12 @@ function MatchAI.Update(dt: number, ctx)
 				if low and flat(ballPos - bot.pos).Magnitude < D.StealRange and live then
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(bot.dir.X * 14, 0, d * 20))
+					bot.st.tackles += 1
 					fire("steal")
 				elseif live and flat(ctx.playerPos - bot.pos).Magnitude < 4.2 and math.random() < 0.4 then
 					-- topu kaçırıp oyuncuya girdi: faul
 					local r = math.random()
+					bot.st.fouls += 1
 					fire("foul", bot, if r < 0.05 then "violent" elseif r < 0.3 then "reckless" else "careless", "home", ctx.playerPos)
 				end
 			end
@@ -10607,12 +10919,14 @@ function MatchAI.Update(dt: number, ctx)
 					carrier.t = 0.6
 					carrier.animator:Play("Stagger")
 					Ball.LastTeam = team
+					bot.st.tackles += 1
 					Ball.Deflect(Vector3.new(0, 0, d * 12))
 				elseif math.random() < 0.12 then
 					-- botlar arası faul
 					carrier.state = "down"
 					carrier.t = 1.2
 					carrier.animator:Play("Stagger")
+					bot.st.fouls += 1
 					fire("foul", bot, if math.random() < 0.22 then "reckless" else "careless", carrier.team, carrier.pos)
 				end
 			elseif low and dBall < 2.8 and live and Ball.Speed() >= 60 and Ball.SinceKick() > 0.2 then
@@ -10658,6 +10972,14 @@ function MatchAI.Update(dt: number, ctx)
 					if away.Magnitude > 0.1 then
 						target += away.Unit * (4 + 6 * sk)
 					end
+				end
+			end
+			if possession == team then
+				-- ofsayta düşmemek: çizginin biraz gerisinde bekle (az becerikli oyuncu ara sıra kaçırır)
+				local lapse = (math.sin(clock * 0.4 + bot.slot * 1.7) + 1) / 2
+				local maxZ = offLine[team] - 2 + (1 - sk * 0.8) * 8 * lapse
+				if target.Z * d > maxZ then
+					target = Vector3.new(target.X, 0, maxZ * d)
 				end
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))
@@ -10723,6 +11045,7 @@ local Components = require(ReplicatedStorage.UI.Components)
 local Ball = require(script.Parent.Ball)
 local MatchAI = require(script.Parent.MatchAI)
 local Referee = require(script.Parent.Referee)
+local Halftime = require(script.Parent.Parent.Screens.Halftime)
 local PlayerController = require(script.Parent.Parent.Controllers.PlayerController)
 
 local P = Config.MatchPitch
@@ -11060,7 +11383,12 @@ local function onGoal(kind: string, side: string)
 	task.defer(function()
 		if M then
 			Stadium.Score(M.homeName, M.awayName, M.home, M.away, M.minute)
-			Stadium.Screen("GOL!", (if side == "front" then M.homeName else M.awayName) .. "  " .. tostring(M.minute) .. "'", nil, 6)
+			Stadium.Screen(
+				"GOL!",
+				M.goalLine or ((if side == "front" then M.homeName else M.awayName) .. "  " .. tostring(M.minute) .. "'"),
+				nil,
+				6
+			)
 		end
 	end)
 	-- kendi kalemize giren top rakibin, rakip kaleye giren bizim golümüzdür
@@ -11091,10 +11419,25 @@ local function onGoal(kind: string, side: string)
 		PlayerController.PlayAction("Uzulme")
 	end
 	setScore(true)
-	Components.Toast(
-		if team == "home" then "unlock" else "error",
-		M.minute .. "' Gol: " .. (if team == "home" then M.homeName else M.awayName)
-	)
+	-- gol kimin? (kendi kalesine atılan gol kimseye yazılmaz)
+	local clubName = if team == "home" then M.homeName else M.awayName
+	local line = M.minute .. "' Gol: " .. clubName
+	local screenLine = clubName .. "  " .. M.minute .. "'"
+	if scorer == team then
+		local sInfo, aInfo = MatchAI.CreditGoal(team)
+		if sInfo then
+			line = string.format("%d' Gol: %d %s (%s)", M.minute, sInfo.number, sInfo.name, clubName)
+			screenLine = string.format("%d %s  ·  %d'", sInfo.number, sInfo.name, M.minute)
+			if aInfo then
+				line ..= "  ·  asist " .. aInfo.name
+				screenLine ..= "  ·  asist " .. aInfo.name
+			end
+		end
+	else
+		line ..= " (kendi kalesine)"
+	end
+	M.goalLine = screenLine
+	Components.Toast(if team == "home" then "unlock" else "error", line)
 	MatchAI.Freeze(MC.GoalPause)
 	task.delay(MC.GoalPause, function()
 		if M and M.phase == "goal" then
@@ -11110,6 +11453,133 @@ end
 --------------------------------------------------------------------------------
 -- Maç sonu
 --------------------------------------------------------------------------------
+-- Maç sonu oyuncu puanları: maçın adamı ve iki takımın listesi
+local function ratingColor(v: number): Color3
+	return if v >= 8 then C.Gold elseif v >= 7 then C.Good elseif v >= 6 then C.Text else C.Bad
+end
+
+local function ratingsPanel(parent: Instance, report)
+	local panel, content = Components.Panel({
+		Name = "Ratings",
+		Size = UDim2.fromOffset(632, 500),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 326, 0.5, 0),
+		Title = "Oyuncu Puanları",
+		Accent = false,
+	})
+	panel.ZIndex = 61
+	panel.Parent = parent
+	local best
+	for _, r in ipairs(report) do
+		if not best or r.rating > best.rating or (r.rating == best.rating and r.goals > best.goals) then
+			best = r
+		end
+	end
+	local function label(
+		text: string,
+		size: number,
+		color: Color3,
+		x: number,
+		y: number,
+		w: number,
+		font: Font?,
+		align: Enum.TextXAlignment?
+	)
+		local l = Components.Label({
+			Text = text,
+			Size = size,
+			Color = color,
+			Font = font or Theme.Font.Title,
+			Frame = UDim2.fromOffset(w, size + 8),
+			Align = align,
+		})
+		l.Position = UDim2.fromOffset(x, y)
+		l.Parent = content
+		return l
+	end
+	-- maçın adamı
+	local box = Instance.new("Frame")
+	box.Name = "Motm"
+	box.Position = UDim2.fromOffset(0, 36)
+	box.Size = UDim2.new(1, 0, 0, 58)
+	box.BackgroundColor3 = C.Ground
+	box.BackgroundTransparency = 0.3
+	box.BorderSizePixel = 0
+	local bu = Instance.new("UICorner")
+	bu.CornerRadius = UDim.new(0, 8)
+	bu.Parent = box
+	local bs = Instance.new("UIStroke")
+	bs.Color = C.Gold
+	bs.Thickness = 1.5
+	bs.Parent = box
+	box.Parent = content
+	label("MAÇIN ADAMI", 11, C.Gold, 12, 40, 200)
+	label(
+		string.format("%d  %s%s", best.number, best.name, if best.human then "  (SEN)" else ""),
+		20,
+		C.White,
+		12,
+		58,
+		420,
+		Theme.Font.Display
+	)
+	label(
+		(if best.team == "home" then M.homeName else M.awayName)
+			.. (if best.goals > 0 then "  ·  " .. best.goals .. " gol" else "")
+			.. (if best.assists > 0 then "  ·  " .. best.assists .. " asist" else "")
+			.. (if best.saves > 0 then "  ·  " .. best.saves .. " kurtarış" else ""),
+		12,
+		C.Muted,
+		330,
+		44,
+		190,
+		nil,
+		Enum.TextXAlignment.Right
+	)
+	label(string.format("%.1f", best.rating), 34, C.Gold, 520, 44, 70, Theme.Font.Number, Enum.TextXAlignment.Right)
+
+	-- iki takım yan yana (sahadan çıkanlar listenin sonunda)
+	for col, team in ipairs({ "home", "away" }) do
+		local x = (col - 1) * 304
+		label(Theme.Upper(if team == "home" then M.homeName else M.awayName), 12, C.Yellow, x, 104, 290)
+		local list = {}
+		for _, r in ipairs(report) do
+			if r.team == team then
+				table.insert(list, r)
+			end
+		end
+		table.sort(list, function(a, b)
+			local ga, gb = (a.subbed or a.sentOff), (b.subbed or b.sentOff)
+			if ga ~= gb then
+				return not ga
+			end
+			return a.slot < b.slot
+		end)
+		for i, r in ipairs(list) do
+			if i > 13 then
+				break
+			end
+			local y = 124 + (i - 1) * 25
+			local ink = if r.human then C.Yellow elseif r.subbed or r.sentOff then C.Muted else C.Text
+			label(tostring(r.number), 12, C.Muted, x, y, 24, Theme.Font.Number, Enum.TextXAlignment.Right)
+			label(
+				r.name
+					.. (if r.human then " (SEN)" else "")
+					.. (if r.sentOff then " · kırmızı" elseif r.subbed then " · çıktı" else "")
+					.. (if r.goals > 0 then "  " .. r.goals .. "G" else "")
+					.. (if r.assists > 0 then "  " .. r.assists .. "A" else ""),
+				13,
+				ink,
+				x + 30,
+				y,
+				210
+			)
+			label(string.format("%.1f", r.rating), 14, ratingColor(r.rating), x + 244, y, 46, Theme.Font.Number, Enum.TextXAlignment.Right)
+		end
+	end
+	UIMotion.In(panel, Vector2.new(40, 0), 0.2)
+end
+
 local function resultScreen(gui: ScreenGui, result, onClose: () -> ())
 	local s = MatchAI.Stats()
 	local dim = Instance.new("Frame")
@@ -11130,6 +11600,12 @@ local function resultScreen(gui: ScreenGui, result, onClose: () -> ())
 	})
 	panel.ZIndex = 61
 	panel.Parent = dim
+	-- sağda oyuncu puanları ve maçın adamı
+	local okReport, report = pcall(MatchAI.Report, M.home, M.away, M.cards)
+	if okReport and #report > 0 then
+		panel.Position = UDim2.new(0.5, -326, 0.5, 0)
+		ratingsPanel(dim, report)
+	end
 	local title = Components.Label({
 		Text = if win then "Galibiyet" elseif draw then "Beraberlik" else "Mağlubiyet",
 		Size = 46,
@@ -11388,9 +11864,14 @@ local function decision(cardColor: Color3?, title: string, who: string, reason: 
 	cu.Parent = card
 	card.Parent = f
 	if not cardColor then
-		-- kartsız karar: düdük simgesi yerine "F" (faul)
+		-- kartsız karar: başlığın baş harfi (Faul, Ofsayt, Oyuncu değişikliği)
+		local mark = "F"
+		for _, code in utf8.codes(Theme.Upper(title)) do
+			mark = utf8.char(code)
+			break
+		end
 		local l = Components.Label({
-			Text = "F",
+			Text = mark,
 			Size = 40,
 			Font = Theme.Font.Display,
 			Color = C.Navy,
@@ -11407,7 +11888,9 @@ local function decision(cardColor: Color3?, title: string, who: string, reason: 
 	line(Theme.Upper(title), 24, cardColor or C.White, 10, Theme.Font.Display)
 	line(who, 17, C.Text, 42, Theme.Font.Title)
 	line(reason, 14, C.Muted, 66, Theme.Font.Body)
-	line("KARAR: " .. Theme.Upper(verdict), 14, C.Yellow, 88, Theme.Font.Title)
+	if verdict ~= "" then
+		line("KARAR: " .. Theme.Upper(verdict), 14, C.Yellow, 88, Theme.Font.Title)
+	end
 	f.Parent = ui.root
 	ui.decision = f
 	UIMotion.In(f, Vector2.new(0, -30))
@@ -11422,7 +11905,7 @@ end
 --[[ Faul. by: faulü yapan takım, offender: { name, number, human?, bot? },
 	severity: "careless" (kartsız) | "reckless" (sarı) | "violent" (kırmızı),
 	victim: faul yapılan takım, pos: faulün yeri ]]
-local function foul(by: string, offender, severity: string, victim: string, pos: Vector3, reason: string?)
+local function foul(by: string, offender, severity: string, victim: string, pos: Vector3, reason: string?, override: any?)
 	if not M or M.phase ~= "play" then
 		return
 	end
@@ -11448,12 +11931,16 @@ local function foul(by: string, offender, severity: string, victim: string, pos:
 	end
 	-- Faul, yapanın kendi ceza sahasındaysa penaltı
 	local ownGoalZ = if by == "home" then P.MinZ else P.MaxZ
-	local inBox = math.abs(pos.X) <= 66 and math.abs(pos.Z - ownGoalZ) <= 54
-	local verdict = if inBox then "Penaltı" else "Serbest vuruş"
+	local inBox = math.abs(pos.X) <= 66 and math.abs(pos.Z - ownGoalZ) <= 54 and not override
+	local verdict = if override then override.verdict elseif inBox then "Penaltı" else "Serbest vuruş"
 	local club = if by == "home" then M.homeName else M.awayName
 	local who = string.format("%d  %s  ·  %s", offender.number, offender.name, club)
 	local color = if card == "red" then C.Bad elseif card == "yellow" then C.Yellow else nil
-	local title = if card == "red" then "Kırmızı kart" elseif card == "yellow" then "Sarı kart" else "Faul"
+	local title = if override
+		then override.title
+		elseif card == "red" then "Kırmızı kart"
+		elseif card == "yellow" then "Sarı kart"
+		else "Faul"
 	decision(color, title, who, why, verdict)
 	Stadium.Screen(Theme.Upper(title), who .. "  ·  " .. why .. "  ·  " .. verdict, color, 6)
 	if color then
@@ -11631,6 +12118,78 @@ local function buildOrders()
 	paintOrders()
 end
 
+--------------------------------------------------------------------------------
+-- Oyuncu değişiklikleri
+--------------------------------------------------------------------------------
+local function announceSub(club: string, incoming, outgoing)
+	local who = string.format("Giren: %d %s", incoming.number, incoming.name)
+	local out = string.format("Çıkan: %d %s  ·  %s", outgoing.number, outgoing.name, club)
+	decision(nil, "Oyuncu değişikliği", who, out, "")
+	Stadium.Screen("OYUNCU DEĞİŞİKLİĞİ", who .. "  ·  " .. out, nil, 6)
+end
+
+-- Rakip teknik direktör ikinci yarıda en zayıf oyuncusunu değiştirir
+local function awaySubstitution()
+	local worst
+	for _, p in ipairs(MatchAI.Squad("away")) do
+		if p.slot ~= 1 and p.info and (not worst or p.info.rating < worst.info.rating) then
+			worst = p
+		end
+	end
+	local pick
+	for _, info in ipairs(M.fixture.away.bench) do
+		if info.role ~= "KL" and (not pick or info.rating > pick.rating) then
+			pick = info
+		end
+	end
+	if worst and pick and MatchAI.Substitute("away", worst.slot, pick) then
+		announceSub(M.awayName, pick, worst.info)
+	end
+end
+
+local function halftimeContext()
+	return {
+		homeName = M.homeName,
+		awayName = M.awayName,
+		home = M.home,
+		away = M.away,
+		stats = MatchAI.Stats(),
+		me = M.me,
+		bench = M.bench,
+		squad = function()
+			return MatchAI.Squad("home")
+		end,
+		subsLeft = function()
+			return M.subsLeft
+		end,
+		substitute = function(slot: number, benchIndex: number): boolean
+			local incoming = M.bench[benchIndex]
+			if not incoming or M.subsLeft <= 0 then
+				return false
+			end
+			local outgoing
+			for _, p in ipairs(MatchAI.Squad("home")) do
+				if p.slot == slot then
+					outgoing = p.info
+				end
+			end
+			if not outgoing or not MatchAI.Substitute("home", slot, incoming) then
+				return false
+			end
+			table.remove(M.bench, benchIndex)
+			M.subsLeft -= 1
+			announceSub(M.homeName, incoming, outgoing)
+			return true
+		end,
+		order = function()
+			return M.order
+		end,
+		setOrder = function(name: string)
+			setOrder(name)
+		end,
+	}
+end
+
 local function update(dt: number, ctx)
 	if not M then
 		return
@@ -11647,6 +12206,10 @@ local function update(dt: number, ctx)
 			ui.clock.Text = M.minute .. "'"
 		end
 		MatchAI.SetScore(M.home, M.away, M.minute) -- rakip, skora ve dakikaya göre oyununu ayarlar
+		if M.half == 2 and M.fixture and not M.awaySubDone and M.minute >= 62 then
+			M.awaySubDone = true
+			awaySubstitution()
+		end
 		if M.elapsed >= half then
 			if M.half == 1 then
 				M.phase = "halftime"
@@ -11656,11 +12219,23 @@ local function update(dt: number, ctx)
 				task.delay(3, function()
 					if M and M.phase == "halftime" then
 						UIMotion.Wipe(function()
-							if M then
-								M.half = 2
-								M.elapsed = 0
-								kickoff("away")
-								big("İkinci yarı", C.Yellow, 1.4)
+							if not M then
+								return
+							end
+							local function secondHalf()
+								if M then
+									M.half = 2
+									M.elapsed = 0
+									kickoff("away")
+									big("İkinci yarı", C.Yellow, 1.4)
+								end
+							end
+							if M.fixture then
+								-- devre arası: özet, takım emri ve oyuncu değişikliği
+								MatchAI.Freeze(9999)
+								Halftime.Show(M.gui, halftimeContext(), secondHalf)
+							else
+								secondHalf()
 							end
 						end)
 					end
@@ -11696,6 +12271,9 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		lastHumanKick = nil,
 		position = data.position,
 		cards = {}, -- cards["home:9"] = "yellow" | "red"
+		fixture = fixture,
+		subsLeft = 3,
+		bench = if fixture then table.clone(fixture.home.bench) else {},
 		order = "Dengeli",
 		captain = (data.level or 1) >= Config.CaptainBandLevel,
 		me = { name = data.name, number = data.number or 9, human = true },
@@ -11776,6 +12354,21 @@ MatchAI.On("foul", function(bot, severity, victim, pos)
 			severity,
 			victim,
 			pos
+		)
+	end
+end)
+MatchAI.On("offside", function(who, pos)
+	if M then
+		local team = if who == "human" then "home" else who.team
+		local info = if who == "human" then M.me else who.info
+		foul(
+			team,
+			{ name = if info then info.name else "Oyuncu", number = if info then info.number else 0 },
+			"careless",
+			if team == "home" then "away" else "home",
+			pos,
+			"Pas anında son ikinci savunmacının ilerisinde",
+			{ title = "Ofsayt", verdict = "Endirekt serbest vuruş" }
 		)
 	end
 end)
@@ -12069,7 +12662,7 @@ end
 return TimeScale
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX39"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX40"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
 	Creator (karakter ve kulüp oluşturma ekranı)
 	Solda sekmeli seçenek paneli, sağda stüdyo sahnesinde dönen gerçek karakter.
 	Her seçim sunucuya önizleme isteği gönderir; sunucu doğrular ve karaktere uygular.
@@ -12997,7 +13590,319 @@ end
 
 return CrestDesigner
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX36"><Properties><string name="Name">League</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX36"><Properties><string name="Name">Halftime</string><ProtectedString name="Source"><![CDATA[--[[
+	Halftime
+	Devre arası ekranı: ilk yarının özeti, takım emri ve oyuncu değişikliği.
+	Sahadan bir oyuncu ve kulübeden bir yedek seçilip "Değiştir" denir (en çok 3 değişiklik).
+	Oyuncunun kendisi değiştirilemez.
+
+	Halftime.Show(gui, ctx, onContinue)
+	ctx = {
+		homeName, awayName, home, away,            skor
+		stats = MatchAI.Stats(),                   şut ve topa sahip olma
+		squad = () -> { {slot, info, tired} },     sahadaki takım arkadaşları (güncel)
+		bench = { info, ... },                     yedekler (kullanılan çıkarılır)
+		subsLeft = () -> number,
+		substitute = (slot, benchIndex) -> boolean,
+		order = () -> string, setOrder = (name) -> (),
+		me = { name, number },
+	}
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Components = require(ReplicatedStorage.UI.Components)
+local Theme = require(ReplicatedStorage.UI.Theme)
+local UIMotion = require(ReplicatedStorage.UI.UIMotion)
+
+local Halftime = {}
+
+local C = Theme.Color
+local ORDERS = { "Dengeli", "Atak", "Defans", "Pres" }
+
+local function text(
+	parent: Instance,
+	str: string,
+	size: number,
+	color: Color3,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	font: Font?,
+	align: Enum.TextXAlignment?
+)
+	local l = Components.Label({
+		Text = str,
+		Size = size,
+		Color = color,
+		Font = font or Theme.Font.Title,
+		Frame = UDim2.fromOffset(w, h),
+		Align = align,
+	})
+	l.Position = UDim2.fromOffset(x, y)
+	l.Parent = parent
+	return l
+end
+
+local function ratingColor(v: number): Color3
+	return if v >= 80 then C.Gold elseif v >= 65 then C.Good elseif v >= 45 then C.Yellow else C.Muted
+end
+
+function Halftime.Show(gui: ScreenGui, ctx, onContinue: () -> ())
+	local root = Instance.new("Frame")
+	root.Name = "Halftime"
+	root.Size = UDim2.fromScale(1, 1)
+	root.BackgroundColor3 = Color3.fromRGB(6, 11, 36)
+	root.BackgroundTransparency = 0.08
+	root.BorderSizePixel = 0
+	root.ZIndex = 140
+	root.Parent = gui
+	local panel, content = Components.Panel({
+		Name = "HalftimePanel",
+		Size = UDim2.fromOffset(1180, 700),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Title = "Devre Arası",
+	})
+	panel.ZIndex = 141
+	panel.Parent = root
+
+	-- özet
+	text(
+		content,
+		string.format("%s  %d - %d  %s", ctx.homeName, ctx.home, ctx.away, ctx.awayName),
+		30,
+		C.White,
+		0,
+		40,
+		520,
+		40,
+		Theme.Font.Display
+	)
+	local st = ctx.stats
+	local total = math.max(1, st.possession.home + st.possession.away)
+	text(
+		content,
+		string.format(
+			"Şut %d - %d   ·   Topa sahip olma %%%d - %%%d",
+			st.shots.home,
+			st.shots.away,
+			math.floor(st.possession.home / total * 100 + 0.5),
+			math.floor(st.possession.away / total * 100 + 0.5)
+		),
+		15,
+		C.Muted,
+		0,
+		82,
+		700,
+		22
+	)
+
+	local selectedSlot: number? = nil
+	local selectedBench: number? = nil
+	local body = Instance.new("Frame")
+	body.Name = "Body"
+	body.BackgroundTransparency = 1
+	body.Position = UDim2.fromOffset(0, 118)
+	body.Size = UDim2.new(1, 0, 1, -118)
+	body.Parent = content
+
+	local draw: () -> ()
+	local function row(parent: Instance, y: number, w: number, selected: boolean, disabled: boolean, onClick: (() -> ())?): TextButton
+		local b = Instance.new("TextButton")
+		b.AutoButtonColor = false
+		b.Text = ""
+		b.Size = UDim2.fromOffset(w, 36)
+		b.Position = UDim2.fromOffset(0, y)
+		b.BackgroundColor3 = if selected then C.Yellow elseif disabled then C.Ground else C.Blue
+		b.BackgroundTransparency = if selected then 0 else 0.3
+		b.BorderSizePixel = 0
+		local u = Instance.new("UICorner")
+		u.CornerRadius = UDim.new(0, 6)
+		u.Parent = b
+		b.Parent = parent
+		if onClick and not disabled then
+			b.Activated:Connect(onClick)
+		end
+		return b
+	end
+
+	draw = function()
+		for _, child in ipairs(body:GetChildren()) do
+			child:Destroy()
+		end
+		-- sahadakiler
+		local left = Instance.new("Frame")
+		left.BackgroundTransparency = 1
+		left.Size = UDim2.fromOffset(470, 540)
+		left.Parent = body
+		text(left, "SAHADAKİLER", 13, C.Yellow, 0, 0, 300, 20)
+		text(left, "GÜÇ", 11, C.Muted, 330, 2, 50, 18, nil, Enum.TextXAlignment.Center)
+		text(left, "YORGUNLUK", 11, C.Muted, 384, 2, 86, 18, nil, Enum.TextXAlignment.Center)
+		local list = ctx.squad()
+		local y = 26
+		for _, p in ipairs(list) do
+			local on = selectedSlot == p.slot
+			local b = row(left, y, 470, on, false, function()
+				selectedSlot = if selectedSlot == p.slot then nil else p.slot
+				draw()
+			end)
+			b.Name = "Starter"
+			local ink = if on then C.Navy else C.Text
+			text(
+				b,
+				tostring(p.info.number),
+				15,
+				if on then C.Navy else C.Yellow,
+				8,
+				0,
+				34,
+				36,
+				Theme.Font.Number,
+				Enum.TextXAlignment.Center
+			)
+			text(b, p.info.name, 15, ink, 50, 0, 200, 36)
+			text(b, p.info.role, 12, if on then C.Navy else C.Muted, 258, 0, 60, 36)
+			text(
+				b,
+				tostring(p.info.rating),
+				17,
+				if on then C.Navy else ratingColor(p.info.rating),
+				330,
+				0,
+				50,
+				36,
+				Theme.Font.Number,
+				Enum.TextXAlignment.Center
+			)
+			-- yorgunluk çubuğu
+			local track = Instance.new("Frame")
+			track.Size = UDim2.fromOffset(70, 8)
+			track.Position = UDim2.fromOffset(392, 14)
+			track.BackgroundColor3 = C.Ground
+			track.BorderSizePixel = 0
+			track.Parent = b
+			local fill = Instance.new("Frame")
+			fill.Size = UDim2.fromScale(math.clamp(p.tired, 0.04, 1), 1) -- devre arasında yarıya kadar dolar
+			fill.BackgroundColor3 = if p.tired > 0.7 then C.Bad elseif p.tired > 0.35 then C.Gold else C.Good
+			fill.BorderSizePixel = 0
+			fill.Parent = track
+			y += 40
+		end
+		local me = row(left, y, 470, false, true, nil)
+		me.Name = "Me"
+		text(me, tostring(ctx.me.number), 15, C.Yellow, 8, 0, 34, 36, Theme.Font.Number, Enum.TextXAlignment.Center)
+		text(me, Theme.Upper(ctx.me.name) .. "  (SEN · değiştirilemez)", 14, C.Muted, 50, 0, 400, 36)
+
+		-- yedekler
+		local mid = Instance.new("Frame")
+		mid.BackgroundTransparency = 1
+		mid.Position = UDim2.fromOffset(500, 0)
+		mid.Size = UDim2.fromOffset(330, 540)
+		mid.Parent = body
+		text(mid, "YEDEKLER", 13, C.Yellow, 0, 0, 200, 20)
+		text(mid, "Kalan değişiklik: " .. ctx.subsLeft(), 12, C.Muted, 150, 0, 180, 20, nil, Enum.TextXAlignment.Right)
+		local by = 26
+		for i, info in ipairs(ctx.bench) do
+			local on = selectedBench == i
+			local b = row(mid, by, 330, on, false, function()
+				selectedBench = if selectedBench == i then nil else i
+				draw()
+			end)
+			b.Name = "Sub"
+			local ink = if on then C.Navy else C.Text
+			text(b, tostring(info.number), 15, if on then C.Navy else C.Yellow, 8, 0, 34, 36, Theme.Font.Number, Enum.TextXAlignment.Center)
+			text(b, info.name, 15, ink, 50, 0, 170, 36)
+			text(b, info.role, 12, if on then C.Navy else C.Muted, 222, 0, 50, 36)
+			text(
+				b,
+				tostring(info.rating),
+				17,
+				if on then C.Navy else ratingColor(info.rating),
+				276,
+				0,
+				46,
+				36,
+				Theme.Font.Number,
+				Enum.TextXAlignment.Center
+			)
+			by += 40
+		end
+		if #ctx.bench == 0 then
+			text(mid, "Kulübede oyuncu kalmadı.", 13, C.Muted, 0, 30, 330, 20)
+		end
+		local can = selectedSlot ~= nil and selectedBench ~= nil and ctx.subsLeft() > 0
+		local swap = Components.Button({
+			Text = "Değiştir",
+			Style = if can then "Primary" else "Secondary",
+			Sub = if ctx.subsLeft() <= 0
+				then "Değişiklik hakkın bitti"
+				elseif can then "Seçilen ikiliyi değiştir"
+				else "Bir sahadan, bir kulübeden seç",
+			Size = UDim2.fromOffset(330, 60),
+			OnClick = function()
+				if not can then
+					Components.Toast(
+						"info",
+						if ctx.subsLeft() <= 0 then "Değişiklik hakkın bitti." else "Sahadan bir oyuncu ve kulübeden bir yedek seç."
+					)
+					return
+				end
+				if ctx.substitute(selectedSlot :: number, selectedBench :: number) then
+					UIMotion.Sound("ConfirmSound")
+					selectedSlot, selectedBench = nil, nil
+					draw()
+				end
+			end,
+		})
+		swap.Name = "Swap"
+		swap.Position = UDim2.fromOffset(0, by + 14)
+		swap.Parent = mid
+
+		-- takım emri
+		local right = Instance.new("Frame")
+		right.BackgroundTransparency = 1
+		right.Position = UDim2.fromOffset(860, 0)
+		right.Size = UDim2.fromOffset(288, 540)
+		right.Parent = body
+		text(right, "İKİNCİ YARI EMRİ", 13, C.Yellow, 0, 0, 288, 20)
+		for i, name in ipairs(ORDERS) do
+			local on = ctx.order() == name
+			local b = row(right, 26 + (i - 1) * 44, 288, on, false, function()
+				ctx.setOrder(name)
+				draw()
+			end)
+			b.Size = UDim2.fromOffset(288, 40)
+			b.Name = "Order"
+			text(b, Theme.Upper(name), 15, if on then C.Navy else C.Text, 0, 0, 288, 40, nil, Enum.TextXAlignment.Center)
+		end
+	end
+	draw()
+
+	local go = Components.Button({
+		Text = "İkinci yarı",
+		Style = "Primary",
+		Sub = "Rakibin santrasıyla başlar",
+		Size = UDim2.fromOffset(288, 64),
+		OnClick = function()
+			UIMotion.Wipe(function()
+				root:Destroy()
+				onContinue()
+			end)
+		end,
+	})
+	go.Name = "Continue"
+	go.AnchorPoint = Vector2.new(1, 1)
+	go.Position = UDim2.fromScale(1, 1)
+	go.Parent = content
+	UIMotion.In(panel, Vector2.new(0, 30))
+	return root
+end
+
+return Halftime
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX37"><Properties><string name="Name">League</string><ProtectedString name="Source"><![CDATA[--[[
 	League
 	Puan durumu ekranı: ligdeki altı kulüp, oynanan maç, galibiyet/beraberlik/mağlubiyet ve puan.
 	Oyuncunun kulübü sarı satırdadır. Lig atlama çizgisi tabloda gösterilir.
@@ -13160,7 +14065,7 @@ end
 
 return League
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX37"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX38"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
 	Lineup
 	Maç öncesi tanıtım: iki kulüp, armalar, teknik direktörler, diziliş ve 11'ler.
 	Her futbolcunun genel gücü ve altı özelliği görünür. "Maça çık" ile santraya geçilir.
@@ -13455,7 +14360,7 @@ end
 
 return Lineup
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX38"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX39"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
 	SkillTree
 	Yetenek ağacı sayfası. Solda zincirler (Şut, Çalım, Hava, Defans, kaleciyse Kaleci): her zincirde
 	hareketler sırayla açılır ve aynı tuş, açılan en üst hareketi oynatır. Sağda özellikler
@@ -13815,7 +14720,7 @@ return SkillTree
 </Item>
 </Item>
 </Item>
-<Item class="StarterCharacterScripts" referent="RBX43"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX42"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterCharacterScripts" referent="RBX44"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX43"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
 	Animate (boş)
 	Bu ad, Roblox'un varsayılan "Animate" betiğinin yerine geçer: hazır yürüme/koşma animasyonları
 	hiç yüklenmez. Bütün hareketler Client/Anim/Animator tarafından eklemlere doğrudan yazılır.
@@ -13823,7 +14728,7 @@ return SkillTree
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterGui" referent="RBX45"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
-<Item class="Workspace" referent="RBX46"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
-<Item class="Lighting" referent="RBX47"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
+<Item class="StarterGui" referent="RBX46"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
+<Item class="Workspace" referent="RBX47"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="Lighting" referent="RBX48"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
 </roblox>

@@ -443,6 +443,92 @@ check("21 bot sahada", #MatchAI.Positions() == 21, #MatchAI.Positions())
 check("botlar şut çeker", mShots >= 3, mShots)
 check("iki takım da topa sahip olur", st.possession.home > 20 and st.possession.away > 20, st.possession.home .. "/" .. st.possession.away)
 check("skor makul aralıkta", mg.home + mg.away <= 12, mg.home + mg.away)
+-- maç sonu oyuncu puanları
+local report = MatchAI.Report(mg.home, mg.away, {})
+local ratingsOk, humans = true, 0
+for _, r in ipairs(report) do
+	ratingsOk = ratingsOk and r.rating >= 3.5 and r.rating <= 10 and r.name ~= nil
+	if r.human then
+		humans += 1
+	end
+end
+check("22 oyuncuya puan verilir", #report == 22, #report)
+check("puanlar 3,5 - 10 aralığında", ratingsOk)
+check("insan oyuncu raporda bir kez yer alır", humans == 1, humans)
+-- oyuncu değişikliği
+local before = MatchAI.Squad("away")
+check("sahadaki rakip 11 listelenir", #before == 11, #before)
+local subOk = MatchAI.Substitute(
+	"away",
+	9,
+	{ name = "Y. Yedek", number = 15, role = "SLO", rating = 44, stats = { 50, 40, 40, 40, 30, 40 }, pace = 1.02 }
+)
+check("oyuncu değişikliği yapılır", subOk)
+local swapped = false
+for _, p in ipairs(MatchAI.Squad("away")) do
+	if p.slot == 9 and p.info.number == 15 and p.tired == 0 then
+		swapped = true
+	end
+end
+check("giren oyuncu dizilişte ve dinç", swapped)
+check("çıkan oyuncu da raporda kalır", #MatchAI.Report(mg.home, mg.away, {}) == 23)
+check("olmayan mevkide değişiklik yapılmaz", MatchAI.Substitute("away", 99, {}) == false)
+-- ofsayt: insan oyuncu savunma hattının gerisindeyken takım arkadaşı pas atarsa
+MatchAI.Start({ position = "Forvet", awaySkill = 0.4, homeSkill = 0.45 })
+local offsides = 0
+MatchAI.On("offside", function(who)
+	if who == "human" then
+		offsides += 1
+	end
+end)
+local deep = Vector3.new(30, 0, P.MaxZ - 8) -- rakip kalenin dibi: herkesin ilerisinde
+local limit = MatchAI.OffsideLimit("home", Vector3.new(0, 0, midZ), { playerPos = human })
+check("ofsayt çizgisi orta sahanın gerisinde olamaz", limit >= midZ, limit)
+local passer
+for _, b in ipairs(MatchAI.Positions()) do
+	-- en ilerideki takım arkadaşı (pas mesafesi içinde kalsın)
+	if b[3] == "home" and not b[8] and (not passer or b[2] > passer[2]) then
+		passer = b
+	end
+end
+local called = false
+if passer then
+	for attempt = 1, 40 do
+		Ball.Reset(Vector3.new(passer[1], 0, passer[2]))
+		MatchAI.Update(1 / 60, { playerPos = deep })
+		__advance(1 / 60)
+		if MatchAI.CallPass(deep) then
+			called = true
+			break
+		end
+	end
+end
+check("takım arkadaşı pas çağrısına uyar", called)
+Ball.Reset(deep)
+for _ = 1, 6 do
+	MatchAI.Update(1 / 60, { playerPos = deep })
+	__advance(1 / 60)
+end
+check("ofsayttaki oyuncu topla buluşunca ofsayt çalınır", offsides == 1, offsides)
+-- çizginin gerisindeyken aynı pas ofsayt değildir
+local onside = Vector3.new(30, 0, midZ - 30)
+called = false
+MatchAI.ResetPositions()
+for attempt = 1, 40 do
+	Ball.Reset(Vector3.new(passer[1], 0, passer[2]))
+	MatchAI.Update(1 / 60, { playerPos = onside })
+	__advance(1 / 60)
+	if MatchAI.CallPass(onside) then
+		called = true
+		break
+	end
+end
+Ball.Reset(onside)
+for _ = 1, 6 do
+	MatchAI.Update(1 / 60, { playerPos = onside })
+	__advance(1 / 60)
+end
+check("kendi yarı sahasındaki oyuncuya pas ofsayt değildir", offsides == 1, offsides)
 local inside = true
 for _, b in ipairs(MatchAI.Positions()) do
 	inside = inside and b[1] >= P.MinX - 5 and b[1] <= P.MaxX + 5 and b[2] >= P.MinZ - 4 and b[2] <= P.MaxZ + 4
@@ -974,6 +1060,18 @@ do
 		check("oyuncunun 6 özelliği var: " .. p.name, #p.stats == 6 and p.rating >= 1 and p.rating <= 99)
 	end
 	check("forma numaraları farklı", distinct)
+	check("kulübede 5 yedek var", #fx.home.bench == 5 and #fx.away.bench == 5)
+	local seen, dup = {}, false
+	for _, list in ipairs({ fx.away.players, fx.away.bench }) do
+		for _, p in ipairs(list) do
+			if seen[p.name] then
+				dup = true
+			end
+			seen[p.name] = true
+		end
+	end
+	check("aynı kadroda aynı ad iki kez geçmez", not dup)
+	check("yedeklerin formaları 12-16", fx.home.bench[1].number == 12 and fx.home.bench[5].number == 16)
 	local fx2 = Squads.Fixture(d)
 	check("aynı kulüp aynı kadroyu verir", fx2.away.players[5].name == fx.away.players[5].name)
 	d.club.season.played = 1
@@ -1147,9 +1245,47 @@ local coinsBefore = data.coins
 local playedBefore = data.club.season.played
 local back = false
 data.power = 60
+local SquadsM = require(__tree.Shared.Squads)
+local matchFixture = SquadsM.Fixture(data)
 MCtl.Start(gui2, data, function()
 	back = true
-end)
+end, matchFixture)
+-- devre arası ekranı çıkınca: bir değişiklik yap, emir ver, ikinci yarıyı başlat
+local halftimeSeen, halftimeChecks = false, {}
+local function handleHalftime()
+	local root = gui2:FindFirstChild("Halftime")
+	if not root or halftimeSeen then
+		return
+	end
+	halftimeSeen = true
+	local function named(n)
+		local out = {}
+		for _, t in ipairs(root:GetDescendants()) do
+			if t.Name == n then
+				table.insert(out, t)
+			end
+		end
+		return out
+	end
+	frames(40) -- açılış animasyonu bitsin
+	halftimeChecks.starters = #named("Starter")
+	halftimeChecks.subs = #named("Sub")
+	named("Starter")[3].Activated:Fire()
+	named("Sub")[2].Activated:Fire()
+	__snapIf("devre", gui2)
+	local incoming = matchFixture.home.bench[2].number
+	named("Swap")[1].Activated:Fire()
+	halftimeChecks.subsAfter = #named("Sub")
+	halftimeChecks.onPitch = false
+	for _, p in ipairs(require(__tree.Match.MatchAI).Squad("home")) do
+		if p.info.number == incoming then
+			halftimeChecks.onPitch = true
+		end
+	end
+	named("Order")[2].Activated:Fire()
+	halftimeChecks.order = require(__tree.Match.MatchAI).Order()
+	named("Continue")[1].Activated:Fire()
+end
 frames(30)
 check("maç sahasına ışınlanır", hrpPart.Position.Z > Config.MatchPitch.MinZ, hrpPart.Position.Z)
 check("skor tabelası ve radar kurulur", gui2:FindFirstChild("MatchHud") ~= nil)
@@ -1238,9 +1374,30 @@ for i = 1, 20 do
 		UIS.InputEnded:Fire({ KeyCode = Config.Keys.Shoot, UserInputType = Enum.UserInputType.Keyboard }, false)
 	end
 	hum.MoveDirection = Vector3.new(math.sin(i), 0, math.cos(i * 0.7))
+	handleHalftime()
 end
 hum.MoveDirection = Vector3.zero
-frames(60 * 40)
+for _ = 1, 80 do
+	frames(60)
+	handleHalftime()
+end
+check("devre arası ekranı açıldı", halftimeSeen)
+check(
+	"devre arasında 10 takım arkadaşı ve 5 yedek listelenir",
+	halftimeChecks.starters == 10 and halftimeChecks.subs == 5,
+	tostring(halftimeChecks.starters) .. "/" .. tostring(halftimeChecks.subs)
+)
+check("değişiklikten sonra kulübede 4 yedek kalır", halftimeChecks.subsAfter == 4, halftimeChecks.subsAfter)
+check("giren oyuncu sahada", halftimeChecks.onPitch == true)
+check("devre arasında verilen emir uygulanır", halftimeChecks.order == "Atak", halftimeChecks.order)
+local ratingsShown = false
+for _, t in ipairs(gui2:GetDescendants()) do
+	if t.Name == "Ratings" then
+		ratingsShown = true
+	end
+end
+check("maç sonunda oyuncu puanları gösterilir", ratingsShown)
+__snapIf("sonuc", gui2)
 local resultPanel
 for _, d in ipairs(gui2:GetDescendants()) do
 	if d.Name == "Result" then

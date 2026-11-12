@@ -770,6 +770,7 @@ moduleNode("SkillTree", CL .. "Screens/SkillTree.luau", screens)
 moduleNode("Lineup", CL .. "Screens/Lineup.luau", screens)
 moduleNode("CrestDesigner", CL .. "Screens/CrestDesigner.luau", screens)
 moduleNode("League", CL .. "Screens/League.luau", screens)
+moduleNode("Halftime", CL .. "Screens/Halftime.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 
 -- R15 iskeletli sahte karakter (animasyon ve bot sınamaları için)

@@ -19,6 +19,9 @@ Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 
 - Karakter gövdesi: Roblox'un "Man" gövde paketi (`Config.Body.Parts`); yüklenemezse standart köşeli gövdeye döner. Saç modelleri, burun ve kulak yuvarlak hacimlerle kurulur.
 - Botlar: şutta kalecinin uzak köşesi, kapalı pas yolundan kaçınma, koşan oyuncunun önüne ve ara pası, adam tutma, baskı altında topu uzaklaştırma; rakip skora ve dakikaya göre öne çıkar ya da geri yaslanır. Maç başına gol sayısı ölçülerek ayarlandı (beceriye göre 2-6).
 - Puan durumu: lobi > "Puan durumu" (`Screens/League.luau`). Diğer kulüplerin sonuçları sezona bağlı tohumla üretilir.
+- Ofsayt: pas anında son ikinci savunmacının ilerisindeki oyuncu topla buluşursa çalınır (santra, taç, korner, aut ve serbest vuruştan sonraki ilk paslarda aranmaz). Elle oynama yok.
+- Devre arası ekranı: özet, ikinci yarı emri ve oyuncu değişikliği (5 yedek, 3 hak; oyuncunun kendisi değiştirilemez). Rakip 62. dakikada bir değişiklik yapar. Oyuncular sahada kaldıkça yorulur, giren oyuncu dinçtir.
+- Maç sonu: oyuncu puanları (3,5-10) ve maçın adamı; gol ve asist oyuncuya yazılır.
 - Maç öncesi kadro ekranı: iki kulüp, armalar, teknik direktörler, 11'ler ve oyuncu özellikleri (`Shared/Squads.luau`).
 
 ## Çalıştırma

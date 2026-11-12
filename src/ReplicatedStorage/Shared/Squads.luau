@@ -185,10 +185,24 @@ local function initial(name: string): string
 	return ""
 end
 
+-- Kadroda aynı ad iki kez çıkmasın: kullanılan adlar tutulur, çakışırsa yeniden çekilir
+local function uniqueName(R: () -> number, used: { [string]: boolean }): string
+	local name = ""
+	for _ = 1, 12 do
+		name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)]
+		if not used[name] then
+			break
+		end
+	end
+	used[name] = true
+	return name
+end
+
 -- Bir kulübün 11'i. avg: ortalama güç (0-99)
 function Squads.Build(club, avg: number)
 	local R = rng(hash(club.Name) + 17)
 	local players = {}
+	local used = {}
 	for slot = 1, 11 do
 		local role = Squads.Roles[slot]
 		local rating = math.clamp(math.floor(avg + (R() - 0.5) * 12 + 0.5), 20, 99)
@@ -200,12 +214,39 @@ function Squads.Build(club, avg: number)
 		players[slot] = {
 			slot = slot,
 			number = NUMBERS[slot],
-			name = initial(FIRST[1 + math.floor(R() * #FIRST)]) .. ". " .. LAST[1 + math.floor(R() * #LAST)],
+			name = uniqueName(R, used),
 			full = "",
 			role = role,
 			rating = rating,
 			stats = stats,
 			pace = math.clamp(1 + (stats[1] - avg) / 120, 0.9, 1.1), -- takım ortalamasına göre hız çarpanı
+		}
+	end
+	return players
+end
+
+-- Yedek kulübesi: 5 oyuncu (kaleci, stoper, orta saha, kanat, forvet), forma 12-16
+local BENCH_ROLES = { "KL", "STP", "MO", "SLO", "SF" }
+function Squads.Bench(club, avg: number, taken: { any }?)
+	local R = rng(hash(club.Name) + 4001)
+	local players = {}
+	local used = {}
+	for _, p in ipairs(taken or {}) do
+		used[p.name] = true
+	end
+	for i, role in ipairs(BENCH_ROLES) do
+		local rating = math.clamp(math.floor(avg - 2 + (R() - 0.5) * 12 + 0.5), 20, 99)
+		local stats = {}
+		for k = 1, 6 do
+			stats[k] = math.clamp(math.floor(rating + BIAS[role][k] + (R() - 0.5) * 10 + 0.5), 10, 99)
+		end
+		players[i] = {
+			number = 11 + i,
+			name = uniqueName(R, used),
+			role = role,
+			rating = rating,
+			stats = stats,
+			pace = math.clamp(1 + (stats[1] - avg) / 120, 0.9, 1.1),
 		}
 	end
 	return players
@@ -309,8 +350,11 @@ function Squads.Fixture(data)
 		stadium = tier.Stadium,
 		avg = avg,
 		matchNo = (season.played or 0) + 1,
-		home = { club = homeDef, players = home },
-		away = { club = oppDef, players = Squads.Build(oppDef, avg) },
+		home = { club = homeDef, players = home, bench = Squads.Bench(homeDef, avg + 1, home) },
+		away = (function()
+			local eleven = Squads.Build(oppDef, avg)
+			return { club = oppDef, players = eleven, bench = Squads.Bench(oppDef, avg, eleven) }
+		end)(),
 	}
 end
 

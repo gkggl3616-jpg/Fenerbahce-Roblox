@@ -33,10 +33,28 @@ local frozenUntil = 0
 local skill = { home = 0.4, away = 0.4 }
 local humanSlot = 11
 local humanKeeper = false
+-- Topu hedefe gönderen yardımcı; aşağıda tanımlanır, yukarıdaki işlevler de kullanır
+local kickTo: (Vector3, number, string, string, number?) -> ()
+
 -- Takım emri (kaptanın verdiği): "Dengeli" | "Atak" | "Defans" | "Pres"; strength 0-1 (kaptansa 1)
 local order = { name = "Dengeli", strength = 1 }
 local lastCarrier: any = nil
-local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {} }
+local listeners = { steal = {}, save = {}, shot = {}, telegraph = {}, foul = {}, offside = {} }
+-- Oyuncu başına maç istatistiği (maç sonu puanları için)
+local function newStats()
+	return { goals = 0, assists = 0, shots = 0, passes = 0, tackles = 0, saves = 0, fouls = 0 }
+end
+local humanSt = newStats()
+local humanInfo: any = nil
+local gone: { any } = {} -- sahadan çıkanlar (değişiklik, kırmızı kart): { team, info, st }
+local pendingKicker: any = nil -- vuruşu yapan bot (vuruş olayından hemen önce yazılır)
+local lastKicker: { [string]: any } = {} -- takım -> son vuran (bot ya da "human")
+local prevKicker: { [string]: any } = {} -- takım -> ondan önce vuran (asist)
+local offsideSnap: any = nil -- son pas anında ofsayt konumunda olanlar
+local offsideGraceUntil = 0 -- duran toplardan sonra ofsayt aranmayan süre
+local offLine = { home = math.huge, away = math.huge } -- takımın geçmemesi gereken çizgi (hücum yönünde)
+local lastCtx: any = nil
+local minuteNow = 0
 local plans: { [any]: any } = {} -- kaleci -> kurtarış planı
 local stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
 
@@ -146,7 +164,13 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 	local bot = {
 		team = team,
 		slot = slot,
-		info = info,
+		-- kadro verilmediyse (deneme) sade bir kimlik kullanılır
+		info = info or {
+			name = (if team == "home" then "Takım " else "Rakip ") .. tostring(NUMBERS[slot]),
+			number = NUMBERS[slot],
+			role = "",
+			rating = 50,
+		},
 		pace = if info then info.pace or 1 else 1,
 		keeper = slot == 1,
 		model = model,
@@ -162,6 +186,8 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 		cd = 0,
 		touch = 0,
 		decideAt = 0,
+		st = newStats(),
+		freshAt = 0,
 		ring = ring,
 		receiveUntil = 0,
 	}
@@ -192,7 +218,13 @@ end
 
 -- Her oyuncunun kendi hızı vardır (kadrodaki Hız özelliğinden gelir)
 local function runSpeed(team: string, bot: any?): number
-	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * (if bot then bot.pace or 1 else 1)
+	local pace = 1
+	if bot then
+		-- yorgunluk: sahada kaldıkça hız düşer (90 dakikada %9); yeni giren oyuncu dinçtir
+		local tired = math.clamp((minuteNow - (bot.freshAt or 0)) / 90, 0, 1)
+		pace = (bot.pace or 1) * (1 - 0.09 * tired)
+	end
+	return (MC.BotSpeed[1] + (MC.BotSpeed[2] - MC.BotSpeed[1]) * skill[team]) * pace
 end
 
 function MatchAI.Clear()
@@ -214,8 +246,15 @@ function MatchAI.Start(opts)
 	lastCarrier = nil
 	mentality = { home = 0, away = 0 }
 	local fx = opts.fixture -- Squads.Fixture: kadrolar ve oyuncu özellikleri
+	humanInfo = (fx and fx.home.players[humanSlot]) or { name = "Sen", number = 9, role = "SF", rating = 50, human = true }
 	humanKeeper = humanSlot == 1
-	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 } }
+	stats = { shots = { home = 0, away = 0 }, possession = { home = 0, away = 0 }, offsides = { home = 0, away = 0 } }
+	humanSt = newStats()
+	gone = {}
+	lastKicker, prevKicker = {}, {}
+	offsideSnap = nil
+	offsideGraceUntil = 0
+	minuteNow = 0
 	for slot = 1, 11 do
 		if slot ~= humanSlot then
 			spawn(
@@ -288,6 +327,8 @@ function MatchAI.CallPass(playerPos: Vector3): boolean
 	end
 	c.animator:Play("Pass")
 	c.cd = 0.7
+	pendingKicker = c
+	c.st.passes += 1
 	kickTo(playerPos + Vector3.new(0, 0.6, 0), math.clamp(42 + dist * 0.5, 48, 92), "Pass", "home", if dist > 90 then 1.25 else 1)
 	return true
 end
@@ -297,6 +338,7 @@ function MatchAI.SendOff(bot)
 	local i = table.find(bots, bot)
 	if i then
 		table.remove(bots, i)
+		table.insert(gone, { team = bot.team, info = bot.info, st = bot.st, slot = bot.slot, reason = "red" })
 		bot.animator:Destroy()
 		bot.model:Destroy()
 	end
@@ -345,6 +387,151 @@ end
 
 function MatchAI.Freeze(seconds: number)
 	frozenUntil = clock + seconds
+	-- duran toplardan (santra, taç, korner, aut, serbest vuruş) sonraki ilk paslarda ofsayt aranmaz
+	offsideGraceUntil = math.max(offsideGraceUntil, clock + math.min(seconds, 6) + 3)
+	offsideSnap = nil
+end
+
+-- Bir takımın ofsayt çizgisi (hücum yönünde): son ikinci savunmacı, top ve orta sahadan en ilerideki
+local function offsideLimit(team: string, ballPos: Vector3, ctx): number
+	local d = dirOf(team)
+	local opp = if team == "home" then "away" else "home"
+	local first, second = -math.huge, -math.huge
+	local function add(z: number)
+		if z > first then
+			first, second = z, first
+		elseif z > second then
+			second = z
+		end
+	end
+	for _, bot in ipairs(bots) do
+		if bot.team == opp then
+			add(bot.pos.Z * d)
+		end
+	end
+	if opp == "home" and ctx then
+		add(ctx.playerPos.Z * d)
+	end
+	if second == -math.huge then
+		second = first
+	end
+	return math.max(second, ballPos.Z * d, MID_Z * d)
+end
+MatchAI.OffsideLimit = offsideLimit
+
+--[[ Oyuncu değişikliği: dizilişteki yere yeni oyuncu girer (dinç gelir).
+	Çıkan oyuncunun istatistikleri maç sonu puanları için saklanır. ]]
+function MatchAI.Substitute(team: string, slot: number, info): boolean
+	for _, bot in ipairs(bots) do
+		if bot.team == team and bot.slot == slot then
+			table.insert(gone, { team = team, info = bot.info, st = bot.st, slot = slot, reason = "sub" })
+			bot.info = info
+			bot.st = newStats()
+			bot.pace = (info.pace or 1) * 1.02
+			bot.freshAt = minuteNow
+			for _, dsc in ipairs(bot.model:GetDescendants()) do
+				if dsc:IsA("TextLabel") and tonumber(dsc.Text) then
+					dsc.Text = tostring(info.number)
+				end
+			end
+			return true
+		end
+	end
+	return false
+end
+
+-- Sahadaki 11 (insan oyuncu dahil değil): { slot, info, tired (0-1) }
+function MatchAI.Squad(team: string)
+	local out = {}
+	for _, bot in ipairs(bots) do
+		if bot.team == team then
+			table.insert(out, { slot = bot.slot, info = bot.info, tired = math.clamp((minuteNow - (bot.freshAt or 0)) / 90, 0, 1) })
+		end
+	end
+	table.sort(out, function(x, y)
+		return x.slot < y.slot
+	end)
+	return out
+end
+
+-- Gol kimin? Son vuran ve ondan önce vuran (asist) oyuncuya yazılır. Döner: golcü bilgisi, asist bilgisi
+function MatchAI.CreditGoal(team: string)
+	local function info(who: any)
+		if who == "human" then
+			return humanInfo, humanSt
+		elseif who then
+			return who.info, who.st
+		end
+		return nil, nil
+	end
+	local sInfo, sSt = info(lastKicker[team])
+	local aInfo, aSt = info(prevKicker[team])
+	if sSt then
+		sSt.goals += 1
+	end
+	if aSt and aSt ~= sSt then
+		aSt.assists += 1
+	else
+		aInfo = nil
+	end
+	lastKicker, prevKicker = {}, {}
+	return sInfo, aInfo
+end
+
+--[[ Maç sonu oyuncu puanları. cards["home:9"] = "yellow" | "red"
+	Döner: { { team, name, number, role, human, rating, goals, assists, saves, subbed, sentOff }, ... } ]]
+function MatchAI.Report(homeGoals: number, awayGoals: number, cards: { [string]: string }?)
+	local out = {}
+	local function rate(team: string, info, st, slot: number, human: boolean, flag: string?)
+		if not info then
+			return
+		end
+		local mine = if team == "home" then homeGoals else awayGoals
+		local theirs = if team == "home" then awayGoals else homeGoals
+		local r = 6
+			+ st.goals * 1.1
+			+ st.assists * 0.6
+			+ math.min(st.shots * 0.08, 0.5)
+			+ math.min(st.passes * 0.03, 0.8)
+			+ math.min(st.tackles * 0.2, 1)
+			- st.fouls * 0.25
+			+ (if mine > theirs then 0.3 elseif mine < theirs then -0.3 else 0)
+		if slot == 1 then
+			r += st.saves * 0.35 - theirs * 0.25 + (if theirs == 0 then 0.8 else 0)
+		elseif slot <= 5 then
+			r += (if theirs == 0 then 0.4 else -0.1 * theirs)
+		end
+		local card = cards and cards[team .. ":" .. tostring(info.number)]
+		if card == "yellow" then
+			r -= 0.4
+		elseif card == "red" then
+			r -= 1.5
+		end
+		-- küçük, oyuncuya özgü fark (herkes aynı puanı almasın)
+		r += (((info.rating or 50) * 7 + (info.number or 0) * 13) % 10 - 5) * 0.03
+		table.insert(out, {
+			team = team,
+			name = info.name,
+			number = info.number,
+			role = info.role,
+			human = human,
+			rating = math.floor(math.clamp(r, 3.5, 10) * 10 + 0.5) / 10,
+			goals = st.goals,
+			assists = st.assists,
+			saves = st.saves,
+			subbed = flag == "sub",
+			sentOff = flag == "red",
+			slot = slot,
+		})
+	end
+	for _, bot in ipairs(bots) do
+		rate(bot.team, bot.info, bot.st, bot.slot, false, nil)
+	end
+	rate("home", humanInfo, humanSt, humanSlot, true, nil)
+	for _, g in ipairs(gone) do
+		rate(g.team, g.info, g.st, g.slot, false, g.reason)
+	end
+	return out
 end
 
 function MatchAI.Stats()
@@ -410,13 +597,14 @@ end
 local mentality = { home = 0, away = 0 }
 local botShot = false
 function MatchAI.SetScore(homeGoals: number, awayGoals: number, minute: number)
+	minuteNow = minute
 	local diff = awayGoals - homeGoals
 	local late = math.clamp((minute - 45) / 45, 0, 1)
 	mentality.away = if diff < 0 then 8 + 16 * late elseif diff > 0 then -6 - 12 * late else 0
 end
 
 -- Topu hedefe yaklaşık hızla gönderir (yerçekimi telafili)
-local function kickTo(target: Vector3, speed: number, kind: string, team: string, loft: number?)
+kickTo = function(target: Vector3, speed: number, kind: string, team: string, loft: number?)
 	local pos = Ball.Position()
 	local delta = target - pos
 	local t = math.max(0.15, flat(delta).Magnitude / speed) * (loft or 1)
@@ -457,11 +645,13 @@ function MatchAI.Tackle(playerPos: Vector3, look: Vector3, sliding: boolean): st
 			bot.t = 0.9
 			bot.animator:Play("Stagger")
 		end
+		humanSt.tackles += 1
 		return "win"
 	end
 	if bot and d < (if sliding then D.FoulRange + 1.4 else D.FoulRange) then
 		local fromBehind = bot.dir:Dot(flat(look).Unit) > 0.45
 		MatchAI.LastFoul = { bot = bot, fromBehind = fromBehind, sliding = sliding, pos = bot.pos }
+		humanSt.fouls += 1
 		bot.state = "down"
 		bot.t = 1.4
 		bot.animator:Play("Stagger")
@@ -479,6 +669,7 @@ function MatchAI.HumanSave(handPos: Vector3): boolean
 	local v = Ball.Velocity()
 	Ball.LastTeam = "home"
 	Ball.Deflect(Vector3.new((if bp.X > handPos.X then 1 else -1) * 20, 12, math.abs(v.Z) * 0.3 + 12))
+	humanSt.saves += 1
 	return true
 end
 
@@ -487,7 +678,52 @@ end
 --------------------------------------------------------------------------------
 Ball.On("kick", function(kind, v)
 	if #bots == 0 or Ball.Pitch() ~= P then
+		pendingKicker = nil
 		return
+	end
+	do
+		-- kim vurdu? bot (vuruştan hemen önce yazılır) ya da topun yanındaki insan oyuncu
+		local team = Ball.LastTeam
+		local bp = Ball.Position()
+		local who: any = pendingKicker
+		pendingKicker = nil
+		if not who and team == "home" and lastCtx and flat(lastCtx.playerPos - bp).Magnitude < 9 then
+			who = "human"
+		end
+		local other = if team == "home" then "away" else "home"
+		lastKicker[other], prevKicker[other] = nil, nil
+		if who then
+			if lastKicker[team] ~= who then
+				prevKicker[team] = lastKicker[team]
+			end
+			lastKicker[team] = who
+			if who == "human" then
+				if kind == "Pass" then
+					humanSt.passes += 1
+				elseif v.Z * dirOf(team) > K.MinShotSpeed * 0.6 then
+					humanSt.shots += 1
+				end
+			end
+		else
+			lastKicker[team], prevKicker[team] = nil, nil -- duran top: gol kimseye yazılmaz
+		end
+		-- ofsayt: pas anında çizginin ilerisindeki takım arkadaşları işaretlenir
+		offsideSnap = nil
+		if who and kind ~= "Clear" and clock >= offsideGraceUntil then
+			local d = dirOf(team)
+			local limit = offsideLimit(team, bp, lastCtx) + 1.2
+			local set, any = {}, false
+			for _, bot in ipairs(bots) do
+				if bot.team == team and not bot.keeper and bot ~= who and bot.pos.Z * d > limit then
+					set[bot] = true
+					any = true
+				end
+			end
+			local human = team == "home" and who ~= "human" and not humanKeeper and lastCtx ~= nil and lastCtx.playerPos.Z * d > limit
+			if any or human then
+				offsideSnap = { team = team, set = set, human = human, at = clock }
+			end
+		end
 	end
 	if v.Magnitude >= K.MinShotSpeed then
 		-- şut istatistiği: kaleye doğru giden sert vuruş
@@ -557,6 +793,7 @@ local function updateKeeper(k, dt: number)
 				local v = Ball.Velocity()
 				local out = -plan.sign
 				Ball.LastTeam = k.team
+				k.st.saves += 1
 				if plan.fumble then
 					Ball.Deflect(Vector3.new((math.random() - 0.5) * 20, 10, out * math.abs(v.Z) * 0.18))
 					fire("save", k.team, "fumble")
@@ -672,6 +909,8 @@ local function carrierThink(bot, dt: number, ctx)
 			task.delay(0.3, function()
 				if b.model.Parent and flat(Ball.Position() - b.pos).Magnitude < 5 and not Ball.InNet() then
 					botShot = true -- kaleci, botların şutuna karşı daha hazırlıklıdır (maç skoru makul kalsın)
+					pendingKicker = b
+					b.st.shots += 1
 					kickTo(target, 72 + sk * 30, "Shoot", team)
 					botShot = false
 					fire("shot", team)
@@ -708,6 +947,9 @@ local function carrierThink(bot, dt: number, ctx)
 			if gap < 3 + dist * 0.04 then
 				score -= 70 * (0.3 + sk) -- pas yolu kapalı: becerikli oyuncu bunu görür
 			end
+			if pos.Z * d > offLine[team] + 1.2 then
+				score -= 5 + 90 * sk * sk -- arkadaşı ofsaytta (becerikli oyuncu görür, acemi çoğu zaman görmez)
+			end
 			if score > bestScore then
 				best, bestScore, bestPos = target, score, lead
 			end
@@ -737,6 +979,8 @@ local function carrierThink(bot, dt: number, ctx)
 			local speed = math.clamp(dist * 1.25 + 26, 46, 96)
 			bot.animator:Play("Pass")
 			Ball.LastTeam = team
+			pendingKicker = bot
+			bot.st.passes += 1
 			Ball.Kick(dir * speed + Vector3.new(0, if dist > 75 then 20 else 0, 0), 0, "Pass")
 			if best ~= "human" then
 				best.receiveUntil = clock + 2.2
@@ -771,10 +1015,32 @@ function MatchAI.Update(dt: number, ctx)
 		end
 	end
 	lastCarrier = carrier
+	lastCtx = ctx
+	offLine.home = offsideLimit("home", ballPos, ctx)
+	offLine.away = offsideLimit("away", ballPos, ctx)
 	local humanDist = flat(ctx.playerPos - ballFlat).Magnitude
 	local humanHas = live and low and humanDist < 4 and (not carrier or humanDist < cd)
 	if humanHas then
 		carrier = nil
+	end
+	-- ofsayt: pas anında ofsayt konumunda olan oyuncu topla buluşursa düdük çalar
+	if offsideSnap then
+		local snap = offsideSnap
+		if clock - snap.at > 7 then
+			offsideSnap = nil
+		elseif humanHas then
+			offsideSnap = nil
+			if snap.team == "home" and snap.human then
+				stats.offsides.home += 1
+				fire("offside", "human", ctx.playerPos)
+			end
+		elseif carrier then
+			offsideSnap = nil
+			if carrier.team == snap.team and snap.set[carrier] then
+				stats.offsides[carrier.team] += 1
+				fire("offside", carrier, carrier.pos)
+			end
+		end
 	end
 	local possession = if humanHas then "home" elseif carrier then carrier.team else Ball.LastTeam
 	stats.possession[possession] += dt
@@ -827,10 +1093,12 @@ function MatchAI.Update(dt: number, ctx)
 				if low and flat(ballPos - bot.pos).Magnitude < D.StealRange and live then
 					Ball.LastTeam = team
 					Ball.Deflect(Vector3.new(bot.dir.X * 14, 0, d * 20))
+					bot.st.tackles += 1
 					fire("steal")
 				elseif live and flat(ctx.playerPos - bot.pos).Magnitude < 4.2 and math.random() < 0.4 then
 					-- topu kaçırıp oyuncuya girdi: faul
 					local r = math.random()
+					bot.st.fouls += 1
 					fire("foul", bot, if r < 0.05 then "violent" elseif r < 0.3 then "reckless" else "careless", "home", ctx.playerPos)
 				end
 			end
@@ -867,12 +1135,14 @@ function MatchAI.Update(dt: number, ctx)
 					carrier.t = 0.6
 					carrier.animator:Play("Stagger")
 					Ball.LastTeam = team
+					bot.st.tackles += 1
 					Ball.Deflect(Vector3.new(0, 0, d * 12))
 				elseif math.random() < 0.12 then
 					-- botlar arası faul
 					carrier.state = "down"
 					carrier.t = 1.2
 					carrier.animator:Play("Stagger")
+					bot.st.fouls += 1
 					fire("foul", bot, if math.random() < 0.22 then "reckless" else "careless", carrier.team, carrier.pos)
 				end
 			elseif low and dBall < 2.8 and live and Ball.Speed() >= 60 and Ball.SinceKick() > 0.2 then
@@ -918,6 +1188,14 @@ function MatchAI.Update(dt: number, ctx)
 					if away.Magnitude > 0.1 then
 						target += away.Unit * (4 + 6 * sk)
 					end
+				end
+			end
+			if possession == team then
+				-- ofsayta düşmemek: çizginin biraz gerisinde bekle (az becerikli oyuncu ara sıra kaçırır)
+				local lapse = (math.sin(clock * 0.4 + bot.slot * 1.7) + 1) / 2
+				local maxZ = offLine[team] - 2 + (1 - sk * 0.8) * 8 * lapse
+				if target.Z * d > maxZ then
+					target = Vector3.new(target.X, 0, maxZ * d)
 				end
 			end
 			target = Vector3.new(math.clamp(target.X, P.MinX + 4, P.MaxX - 4), 0, math.clamp(target.Z, P.MinZ + 6, P.MaxZ - 6))
