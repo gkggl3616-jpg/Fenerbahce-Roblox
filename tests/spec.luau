@@ -849,7 +849,7 @@ check("sol tık (top sende): şut gücü dolar", PC.Debug().charge > 0.1, PC.Deb
 UIS.InputEnded:Fire({ KeyCode = Enum.KeyCode.Unknown, UserInputType = Enum.UserInputType.MouseButton1 }, false)
 frames(3)
 check("sol tık bırakılınca şut başlar", PC.Debug().action == "Shoot", PC.Debug().action)
-frames(120)
+frames(420) -- şut gol olursa sevinç animasyonu bitsin
 -- top sahanın içinde ama oyuncudan uzakta
 local far = if math.abs(feetNow.Z - 120) > 30 then Vector3.new(0, 0, 120) else Vector3.new(60, 0, 70)
 Ball2.Reset(far)
