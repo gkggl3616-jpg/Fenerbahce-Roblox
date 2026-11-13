@@ -1447,4 +1447,99 @@ frames(120)
 check("maç bitince lobiye dönülür", back)
 check("maç arayüzü kaldırılır", gui2:FindFirstChild("MatchHud") == nil)
 
+section("Lobi (ana betik), mağaza, tesisler, sıralama, günlük görevler")
+do
+	-- sunucu tarafı: günlük görev ilerlemesi ve mağaza
+	local coins0 = data.coins
+	fire("BuyItem", "TopSari")
+	check("mağazadan top alınır ve kuşanılır", data.owned.TopSari == true and data.equipped.Ball == "TopSari")
+	check("eşyanın bedeli düşülür", data.coins == coins0 - 300, coins0 - data.coins)
+	fire("BuyItem", "TopSari")
+	check("aynı eşya iki kez alınmaz", data.coins == coins0 - 300)
+	fire("EquipItem", "TopAltin")
+	check("sahip olunmayan eşya kuşanılamaz", data.equipped.Ball == "TopSari")
+	fire("EquipItem", "TopKlasik")
+	check("ücretsiz eşya kuşanılır", data.equipped.Ball == "TopKlasik")
+	fire("BuyItem", "OlmayanEsya")
+	check("olmayan eşya yok sayılır", data.owned.OlmayanEsya == nil)
+	check("günlük görevler üretilir", data.daily ~= nil and #data.daily.tasks == Config.DailyCount)
+	local t1 = data.daily.tasks[1]
+	local before = data.coins
+	fire("ClaimDaily", 1)
+	if t1.progress < 99 and not t1.claimed then
+		check("tamamlanmamış görevin ödülü alınmaz", data.coins == before)
+	end
+	t1.progress = 99
+	t1.claimed = false
+	fire("ClaimDaily", 1)
+	check("tamamlanan görevin ödülü verilir", t1.claimed == true and data.coins > before, data.coins - before)
+	local after = data.coins
+	fire("ClaimDaily", 1)
+	check("ödül ikinci kez verilmez", data.coins == after)
+	fire("ClaimDaily", 99)
+	check("geçersiz görev sırası yok sayılır", data.coins == after)
+	local board = Remotes.Get("GetLeaderboard").OnServerInvoke(plr)
+	check("sıralama isteği yanıt verir", type(board) == "table" and type(board.rows) == "table" and board.me.power > 0)
+
+	-- istemci: ana betik lobiyi kurar
+	local ok, err = pcall(require, __tree.Client.Main)
+	check("ana betik hatasız çalışır", ok, tostring(err))
+	frames(60 * 6)
+	local lobby
+	for _, g in ipairs(__localPlayer.PlayerGui:GetChildren()) do
+		if g:FindFirstChild("Menu") then
+			lobby = g
+		end
+	end
+	check("lobi menüsü kuruldu", lobby ~= nil)
+	if lobby then
+		local buttons, taskRows = 0, 0
+		for _, d in ipairs(lobby:GetDescendants()) do
+			if d.Name == "Task" then
+				taskRows += 1
+			end
+		end
+		for _, d in ipairs(lobby.Menu:GetDescendants()) do
+			if d.ClassName == "TextButton" then
+				buttons += 1
+			end
+		end
+		check("menüde 8 düğme var", buttons == 8, buttons)
+		check("günlük görev satırları çizilir", taskRows == Config.DailyCount, taskRows)
+		__snapIf("lobi", lobby)
+		local HubS = require(__tree.Screens.Hub)
+		local function getData()
+			local copy = table.clone(data)
+			copy.power = 44
+			return copy
+		end
+		HubS.OpenShop(lobby, getData)
+		frames(40)
+		local items = 0
+		for _, d in ipairs(lobby:GetDescendants()) do
+			if d.Name == "Item" then
+				items += 1
+			end
+		end
+		check("mağazada top sekmesinde 5 eşya", items == 5, items)
+		__snapIf("magaza", lobby)
+		HubS.OpenClub(lobby, getData)
+		frames(40)
+		local facilities = 0
+		for _, d in ipairs(lobby:GetDescendants()) do
+			if d.Name == "Facility" then
+				facilities += 1
+			end
+		end
+		check("tesisler ekranında 6 tesis", facilities == 6, facilities)
+		__snapIf("tesisler", lobby)
+		HubS.OpenRanking(lobby, getData)
+		frames(40)
+		check("sıralama ekranı açılır", lobby:FindFirstChild("Ranking") ~= nil)
+		__snapIf("siralama", lobby)
+		HubS.Close()
+		frames(30)
+	end
+end
+
 print(string.format("\nSONUÇ: %d geçti, %d kaldı", passed, failedCount))

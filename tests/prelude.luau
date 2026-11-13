@@ -553,6 +553,14 @@ end
 function Inst:ApplyDescription(desc)
 	rawset(self, "__description", desc)
 end
+-- RemoteFunction: istemci çağrısı doğrudan sunucudaki işleve gider
+function Inst:InvokeServer(...)
+	local fn = rawget(self, "OnServerInvoke")
+	if fn then
+		return fn(__localPlayer, ...)
+	end
+	return nil
+end
 function Inst:GetAppliedDescription()
 	return rawget(self, "__description") or newInstance("HumanoidDescription")
 end
@@ -790,7 +798,10 @@ moduleNode("Lineup", CL .. "Screens/Lineup.luau", screens)
 moduleNode("CrestDesigner", CL .. "Screens/CrestDesigner.luau", screens)
 moduleNode("League", CL .. "Screens/League.luau", screens)
 moduleNode("Halftime", CL .. "Screens/Halftime.luau", screens)
+moduleNode("Hub", CL .. "Screens/Hub.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
+__tree.Client = client
+moduleNode("Main", CL .. "Main.client.luau", client)
 
 -- Gerçek ölçülü R15 karakter: 15 gövde parçası + kök, Motor6D eklemleri (C0/C1), yüz çıkartması.
 -- Ölçüler Roblox'un standart köşeli R15 gövdesine yakındır; forma giydirme ve animasyon bu iskelette sınanır.

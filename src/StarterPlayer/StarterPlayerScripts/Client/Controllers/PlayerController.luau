@@ -351,7 +351,9 @@ local function doBlock()
 	play(best({ "AyaktaMudahale", "Blok", "UcanBlok" }))
 end
 local function doCelebrate()
-	play(if state.speed > 8 then "DizKaymasi" else "Sevinc")
+	-- mağazadan kuşanılan gol sevinci
+	local item = Config.Equipped(state.getData and state.getData(), "Celebration")
+	play((item and item.Action) or "Sevinc")
 end
 local function doJump()
 	if state.speed > M.Run + 2 and unlocked("UcanKafa") then

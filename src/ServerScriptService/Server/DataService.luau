@@ -174,6 +174,11 @@ function DataService.Save(player: Player, release: boolean?)
 end
 
 -- İlk N oyuncu: { {userId, power}, ... }
+-- Kayıt bellekte mi tutuluyor? (Studio'da ya da veri deposu erişimi yokken)
+function DataService.IsMemory(): boolean
+	return memoryMode
+end
+
 function DataService.Top(count: number)
 	if memoryMode then
 		return {}

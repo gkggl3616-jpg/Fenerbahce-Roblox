@@ -1240,6 +1240,20 @@ Poses.Actions = {
 			{ 0.9, REST },
 		},
 	},
+	Ucak = { -- kollar iki yana açık, gövde sağa sola yatarak (koşarken de oynar)
+		Duration = 2.2,
+		Mask = "Upper",
+		Recover = 0.4,
+		Speed = 1,
+		Keys = {
+			{ 0, REST },
+			{ 0.25, { LeftShoulder = V(0, 0, -88), RightShoulder = V(0, 0, 88), Waist = V(-6, 0, 16), Neck = V(-8, 0, -8) } },
+			{ 0.8, { LeftShoulder = V(0, 0, -84), RightShoulder = V(0, 0, 92), Waist = V(-6, 0, -18), Neck = V(-8, 0, 8) } },
+			{ 1.4, { LeftShoulder = V(0, 0, -92), RightShoulder = V(0, 0, 84), Waist = V(-6, 0, 18), Neck = V(-8, 0, -8) } },
+			{ 1.95, { LeftShoulder = V(0, 0, -86), RightShoulder = V(0, 0, 86), Waist = V(-4, 0, -10) } },
+			{ 2.2, REST },
+		},
+	},
 	Sevinc = {
 		Duration = 2.2,
 		Mask = "Upper",
@@ -1362,6 +1376,7 @@ Poses.Names = {
 	Blok = "Blok",
 	Plonjon = "Plonjon",
 	Sevinc = "Gol sevinci",
+	Ucak = "Uçak sevinci",
 	DizKaymasi = "Diz kayması",
 	TopIste = "Top iste",
 	Uzulme = "Üzülme",

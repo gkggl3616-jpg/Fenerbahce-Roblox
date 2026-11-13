@@ -160,6 +160,8 @@ end
 local SkillTree = require(script.Parent.Screens.SkillTree)
 local CrestDesigner = require(script.Parent.Screens.CrestDesigner)
 local League = require(script.Parent.Screens.League)
+local Hub = require(script.Parent.Screens.Hub)
+local BallSkin = require(script.Parent.Match.Ball)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
 
@@ -210,7 +212,7 @@ local function buildLobby()
 	-- Menü (sol)
 	local menu, mc = Components.Panel({
 		Name = "Menu",
-		Size = UDim2.fromOffset(310, 478),
+		Size = UDim2.fromOffset(310, 536),
 		Position = UDim2.fromOffset(20, 178),
 		Title = "Kariyer Merkezi",
 	})
@@ -221,7 +223,7 @@ local function buildLobby()
 	holder.Position = UDim2.fromOffset(0, 40)
 	holder.Size = UDim2.new(1, 0, 1, -40)
 	holder.Parent = mc
-	list(holder, 8)
+	list(holder, 6)
 	local buttons = {}
 	local ICONS = {
 		["Maça çık"] = "Ball",
@@ -229,6 +231,9 @@ local function buildLobby()
 		["Yetenek ağacı"] = "Star",
 		["Kulüp arması"] = "Shield",
 		["Puan durumu"] = "Table",
+		["Mağaza"] = "Cart",
+		["Tesisler"] = "Building",
+		["Sıralama"] = "Trophy",
 	}
 	local function add(text: string, style: string, locked: string?, onClick: (() -> ())?, sub: string?)
 		local b = Components.Button({
@@ -239,7 +244,7 @@ local function buildLobby()
 			Order = #buttons + 1,
 			OnClick = onClick,
 			Sub = sub,
-			Size = UDim2.new(1, 0, 0, 58),
+			Size = UDim2.new(1, 0, 0, 54),
 		})
 		b.Parent = holder
 		table.insert(buttons, b)
@@ -265,32 +270,39 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Lig tablosu ve lig atlama çizgisi")
+	add("Mağaza", "Secondary", nil, function()
+		Hub.OpenShop(gui, function()
+			return state.data
+		end)
+	end, "Top, şut izi, gol sevinci")
+	add("Tesisler", "Ghost", nil, function()
+		Hub.OpenClub(gui, function()
+			return state.data
+		end)
+	end, "Kulüp kasasıyla stadı geliştir")
+	add("Sıralama", "Secondary", nil, function()
+		Hub.OpenRanking(gui, function()
+			return state.data
+		end)
+	end, "Dünya genelinde yerin")
 
-	-- Görevler (sağ)
+	-- Günlük görevler (sağ): ilerleme çubuğu ve tamamlanınca "Al" düğmesi
 	local tasks, tc = Components.Panel({
 		Name = "Tasks",
-		Size = UDim2.fromOffset(300, 214),
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -20, 0, 500),
+		Size = UDim2.fromOffset(330, 262),
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -20, 1, -20),
 		Title = "Günlük görevler",
 	})
-	tasks.Position = UDim2.new(1, -20, 1, -234)
 	tasks.Parent = gui
 	refs.tasks = tasks
 	local th = Instance.new("Frame")
+	th.Name = "TaskList"
 	th.BackgroundTransparency = 1
 	th.Position = UDim2.fromOffset(0, 40)
 	th.Size = UDim2.new(1, 0, 1, -40)
 	th.Parent = tc
-	list(th, 6)
-	local bars = {}
-	for i, t in ipairs({ { "2 gol at", 0.5, C.Yellow }, { "1 antrenman yap", 1, C.Good }, { "Kafayla gol at", 0, C.Yellow } }) do
-		local l = Components.Label({ Text = t[1], Size = 14, Order = i * 2 - 1 })
-		l.Parent = th
-		local b = Components.Bar({ Color = t[3], Order = i * 2, Value = 0 })
-		b.Frame.Parent = th
-		bars[i] = { b, t[2] }
-	end
+	refs.taskList = th
 
 	-- Sahneye giriş: paneller farklı yönlerden, butonlar sırayla
 	UIMotion.In(card, Vector2.new(-40, 0), 0.05)
@@ -298,17 +310,98 @@ local function buildLobby()
 	UIMotion.In(menu, Vector2.new(-40, 0), 0.15)
 	UIMotion.In(tasks, Vector2.new(40, 0), 0.2)
 	UIMotion.Stagger(buttons, Vector2.new(-24, 0), 0.3)
-	task.delay(0.6, function()
-		for _, b in ipairs(bars) do
-			b[1].Set(b[2])
+end
+
+-- Günlük görev satırlarını veriden çizer
+local function renderTasks(data)
+	local th = refs.taskList
+	if not th then
+		return
+	end
+	for _, child in ipairs(th:GetChildren()) do
+		child:Destroy()
+	end
+	local daily = data.daily
+	if not daily or not daily.tasks then
+		local l = Components.Label({
+			Text = "Kariyerini oluşturunca görevler burada görünür.",
+			Size = 13,
+			Color = C.Muted,
+			Wrap = true,
+			Frame = UDim2.new(1, 0, 0, 40),
+		})
+		l.Parent = th
+		return
+	end
+	for i, t in ipairs(daily.tasks) do
+		local def
+		for _, d in ipairs(Config.DailyTasks) do
+			if d.Id == t.id then
+				def = d
+			end
 		end
-	end)
+		if def then
+			local row = Instance.new("Frame")
+			row.Name = "Task"
+			row.BackgroundTransparency = 1
+			row.Size = UDim2.new(1, 0, 0, 64)
+			row.Position = UDim2.fromOffset(0, (i - 1) * 68)
+			row.Parent = th
+			local done = t.progress >= def.Goal
+			local l = Components.Label({
+				Text = def.Text,
+				Size = 14,
+				Color = if t.claimed then C.Muted else C.Text,
+				Frame = UDim2.new(1, -96, 0, 18),
+			})
+			l.Parent = row
+			local reward = Components.Label({
+				Text = string.format("%d / %d   ·   +%d bakiye, +%d XP", t.progress, def.Goal, def.Coins, def.Xp),
+				Size = 11,
+				Color = C.Muted,
+				Frame = UDim2.new(1, -96, 0, 14),
+			})
+			reward.Position = UDim2.fromOffset(0, 20)
+			reward.Parent = row
+			local bar = Components.Bar({ Color = if done then C.Good else C.Yellow, Value = 0, Size = UDim2.new(1, -96, 0, 10) })
+			bar.Frame.Position = UDim2.fromOffset(0, 40)
+			bar.Frame.Parent = row
+			bar.Set(math.clamp(t.progress / def.Goal, 0, 1))
+			local b = Components.Button({
+				Text = if t.claimed then "Alındı" elseif done then "Al" else "Sürüyor",
+				Style = if t.claimed then "Ghost" elseif done then "Primary" else "Secondary",
+				TextSize = 13,
+				Size = UDim2.fromOffset(86, 40),
+				OnClick = function()
+					if t.claimed then
+						return
+					elseif not done then
+						Components.Toast("info", "Görev henüz tamamlanmadı.")
+					else
+						Remotes.Get("ClaimDaily"):FireServer(i)
+					end
+				end,
+			})
+			b.Name = "Claim"
+			b.AnchorPoint = Vector2.new(1, 0)
+			b.Position = UDim2.new(1, 0, 0, 6)
+			b.Parent = row
+		end
+	end
 end
 
 local function render(data)
 	local first = state.data == nil or not state.rendered
 	state.data = data
 	SkillTree.Refresh()
+	Hub.Refresh()
+	renderTasks(data)
+	-- kuşanılan top ve şut izi
+	local ballItem, trailItem = Config.Equipped(data, "Ball"), Config.Equipped(data, "Trail")
+	if ballItem and trailItem then
+		BallSkin.SetSkin(ballItem.A, ballItem.B)
+		BallSkin.SetTrail(trailItem.A, trailItem.B)
+	end
 	if not refs.name then
 		return
 	end
@@ -401,6 +494,7 @@ enterMatch = function()
 	SkillTree.Close()
 	CrestDesigner.Close()
 	League.Close()
+	Hub.Close()
 	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
 	local fixture = Squads.Fixture(state.data)
 	local function back()

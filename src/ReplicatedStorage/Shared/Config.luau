@@ -164,6 +164,120 @@ function Config.ActionUnlocked(skills, action: string): boolean
 	return true
 end
 
+-- Günlük görevler: her gün havuzdan üç tanesi seçilir (oyuncuya ve güne göre sabit)
+Config.DailyTasks = {
+	{ Id = "Gol2", Text = "Maçlarda 2 gol at", Stat = "goals", Goal = 2, Coins = 120, Xp = 60 },
+	{ Id = "Gol4", Text = "Maçlarda 4 gol at", Stat = "goals", Goal = 4, Coins = 220, Xp = 110 },
+	{ Id = "Mac2", Text = "2 maç oyna", Stat = "matches", Goal = 2, Coins = 100, Xp = 60 },
+	{ Id = "Galibiyet", Text = "1 maç kazan", Stat = "wins", Goal = 1, Coins = 150, Xp = 80 },
+	{ Id = "Kafa", Text = "Kafayla 1 gol at", Stat = "headers", Goal = 1, Coins = 180, Xp = 90 },
+	{ Id = "Antrenman5", Text = "Antrenmanda 5 başarı", Stat = "training", Goal = 5, Coins = 90, Xp = 50 },
+	{ Id = "Antrenman12", Text = "Antrenmanda 12 başarı", Stat = "training", Goal = 12, Coins = 160, Xp = 80 },
+}
+Config.DailyCount = 3
+
+-- Mağaza: görünüm eşyaları (oyun dengesini etkilemez). Kind: Ball (top), Trail (şut izi), Celebration (gol sevinci)
+Config.Shop = {
+	{
+		Id = "TopKlasik",
+		Kind = "Ball",
+		Name = "Klasik top",
+		Price = 0,
+		Level = 1,
+		A = Color3.fromRGB(250, 250, 250),
+		B = Color3.fromRGB(11, 23, 71),
+	},
+	{
+		Id = "TopSari",
+		Kind = "Ball",
+		Name = "Sarı lacivert top",
+		Price = 300,
+		Level = 2,
+		A = Color3.fromRGB(255, 230, 0),
+		B = Color3.fromRGB(11, 23, 71),
+	},
+	{
+		Id = "TopGece",
+		Kind = "Ball",
+		Name = "Gece topu",
+		Price = 600,
+		Level = 5,
+		A = Color3.fromRGB(22, 26, 64),
+		B = Color3.fromRGB(255, 230, 0),
+	},
+	{
+		Id = "TopTuruncu",
+		Kind = "Ball",
+		Name = "Kış topu",
+		Price = 900,
+		Level = 8,
+		A = Color3.fromRGB(255, 120, 30),
+		B = Color3.fromRGB(20, 20, 24),
+	},
+	{
+		Id = "TopAltin",
+		Kind = "Ball",
+		Name = "Altın top",
+		Price = 2500,
+		Level = 12,
+		A = Color3.fromRGB(255, 200, 61),
+		B = Color3.fromRGB(250, 250, 250),
+	},
+	{
+		Id = "IzBeyaz",
+		Kind = "Trail",
+		Name = "Beyaz iz",
+		Price = 0,
+		Level = 1,
+		A = Color3.fromRGB(255, 255, 255),
+		B = Color3.fromRGB(255, 255, 255),
+	},
+	{
+		Id = "IzSari",
+		Kind = "Trail",
+		Name = "Sarı iz",
+		Price = 250,
+		Level = 2,
+		A = Color3.fromRGB(255, 230, 0),
+		B = Color3.fromRGB(255, 255, 255),
+	},
+	{
+		Id = "IzMavi",
+		Kind = "Trail",
+		Name = "Buz izi",
+		Price = 450,
+		Level = 4,
+		A = Color3.fromRGB(96, 190, 235),
+		B = Color3.fromRGB(255, 255, 255),
+	},
+	{
+		Id = "IzAlev",
+		Kind = "Trail",
+		Name = "Alev izi",
+		Price = 1200,
+		Level = 8,
+		A = Color3.fromRGB(255, 90, 40),
+		B = Color3.fromRGB(255, 200, 80),
+	},
+	{ Id = "SevincKlasik", Kind = "Celebration", Name = "Kollar havada", Price = 0, Level = 1, Action = "Sevinc" },
+	{ Id = "SevincDiz", Kind = "Celebration", Name = "Diz kayması", Price = 400, Level = 3, Action = "DizKaymasi" },
+	{ Id = "SevincUcak", Kind = "Celebration", Name = "Uçak", Price = 900, Level = 6, Action = "Ucak" },
+}
+Config.ShopDefaults = { Ball = "TopKlasik", Trail = "IzBeyaz", Celebration = "SevincKlasik" }
+function Config.ShopItem(id: string)
+	for _, item in ipairs(Config.Shop) do
+		if item.Id == id then
+			return item
+		end
+	end
+	return nil
+end
+-- Oyuncunun kuşandığı eşya (kayıtta yoksa ücretsiz olan)
+function Config.Equipped(data, kind: string)
+	local id = (data and data.equipped and data.equipped[kind]) or Config.ShopDefaults[kind]
+	return Config.ShopItem(id) or Config.ShopItem(Config.ShopDefaults[kind])
+end
+
 -- Kulüp kademeleri
 Config.Tiers = {
 	{

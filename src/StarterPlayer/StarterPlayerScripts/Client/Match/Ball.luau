@@ -64,7 +64,7 @@ function Ball.Init()
 	p.Anchored = true
 	p.CanCollide = false
 	p.CanQuery = false
-	p.Color = Color3.fromRGB(250, 250, 250)
+	p.Color = skinA
 	p.Material = Enum.Material.SmoothPlastic
 	p.CastShadow = true
 	p.Parent = Workspace
@@ -90,7 +90,7 @@ function Ball.Init()
 		local d = Instance.new("Part")
 		d.Name = "Patch"
 		d.Size = Vector3.new(patch, B.Radius * 0.16, patch)
-		d.Color = C.Navy
+		d.Color = skinB
 		d.Material = Enum.Material.SmoothPlastic
 		d.CanCollide = false
 		d.CanQuery = false
@@ -160,6 +160,24 @@ local TRAIL_COLORS = {
 	Rovesata = ColorSequence.new(C.Gold, C.Yellow),
 }
 
+-- Mağazadan kuşanılan görünüm: top gövdesi / yamalar ve olağan şut izi
+local skinA, skinB = Color3.fromRGB(250, 250, 250), C.Navy
+local trailBase = ColorSequence.new(C.White)
+function Ball.SetSkin(a: Color3, b: Color3)
+	skinA, skinB = a, b
+	if part then
+		part.Color = a
+		for _, d in ipairs(part:GetChildren()) do
+			if d.Name == "Patch" and d:IsA("BasePart") then
+				d.Color = b
+			end
+		end
+	end
+end
+function Ball.SetTrail(a: Color3, b: Color3)
+	trailBase = ColorSequence.new(a, b)
+end
+
 -- Topa hız verir. kind: iz rengi ve gol türü için
 function Ball.Kick(v: Vector3, spin: number?, kind: string?)
 	vel = v
@@ -168,7 +186,7 @@ function Ball.Kick(v: Vector3, spin: number?, kind: string?)
 	lastKind = kind or "Shoot"
 	inNet = false
 	if trail then
-		trail.Color = TRAIL_COLORS[lastKind] or ColorSequence.new(C.White)
+		trail.Color = TRAIL_COLORS[lastKind] or trailBase
 	end
 	fire("kick", lastKind, v)
 	-- vuruşta sıkışma

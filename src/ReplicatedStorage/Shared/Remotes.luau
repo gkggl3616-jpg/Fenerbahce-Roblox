@@ -14,6 +14,9 @@ local EVENTS = {
 	"UnlockSkill",
 	"UpgradeFacility",
 	"SetCrest",
+	"ClaimDaily",
+	"BuyItem",
+	"EquipItem",
 	"PreviewAppearance",
 	"Anim",
 	"TrainingGoal",
@@ -21,7 +24,7 @@ local EVENTS = {
 	"MatchEnd",
 	"MatchResult",
 }
-local FUNCTIONS = { "GetData" }
+local FUNCTIONS = { "GetData", "GetLeaderboard" }
 
 local Remotes = {}
 
