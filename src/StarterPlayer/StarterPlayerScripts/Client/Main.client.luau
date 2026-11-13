@@ -161,6 +161,7 @@ local SkillTree = require(script.Parent.Screens.SkillTree)
 local CrestDesigner = require(script.Parent.Screens.CrestDesigner)
 local League = require(script.Parent.Screens.League)
 local Hub = require(script.Parent.Screens.Hub)
+local Career = require(script.Parent.Screens.Career)
 local BallSkin = require(script.Parent.Match.Ball)
 local state = { data = nil :: any, coinsShown = 0, rendered = false }
 local refs: { [string]: any } = {}
@@ -212,7 +213,7 @@ local function buildLobby()
 	-- Menü (sol)
 	local menu, mc = Components.Panel({
 		Name = "Menu",
-		Size = UDim2.fromOffset(310, 536),
+		Size = UDim2.fromOffset(310, 596),
 		Position = UDim2.fromOffset(20, 178),
 		Title = "Kariyer Merkezi",
 	})
@@ -234,6 +235,7 @@ local function buildLobby()
 		["Mağaza"] = "Cart",
 		["Tesisler"] = "Building",
 		["Sıralama"] = "Trophy",
+		["Kariyer"] = "Star",
 	}
 	local function add(text: string, style: string, locked: string?, onClick: (() -> ())?, sub: string?)
 		local b = Components.Button({
@@ -262,25 +264,30 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Dünya genelinde yerin")
-	add("Deneme sahası", "Secondary", nil, function()
+	add("Kariyer", "Secondary", nil, function()
+		Career.Open(gui, function()
+			return state.data
+		end)
+	end, "İstatistik, kupa dolabı, başarımlar")
+	add("Deneme sahası", "Ghost", nil, function()
 		enterPitch()
 	end, "Şut, çalım ve savunma çalış")
-	add("Yetenek ağacı", "Ghost", nil, function()
+	add("Yetenek ağacı", "Secondary", nil, function()
 		SkillTree.Open(gui, function()
 			return state.data
 		end)
 	end, "Hareket aç, özellik yükselt")
-	add("Tesisler", "Secondary", nil, function()
+	add("Tesisler", "Ghost", nil, function()
 		Hub.OpenClub(gui, function()
 			return state.data
 		end)
 	end, "Kulüp kasasıyla stadı geliştir")
-	add("Kulüp arması", "Ghost", nil, function()
+	add("Kulüp arması", "Secondary", nil, function()
 		CrestDesigner.Open(gui, function()
 			return state.data
 		end)
 	end, "Biçim, desen, renk, simge")
-	add("Mağaza", "Secondary", nil, function()
+	add("Mağaza", "Ghost", nil, function()
 		Hub.OpenShop(gui, function()
 			return state.data
 		end)
@@ -395,6 +402,7 @@ local function render(data)
 	state.data = data
 	SkillTree.Refresh()
 	Hub.Refresh()
+	Career.Refresh()
 	renderTasks(data)
 	-- kuşanılan top ve şut izi
 	local ballItem, trailItem = Config.Equipped(data, "Ball"), Config.Equipped(data, "Trail")
@@ -496,6 +504,7 @@ enterMatch = function()
 	CrestDesigner.Close()
 	League.Close()
 	Hub.Close()
+	Career.Close()
 	-- Önce kadrolar ve teknik direktörler tanıtılır; "Maça çık" ile santraya geçilir
 	local fixture = Squads.Fixture(state.data)
 	local function back()

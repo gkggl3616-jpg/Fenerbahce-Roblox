@@ -909,7 +909,7 @@ local function carrierThink(bot, dt: number, ctx)
 					b.st.shots += 1
 					kickTo(target, 72 + sk * 30, "Shoot", team)
 					botShot = false
-					fire("shot", team)
+					fire("shot", team, b.info)
 				end
 			end)
 			bot.decideAt = clock + 0.9

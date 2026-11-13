@@ -115,9 +115,25 @@ local function publicData(data, userId: number?)
 	return copy
 end
 
+-- Başarımlar: koşulu sağlanan ve henüz verilmemiş olanlar açılır, ödülü eklenir
+local function checkAchievements(player: Player, data)
+	if not data.created then
+		return
+	end
+	data.achievements = data.achievements or {}
+	for _, a in ipairs(Config.Achievements) do
+		if not data.achievements[a.Id] and Config.AchievementValue(data, a.Stat) >= a.Goal then
+			data.achievements[a.Id] = os.time()
+			data.coins += a.Coins
+			Remotes.Get("Notify"):FireClient(player, "unlock", "Başarım: " .. a.Name .. "  +" .. a.Coins)
+		end
+	end
+end
+
 local function push(player: Player)
 	local data = DataService.Get(player)
 	if data then
+		checkAchievements(player, data)
 		Remotes.Get("DataChanged"):FireClient(player, publicData(data, player.UserId))
 	end
 end
@@ -543,6 +559,9 @@ local function onMatchEnd(player: Player, r)
 	if outcome == "Win" then
 		data.career.wins += 1
 	end
+	if r.myGoals >= 3 then
+		data.career.hatTricks = (data.career.hatTricks or 0) + 1
+	end
 	progress(player, "matches", 1)
 	progress(player, "goals", r.myGoals)
 	progress(player, "headers", r.myHeaderGoals)
@@ -554,6 +573,13 @@ local function onMatchEnd(player: Player, r)
 	if season.played >= Config.Season.Matches then
 		seasonOver = true
 		if season.points >= MC.PromotePoints and data.club.tier < 5 then
+			-- kupa dolabına: hangi ligden, kaçıncı sezonda yükseldi
+			data.career.promotions = (data.career.promotions or 0) + 1
+			data.career.trophies = data.career.trophies or {}
+			table.insert(
+				data.career.trophies,
+				{ league = Config.Tiers[data.club.tier].League, season = season.number, points = season.points }
+			)
 			data.club.tier += 1
 			promoted = true
 		end

@@ -28,6 +28,7 @@ local MatchAI = require(script.Parent.MatchAI)
 local Referee = require(script.Parent.Referee)
 local Halftime = require(script.Parent.Parent.Screens.Halftime)
 local Celebration = require(script.Parent.Parent.Screens.Celebration)
+local Commentary = require(script.Parent.Commentary)
 local PlayerController = require(script.Parent.Parent.Controllers.PlayerController)
 
 local P = Config.MatchPitch
@@ -57,6 +58,17 @@ end
 --------------------------------------------------------------------------------
 -- Arayüz
 --------------------------------------------------------------------------------
+-- Spiker: dakika ve skor eklenir
+local function say(kind: string, extra: any?)
+	if not M then
+		return
+	end
+	local ctx = extra or {}
+	ctx.minute = ctx.minute or M.minute
+	ctx.score = ctx.score or string.format("%s %d - %d %s", M.homeName, M.home, M.away, M.awayName)
+	Commentary.Say(kind, ctx)
+end
+
 local function big(text: string, color: Color3, hold: number?)
 	local l = ui.big
 	if not l then
@@ -346,6 +358,7 @@ local function onDead(kind: string, pos: Vector3)
 		end
 	end
 	big(label, C.White, 1)
+	say(if label == "Taç" then "throw" elseif label == "Korner" then "corner" else "goalkick")
 	MatchAI.Freeze(MC.RestartPause)
 	task.delay(MC.RestartPause * 0.75, function()
 		if M and M.phase == "restart" then
@@ -407,6 +420,7 @@ local function onGoal(kind: string, side: string)
 	local screenLine = clubName .. "  " .. M.minute .. "'"
 	if scorer == team then
 		local sInfo, aInfo = MatchAI.CreditGoal(team)
+		M.lastScorer, M.lastAssist = sInfo, aInfo
 		if sInfo then
 			line = string.format("%d' Gol: %d %s (%s)", M.minute, sInfo.number, sInfo.name, clubName)
 			screenLine = string.format("%d %s  ·  %d'", sInfo.number, sInfo.name, M.minute)
@@ -419,6 +433,21 @@ local function onGoal(kind: string, side: string)
 		line ..= " (kendi kalesine)"
 	end
 	M.goalLine = screenLine
+	do
+		local sInfo = M.lastScorer
+		if scorer == team and sInfo then
+			say("goal", { player = sInfo.name, club = clubName })
+			if M.lastAssist then
+				local assistName = M.lastAssist.name
+				task.delay(2.4, function()
+					say("assist", { other = assistName })
+				end)
+			end
+		else
+			say("owngoal")
+		end
+		M.lastScorer, M.lastAssist = nil, nil
+	end
 	Components.Toast(if team == "home" then "unlock" else "error", line)
 	MatchAI.Freeze(MC.GoalPause)
 	task.delay(MC.GoalPause, function()
@@ -761,6 +790,7 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 	M.phase = "over"
 	MatchAI.Freeze(999)
 	big(if forfeit then "Maç bırakıldı" else "Maç bitti", C.White, 2)
+	say("fulltime")
 	Referee.Whistle("long")
 	local done = false
 	local conn
@@ -779,8 +809,13 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 			MatchAI.Clear()
 			Referee.Clear()
 			Stadium.Clear()
+			Ball.SetWet(false)
+			if M.rain then
+				M.rain:Destroy()
+			end
 			Ball.SetPitch(Config.TestPitch)
 			if ui.root then
+				Commentary.Detach()
 				ui.root:Destroy()
 			end
 			ui = {}
@@ -936,6 +971,16 @@ local function foul(by: string, offender, severity: string, victim: string, pos:
 		elseif card == "yellow" then "Sarı kart"
 		else "Faul"
 	decision(color, title, who, why, verdict)
+	if override and override.title == "Ofsayt" then
+		say("offside", { player = offender.name })
+	else
+		say(if card == "red" then "red" elseif card == "yellow" then "yellow" else "foul", { player = offender.name })
+		if inBox then
+			task.delay(1.6, function()
+				say("penalty")
+			end)
+		end
+	end
 	Stadium.Screen(Theme.Upper(title), who .. "  ·  " .. why .. "  ·  " .. verdict, color, 6)
 	if color then
 		task.delay(0.6, function()
@@ -1119,6 +1164,7 @@ local function announceSub(club: string, incoming, outgoing)
 	local who = string.format("Giren: %d %s", incoming.number, incoming.name)
 	local out = string.format("Çıkan: %d %s  ·  %s", outgoing.number, outgoing.name, club)
 	decision(nil, "Oyuncu değişikliği", who, out, "")
+	say("sub", { player = incoming.name })
 	Stadium.Screen("OYUNCU DEĞİŞİKLİĞİ", who .. "  ·  " .. out, nil, 6)
 end
 
@@ -1190,6 +1236,12 @@ local function update(dt: number, ctx)
 	end
 	MatchAI.Update(dt, ctx)
 	Referee.Update(dt, M.phase == "play")
+	if M.rain then
+		-- yağmur kameranın üstünde kalır
+		local cam = Workspace.CurrentCamera
+		local at = if cam and cam.CFrame then cam.CFrame.Position else ctx.playerPos
+		M.rain.CFrame = CFrame.new(at + Vector3.new(0, 45, 0))
+	end
 	updateRadar()
 	if M.phase == "play" then
 		M.elapsed += dt
@@ -1208,6 +1260,7 @@ local function update(dt: number, ctx)
 			if M.half == 1 then
 				M.phase = "halftime"
 				big("Devre arası", C.White, 2.2)
+				say("halftime")
 				Referee.Whistle("double")
 				MatchAI.Freeze(3.2)
 				task.delay(3, function()
@@ -1222,6 +1275,7 @@ local function update(dt: number, ctx)
 									M.elapsed = 0
 									kickoff("away")
 									big("İkinci yarı", C.Yellow, 1.4)
+									say("second", { club = M.awayName })
 								end
 							end
 							if M.fixture then
@@ -1282,6 +1336,42 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		facilities = data.club.facilities,
 	})
 	Stadium.Score(M.homeName, M.awayName, 0, 0, 0)
+	-- hava: 2. kademeden itibaren maçların yaklaşık dörtte biri yağmurlu (top hızlı kayar)
+	local tierNow = if data.career and data.career.atFenerbahce then 6 else data.club.tier
+	M.wet = tierNow >= 2 and math.random() < 0.25
+	Ball.SetWet(M.wet)
+	if M.wet then
+		local Lighting = game:GetService("Lighting")
+		Lighting.Brightness *= 0.75
+		Lighting.ExposureCompensation -= 0.15
+		local atmo = Lighting:FindFirstChild("FK_Atmosphere")
+		if atmo then
+			(atmo :: any).Density = math.min(0.6, (atmo :: any).Density + 0.15)
+		end
+		local rain = Instance.new("Part")
+		rain.Name = "FK_Rain"
+		rain.Anchored = true
+		rain.CanCollide = false
+		rain.CanQuery = false
+		rain.CanTouch = false
+		rain.Transparency = 1
+		rain.Size = Vector3.new(160, 1, 160)
+		rain.Parent = Workspace
+		local e = Instance.new("ParticleEmitter")
+		e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		e.Color = ColorSequence.new(Color3.fromRGB(200, 220, 255))
+		e.LightEmission = 0.3
+		e.Transparency = NumberSequence.new(0.45)
+		e.Size = NumberSequence.new(0.12)
+		e.Squash = NumberSequence.new(-3)
+		e.Orientation = Enum.ParticleOrientation.VelocityParallel
+		e.Lifetime = NumberRange.new(0.7, 0.9)
+		e.Speed = NumberRange.new(80, 95)
+		e.EmissionDirection = Enum.NormalId.Bottom
+		e.Rate = 900
+		e.Parent = rain
+		M.rain = rain
+	end
 	Ball.SetPitch(P)
 	Ball.Init()
 	MatchAI.Start({
@@ -1300,6 +1390,9 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		OnHumanKick = function()
 			if M then
 				M.lastHumanKick = os.clock()
+				if Ball.Speed() > 70 then
+					say("shot", { player = M.me.name })
+				end
 			end
 		end,
 		Forfeit = function()
@@ -1309,6 +1402,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	Referee.Spawn()
 	PlayerController.SetHud(true)
 	buildHud(gui)
+	Commentary.Attach(ui.root)
 	buildOrders()
 	setScore(false)
 	kickoff("home")
@@ -1320,6 +1414,12 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		if M and M.phase == "intro" then
 			M.phase = "play"
 			big("Başla!", C.Good, 0.9)
+			say("kickoff", { club = M.homeName })
+			if M.wet then
+				task.delay(5, function()
+					say("rain")
+				end)
+			end
 		end
 	end)
 end
@@ -1370,10 +1470,17 @@ end)
 MatchAI.On("steal", function()
 	if M then
 		Components.Toast("error", "Top kaptırdın")
+		say("steal", { player = "Rakip" })
+	end
+end)
+MatchAI.On("shot", function(team, info)
+	if M then
+		say("shot", { player = if info then info.name else (if team == "home" then M.homeName else M.awayName) })
 	end
 end)
 MatchAI.On("save", function(team, kind)
 	if M then
+		say(if kind == "fumble" then "fumble" else "save")
 		big(
 			if team == "home" then "Kalecimiz kurtardı" elseif kind == "fumble" then "Kaleci elinden kaçırdı!" else "Kaleci kurtardı",
 			C.White,

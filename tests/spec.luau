@@ -803,9 +803,21 @@ fire("MatchEnd", { home = 1, away = 0, myGoals = 3, myHeaderGoals = 0 })
 check("takımdan fazla gol reddedilir", data.coins == c1)
 fire("MatchStart")
 __advance(Config.Match.HalfSeconds * 2)
+local achievedBefore = table.clone(data.achievements or {})
 fire("MatchEnd", { home = 3, away = 1, myGoals = 2, myHeaderGoals = 1 })
 local R = Config.Match.Reward
-check("galibiyet ödülü doğru", data.coins == c1 + R.Win + R.Goal + R.HeaderGoal, data.coins - c1)
+-- bu maçla açılan başarımların ödülü ayrıca eklenir
+local achievementBonus = 0
+for _, a in ipairs(Config.Achievements) do
+	if data.achievements and data.achievements[a.Id] and not achievedBefore[a.Id] then
+		achievementBonus += a.Coins
+	end
+end
+check("galibiyet ödülü doğru", data.coins == c1 + R.Win + R.Goal + R.HeaderGoal + achievementBonus, data.coins - c1)
+check(
+	"ilk gol ve ilk galibiyet başarımları açılır",
+	data.achievements and data.achievements.IlkGol ~= nil and data.achievements.IlkGalibiyet ~= nil
+)
 check("sezon ve puan ilerler", data.club.season.played == played0 + 1 and data.club.season.points == 3)
 check("kulüp kasası maç geliri alır", data.club.funds == Config.Tiers[1].MatchIncome, data.club.funds)
 -- lig atlama: 10 maçta 19+ puan
@@ -1582,6 +1594,14 @@ do
 	check("ödül ikinci kez verilmez", data.coins == after)
 	fire("ClaimDaily", 99)
 	check("geçersiz görev sırası yok sayılır", data.coins == after)
+	-- başarımlar sunucuda veri değişince kendiliğinden açılır
+	data.career.hatTricks = 1
+	local coinsA = data.coins
+	fire("EquipItem", "TopKlasik")
+	check("başarım açılır ve ödülü verilir", data.achievements and data.achievements.HatTrick ~= nil and data.coins >= coinsA + 500)
+	local coinsB = data.coins
+	fire("EquipItem", "TopKlasik")
+	check("başarım ödülü bir kez verilir", data.coins == coinsB)
 	local board = Remotes.Get("GetLeaderboard").OnServerInvoke(plr)
 	check("sıralama isteği yanıt verir", type(board) == "table" and type(board.rows) == "table" and board.me.power > 0)
 
@@ -1608,7 +1628,7 @@ do
 				buttons += 1
 			end
 		end
-		check("menüde 8 düğme var", buttons == 8, buttons)
+		check("menüde 9 düğme var", buttons == 9, buttons)
 		check("günlük görev satırları çizilir", taskRows == Config.DailyCount, taskRows)
 		__snapIf("lobi", lobby)
 		local HubS = require(__tree.Screens.Hub)
@@ -1657,6 +1677,36 @@ do
 				return { rows = rows, offline = false, me = { name = "Emre Kadikoy", power = 72, userId = plr.UserId } }
 			end
 		end
+		-- kariyer sayfası: istatistik, kupa dolabı, başarımlar
+		local CareerS = require(__tree.Screens.Career)
+		local cdata = getData()
+		cdata.career = {
+			matches = 12,
+			goals = 14,
+			headerGoals = 3,
+			wins = 7,
+			hatTricks = 1,
+			promotions = 1,
+			trophies = { { league = Config.Tiers[1].League, season = 1, points = 22 } },
+		}
+		cdata.achievements = { IlkGol = 1, IlkGalibiyet = 1, Gol10 = 1, HatTrick = 1, LigAtla = 1 }
+		CareerS.Open(lobby, function()
+			return cdata
+		end)
+		frames(40)
+		local ach, trophies = 0, 0
+		for _, d in ipairs(lobby:GetDescendants()) do
+			if d.Name == "Achievement" then
+				ach += 1
+			elseif d.Name == "Trophy" then
+				trophies += 1
+			end
+		end
+		check("kariyer sayfasında 12 başarım kartı", ach == #Config.Achievements, ach)
+		check("kupa dolabında 6 yer", trophies == 6, trophies)
+		__snapIf("kariyer", lobby)
+		CareerS.Close()
+		frames(30)
 		HubS.OpenRanking(lobby, getData)
 		frames(40)
 		check("sıralama ekranı açılır", lobby:FindFirstChild("Ranking") ~= nil)

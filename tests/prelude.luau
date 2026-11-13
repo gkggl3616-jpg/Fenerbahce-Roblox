@@ -784,7 +784,7 @@ local anim = folder("Anim", client)
 moduleNode("Poses", CL .. "Anim/Poses.luau", anim)
 moduleNode("Animator", CL .. "Anim/Animator.luau", anim)
 local match = folder("Match", client)
-for _, n in ipairs({ "Ball", "Bots", "MatchAI", "Referee", "Training", "TimeScale" }) do
+for _, n in ipairs({ "Ball", "Bots", "MatchAI", "Referee", "Training", "Commentary", "TimeScale" }) do
 	moduleNode(n, CL .. "Match/" .. n .. ".luau", match)
 end
 moduleNode("MatchController", CL .. "Match/MatchController.luau", match)
@@ -799,6 +799,7 @@ moduleNode("CrestDesigner", CL .. "Screens/CrestDesigner.luau", screens)
 moduleNode("League", CL .. "Screens/League.luau", screens)
 moduleNode("Halftime", CL .. "Screens/Halftime.luau", screens)
 moduleNode("Hub", CL .. "Screens/Hub.luau", screens)
+moduleNode("Career", CL .. "Screens/Career.luau", screens)
 moduleNode("Celebration", CL .. "Screens/Celebration.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 __tree.Client = client

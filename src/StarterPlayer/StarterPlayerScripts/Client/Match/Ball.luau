@@ -23,6 +23,14 @@ local Ball = {}
 
 local part: Part? = nil
 local applySkin: () -> () -- aşağıda tanımlanır (mağaza deseni)
+local wet = false
+-- Yağmurlu maç: zemin ıslak, top hızlı kayar
+function Ball.SetWet(v: boolean)
+	wet = v
+end
+function Ball.IsWet(): boolean
+	return wet
+end
 local trail: Trail? = nil
 local pos = Vector3.new(0, 1, 80)
 local vel = Vector3.zero
@@ -267,7 +275,8 @@ local function integrate(p: Vector3, v: Vector3, cv: number, h: number, events: 
 		local side = Vector3.new(-flat.Z, 0, flat.X) / sp
 		v += side * cv * B.CurveAccel * h
 	end
-	local drag = if onGround then B.RollFriction else B.AirDrag
+	-- ıslak zeminde top daha az yavaşlar (yağmurlu maç)
+	local drag = if onGround then B.RollFriction * (if wet then 0.6 else 1) else B.AirDrag
 	v *= math.exp(-drag * h)
 	if onGround and sp < 0.6 then
 		v = Vector3.zero

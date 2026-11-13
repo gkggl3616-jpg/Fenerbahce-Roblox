@@ -164,6 +164,42 @@ function Config.ActionUnlocked(skills, action: string): boolean
 	return true
 end
 
+-- Başarımlar: kariyer sayaçlarından kendiliğinden açılır, bir kez ödül verir.
+-- Stat: career içindeki sayaç ya da "level" / "skills" (açılan toplam hareket) / "fener"
+Config.Achievements = {
+	{ Id = "IlkGol", Name = "İlk gol", Text = "Maçta ilk golünü at", Stat = "goals", Goal = 1, Coins = 100 },
+	{ Id = "IlkGalibiyet", Name = "İlk galibiyet", Text = "Bir maç kazan", Stat = "wins", Goal = 1, Coins = 100 },
+	{ Id = "Gol10", Name = "Golcü", Text = "Kariyerinde 10 gol", Stat = "goals", Goal = 10, Coins = 300 },
+	{ Id = "Kafa5", Name = "Hava hakimi", Text = "Kafayla 5 gol", Stat = "headerGoals", Goal = 5, Coins = 400 },
+	{ Id = "HatTrick", Name = "Hat-trick", Text = "Bir maçta 3 gol at", Stat = "hatTricks", Goal = 1, Coins = 500 },
+	{ Id = "Mac25", Name = "Demirbaş", Text = "25 maça çık", Stat = "matches", Goal = 25, Coins = 400 },
+	{ Id = "Galibiyet15", Name = "Kazanan", Text = "15 galibiyet", Stat = "wins", Goal = 15, Coins = 600 },
+	{ Id = "LigAtla", Name = "Yükseliş", Text = "Bir kez lig atla", Stat = "promotions", Goal = 1, Coins = 500 },
+	{ Id = "Kaptan", Name = "Kaptan", Text = "Seviye 10'a ulaş", Stat = "level", Goal = 10, Coins = 300 },
+	{ Id = "Usta", Name = "Hareket ustası", Text = "Toplam 12 hareket aç", Stat = "skills", Goal = 12, Coins = 500 },
+	{ Id = "Gol50", Name = "Gol makinesi", Text = "Kariyerinde 50 gol", Stat = "goals", Goal = 50, Coins = 1000 },
+	{ Id = "Fener", Name = "Sarı lacivert", Text = "Fenerbahçe formasını giy", Stat = "fener", Goal = 1, Coins = 2000 },
+}
+-- Bir başarımın şimdiki değeri
+function Config.AchievementValue(data, stat: string): number
+	if not data then
+		return 0
+	end
+	local career = data.career or {}
+	if stat == "level" then
+		return data.level or 1
+	elseif stat == "fener" then
+		return if career.atFenerbahce then 1 else 0
+	elseif stat == "skills" then
+		local n = 0
+		for id in pairs(Config.SkillChains) do
+			n += Config.SkillLevel(data.skills, id)
+		end
+		return n
+	end
+	return career[stat] or 0
+end
+
 -- Günlük görevler: her gün havuzdan üç tanesi seçilir (oyuncuya ve güne göre sabit)
 Config.DailyTasks = {
 	{ Id = "Gol2", Text = "Maçlarda 2 gol at", Stat = "goals", Goal = 2, Coins = 120, Xp = 60 },
