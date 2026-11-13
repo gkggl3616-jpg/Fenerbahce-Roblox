@@ -351,7 +351,7 @@ do
 	piece("UpperTorso__Stripe__Cubuklu", ut, Vector3.new(1.2, 1.4, 0.82))
 	piece("UpperTorso__Shirt__Duz", ut, Vector3.new(1.6, 1.4, 0.8))
 	piece("UpperTorso__Trim", ut + Vector3.new(0, 0.7, 0), Vector3.new(0.6, 0.1, 0.5))
-	piece("Head__Hair", MeshRig.Parts.Head.Center + Vector3.new(0, 0.3, 0), Vector3.new(0.7, 0.4, 0.8))
+	piece("Head__Hair__S2", MeshRig.Parts.Head.Center + Vector3.new(0, 0.3, 0), Vector3.new(0.7, 0.4, 0.8))
 	piece("Head__Skin", MeshRig.Parts.Head.Center, Vector3.new(0.7, 0.9, 0.8))
 	piece("LeftUpperArm__Skin", MeshRig.Parts.LeftUpperArm.Center, Vector3.new(0.3, 0.6, 0.3))
 	piece("RightFoot__Boot", MeshRig.Parts.RightFoot.Center, Vector3.new(0.35, 0.3, 0.8))
@@ -416,6 +416,70 @@ do
 	local rel = upper.CFrame:ToObjectSpace(stripe.CFrame).Position
 	check("mesh parçası doğru yerde (işaretlerle geri çözülen konum)", rel.Magnitude < 0.01, rel)
 	check("mesh parçası doğru ölçüde", math.abs(stripe.Size.X - 1.2 * K) < 0.01, stripe.Size.X)
+	-- saç modeli, kısa tozluk, krampon modeli ve yüz seçenekleri
+	piece("Head__Hair__S5", MeshRig.Parts.Head.Center + Vector3.new(0, 0.3, 0), Vector3.new(0.75, 0.45, 0.85))
+	piece("LeftLowerLeg__SockTop", MeshRig.Parts.LeftLowerLeg.Center, Vector3.new(0.3, 0.4, 0.3))
+	piece("LeftFoot__BootSole", MeshRig.Parts.LeftFoot.Center, Vector3.new(0.3, 0.1, 0.8))
+	piece("Head__Brow__Kalin", MeshRig.Parts.Head.Center, Vector3.new(0.3, 0.05, 0.1))
+	piece("Head__Brow__Ince", MeshRig.Parts.Head.Center, Vector3.new(0.3, 0.03, 0.1))
+	MeshBody.Reset()
+	local char2 = __makeRig("MeshDeneme2")
+	char2.Parent = workspace
+	plr.Character = char2
+	CS.Apply(plr, {
+		appearance = {
+			height = 180,
+			build = "Atletik",
+			skin = 3,
+			face = 2,
+			hairStyle = 5,
+			hairColor = "0C0C0E",
+			beard = 0,
+			bootModel = 2,
+			bootColor = "E33A3A",
+			accessories = { UzunKol = false, Bileklik = false, SacBandi = false, KisaTozluk = true },
+		},
+		position = "OrtaSaha",
+		kitPattern = "Cubuklu",
+		number = 8,
+		name = "Mesh",
+		abbr = "MOD",
+		level = 1,
+	})
+	__advance(0.5)
+	local got = {}
+	for _, d in ipairs(char2:GetDescendants()) do
+		if d.Name == "FK_Mesh" then
+			got[d:GetAttribute("Role")] = (got[d:GetAttribute("Role")] or 0) + 1
+			got[d:GetAttribute("Role") .. "#" .. d.Size.X] = d
+		end
+	end
+	local hairCount = got.Hair or 0
+	check("yalnız seçilen saç modeli takılır (kıvırcık)", hairCount == 1, hairCount)
+	local function roleColor(role)
+		for _, d in ipairs(char2:GetDescendants()) do
+			if d.Name == "FK_Mesh" and d:GetAttribute("Role") == role then
+				return d.Color
+			end
+		end
+		return nil
+	end
+	check("kısa tozlukta tekmelik görünür", same(roleColor("SockTop"), Color3.fromRGB(237, 237, 237)))
+	check("hız kramponunda beyaz taban", same(roleColor("BootSole"), Color3.fromRGB(242, 242, 242)))
+	check("çift sıradaki yüzde tek kaş (kalın) takılır", got.Brow == 1, got.Brow)
+	local head = char2:FindFirstChild("Head")
+	local hair = nil
+	for _, d in ipairs(char2:GetDescendants()) do
+		if d.Name == "FK_Mesh" and d:GetAttribute("Role") == "Hair" then
+			hair = d
+		end
+	end
+	check(
+		"yüz oranı kafa parçalarına uygulanır (geniş yüz)",
+		hair ~= nil and math.abs(hair.Size.X - 0.75 * K * 1.05) < 0.01,
+		hair and hair.Size.X
+	)
+	char2:Destroy()
 	assets:Destroy()
 	char:Destroy()
 	MeshBody.Reset()

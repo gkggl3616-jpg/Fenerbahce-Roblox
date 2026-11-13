@@ -30,17 +30,26 @@ Model yoksa oyun kodla kurulan eski gövdeyi kullanmaya devam eder.
 - İskelet (eklem yerleri, kalça yüksekliği) `src/ReplicatedStorage/Shared/MeshRig.luau`
   dosyasındadır; betik bu dosyayı yeniden üretir.
 
-## Özelleştirme
+## Özelleştirme (hepsi oyunda çalışır)
 - **Ten:** 6 renk.
-- **Saç:** 6 renk.
-  - Saç seçeneklerinden "Sıfır" ve "Kel" kafa derisi kabuğunu kullanır.
-  - Diğer saç seçenekleri şimdilik modelin kendi saçını gösterir.
+- **Saç:** 8 model.
+  - 1 Sıfır ve 8 Kel: kafa derisi.
+  - 2 Kısa: modelin kendi saçı.
+  - 3 Hacimli, 4 Uzun, 5 Kıvırcık, 6 Topuz, 7 Yanlar kısa: kafatasına oturan, betiğin ürettiği
+    pürüzsüz saçlar.
+  - 6 saç rengi.
 - **Sakal:** Yok, Kirli, Bıyık, Tam, Keçi.
-- **Kaş:** saç rengini alır.
-- **Krampon:** 6 renk.
-- **Forma:** desen, ana renk, ikinci renk, kol ve şerit renkleri. Rakip kulübün renkleri de
-  aynı yolla uygulanır.
+- **Kaş:** saç rengini alır. Tek sıradaki yüzlerde ince, çift sıradakilerde kalın.
+- **Yüz (6):** kafa oranı (geniş çene, uzun yüz, iri, ince, yuvarlak) ve kaş kalınlığı.
+- **Krampon:** 4 model, 6 renk.
+  - 1 Klasik: tek renk.
+  - 2 Hız: beyaz taban.
+  - 3 Kontrol: siyah örgü bilek.
+  - 4 Retro: siyah gövde, beyaz taban.
+- **Forma:** desen (çubuklu, kuşaklı, düz), ana renk, ikinci renk, kol ve şerit renkleri.
+  - Kol rengi formadan farklıysa omuzda temiz dikiş çizgisi.
+  - Rakip kulüp renkleri de aynı yolla uygulanır.
+- **Kısa tozluk:** tozluk aşağı katlanır, tekmelik görünür.
+- **Uzun kol ve kaleci:** uzun kolda kol derisi forma kolu rengini alır; kalecide eldiven.
 - **Boy ve yapı:** ölçekle uygulanır.
-- **Uzun kol:** kol derisi forma kolu rengini alır.
-- **Kaleci:** uzun kol ve eldiven.
 - **Diğer:** bileklik, saç bandı, kaptanlık bandı; isim, numara, arma.

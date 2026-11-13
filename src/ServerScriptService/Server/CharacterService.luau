@@ -806,6 +806,9 @@ local function dress(character: Model?, look)
 		keeper = keeper,
 		hairStyle = a.hairStyle,
 		beard = a.beard,
+		face = a.face,
+		bootModel = a.bootModel,
+		shortSocks = acc.KisaTozluk == true,
 	}, k)
 	if meshOk then
 		meshExtras(character, look, kit, k)

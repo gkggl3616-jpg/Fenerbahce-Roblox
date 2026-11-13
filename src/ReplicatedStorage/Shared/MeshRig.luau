@@ -37,7 +37,7 @@ return {
 		LeftWrist = {
 			Part0 = "LeftLowerArm",
 			Part1 = "LeftHand",
-			Pivot = Vector3.new(-0.7181, 2.6369, -0.0000),
+			Pivot = Vector3.new(-0.7862, 2.6560, -0.1054),
 		},
 		Neck = {
 			Part0 = "UpperTorso",
@@ -72,7 +72,7 @@ return {
 		RightWrist = {
 			Part0 = "RightLowerArm",
 			Part1 = "RightHand",
-			Pivot = Vector3.new(0.7156, 2.6725, -0.0000),
+			Pivot = Vector3.new(0.7818, 2.6911, -0.1024),
 		},
 		Root = {
 			Part0 = "HumanoidRootPart",
@@ -87,12 +87,12 @@ return {
 	},
 	Landmarks = {
 		ChinY = 4.5314,
-		LeftShortsT = 0.8242,
+		LeftShortsT = 0.6367,
 		LeftSleeveT = 0.3125,
 		LeftSockT = 0.1981,
 		MouthY = 4.6473,
 		NoseY = 4.7889,
-		RightShortsT = 0.8242,
+		RightShortsT = 0.6367,
 		RightSleeveT = 0.3125,
 		RightSockT = 0.1981,
 	},
@@ -106,52 +106,52 @@ return {
 			Size = Vector3.new(0.4908, 0.5432, 0.9028),
 		},
 		LeftHand = {
-			Center = Vector3.new(-0.5736, 2.4072, 0.0474),
-			Size = Vector3.new(0.4241, 0.7840, 0.2396),
+			Center = Vector3.new(-0.6447, 2.3738, -0.1143),
+			Size = Vector3.new(0.4212, 0.8469, 0.3480),
 		},
 		LeftLowerArm = {
-			Center = Vector3.new(-0.6907, 2.9147, 0.1350),
-			Size = Vector3.new(0.2831, 0.7338, 0.3593),
+			Center = Vector3.new(-0.7036, 2.9184, 0.0784),
+			Size = Vector3.new(0.3088, 0.7195, 0.4724),
 		},
 		LeftLowerLeg = {
 			Center = Vector3.new(-0.4585, 0.9654, 0.1403),
-			Size = Vector3.new(0.4748, 1.3742, 0.5507),
+			Size = Vector3.new(0.4791, 1.3742, 0.5507),
 		},
 		LeftUpperArm = {
-			Center = Vector3.new(-0.7556, 3.7071, 0.1242),
-			Size = Vector3.new(0.4130, 1.2512, 0.4731),
+			Center = Vector3.new(-0.7557, 3.6860, 0.1242),
+			Size = Vector3.new(0.4128, 1.2934, 0.4731),
 		},
 		LeftUpperLeg = {
-			Center = Vector3.new(-0.3211, 1.9884, 0.0141),
-			Size = Vector3.new(0.7033, 1.1817, 0.7649),
+			Center = Vector3.new(-0.3013, 1.9884, 0.0141),
+			Size = Vector3.new(0.6594, 1.1817, 0.7649),
 		},
 		LowerTorso = {
-			Center = Vector3.new(-0.0017, 2.8326, -0.0062),
-			Size = Vector3.new(1.1575, 0.9231, 0.8250),
+			Center = Vector3.new(-0.0016, 2.8326, -0.0062),
+			Size = Vector3.new(1.0764, 0.9231, 0.8250),
 		},
 		RightFoot = {
 			Center = Vector3.new(0.6128, 0.2420, -0.0218),
 			Size = Vector3.new(0.4930, 0.5084, 0.9056),
 		},
 		RightHand = {
-			Center = Vector3.new(0.5768, 2.4455, 0.0492),
-			Size = Vector3.new(0.4489, 0.7812, 0.2418),
+			Center = Vector3.new(0.6464, 2.4139, -0.1023),
+			Size = Vector3.new(0.4224, 0.8314, 0.3569),
 		},
 		RightLowerArm = {
-			Center = Vector3.new(0.6902, 2.9586, 0.1366),
-			Size = Vector3.new(0.2838, 0.7177, 0.3659),
+			Center = Vector3.new(0.7060, 2.9639, 0.0820),
+			Size = Vector3.new(0.3059, 0.7288, 0.4828),
 		},
 		RightLowerLeg = {
 			Center = Vector3.new(0.4548, 0.9658, 0.1401),
 			Size = Vector3.new(0.4342, 1.2766, 0.5528),
 		},
 		RightUpperArm = {
-			Center = Vector3.new(0.7571, 3.7301, 0.1377),
-			Size = Vector3.new(0.4176, 1.2694, 0.4565),
+			Center = Vector3.new(0.7595, 3.7163, 0.1377),
+			Size = Vector3.new(0.4129, 1.3117, 0.4565),
 		},
 		RightUpperLeg = {
-			Center = Vector3.new(0.3203, 1.9849, 0.0176),
-			Size = Vector3.new(0.7680, 1.2076, 0.7609),
+			Center = Vector3.new(0.3005, 1.9849, 0.0176),
+			Size = Vector3.new(0.7194, 1.2076, 0.7609),
 		},
 		UpperTorso = {
 			Center = Vector3.new(-0.0069, 3.7998, 0.0000),

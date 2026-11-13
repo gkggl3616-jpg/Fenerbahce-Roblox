@@ -29,6 +29,7 @@ import sys
 import numpy as np
 import pygltflib
 import trimesh
+import fast_simplification
 from trimesh.intersections import slice_mesh_plane
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -280,6 +281,51 @@ vp[body & (V[:, 1] >= Y_WAIST) & (V[:, 1] < Y_NECK)] = "UpperTorso"
 vp[body & (V[:, 1] >= Y_HIP_CUT) & (V[:, 1] < Y_WAIST)] = "LowerTorso"
 assert (vp != "").all(), "atanmamış köşe"
 
+# Eller: kollar gövdeye yaklaşınca eller bol şortun içine giriyordu. Dirsek hafifçe bükülür
+# (ön kol dışa ve öne açılır), el bilekten biraz büyütülür, şort kalçada biraz daraltılır.
+ELBOW_OUT, ELBOW_FWD, HAND_SCALE = math.radians(7), math.radians(11), 1.1
+
+
+def rot_x(a):
+    c, s_ = math.cos(a), math.sin(a)
+    return np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]])
+
+
+def rot_z(a):
+    c, s_ = math.cos(a), math.sin(a)
+    return np.array([[c, -s_, 0], [s_, c, 0], [0, 0, 1]])
+
+
+for sgn in (-1, 1):
+    side = "Right" if sgn > 0 else "Left"
+    el = J[side + "ForeArm"].copy()
+    wr = J[side + "Hand"].copy()
+    # dışa açılma (X ekseni çevresinde; yönü işaretle seçilir) ve öne bükülme (Z ekseni çevresinde)
+    R = rot_z(ELBOW_FWD) @ rot_x(-sgn * ELBOW_OUT)
+    test = R @ np.array([0.0, -1.0, 0.0])
+    if np.sign(test[2]) != sgn:
+        R = rot_z(ELBOW_FWD) @ rot_x(sgn * ELBOW_OUT)
+    sel = np.isin(vp, [side + "LowerArm", side + "Hand"])
+    # dirsekte yumuşak geçiş: dirsek ekleminin hemen altındaki köşeler kısmen döner
+    piv_s = np.array([0.0, Y_SHOULDER, sgn * Z_SHOULDER_P])
+    ua = (el - piv_s) / np.linalg.norm(el - piv_s)
+    tt = (V - el) @ ua
+    w = smooth(-0.004, 0.02, tt) * (np.isin(vp, [side + "UpperArm", side + "LowerArm", side + "Hand"]))
+    w[sel] = np.maximum(w[sel], smooth(-0.004, 0.02, tt[sel]))
+    moving = w > 0
+    d = V[moving] - el
+    rotated = d @ R.T
+    V[moving] = el + d + (rotated - d) * w[moving][:, None]
+    wr2 = el + (wr - el) @ R.T
+    hand = vp == side + "Hand"
+    V[hand] = wr2 + (V[hand] - wr2) * HAND_SCALE
+    J[side + "Hand"] = wr2
+# şort: kalça ve uyluk üstünde yanlara %7 dar (gövde merkezine göre, kesintisiz alan)
+legs = ~arm_mask
+shrink = 1 - 0.07 * smooth(0.30, 0.36, V[:, 1]) * (1 - smooth(0.50, 0.56, V[:, 1]))
+V[legs, 2] *= shrink[legs]
+Vr = to_rb(V)
+
 V = Vr
 joint_pos = {k: to_rb(v)[0] for k, v in J.items() if not k.endswith("_armlen")}
 
@@ -356,6 +402,7 @@ def add(p, role, m, pattern=None):
 
 J = joint_pos
 landmarks = {}
+up = np.array([0.0, 1.0, 0.0])
 # önce iki yanın ölçüsü alınır, ortalaması ikisine de uygulanır (model simetrik)
 def mean_t(kind):
     vals = []
@@ -415,9 +462,21 @@ for side_bone in ("Left", "Right"):
     band, sock_main = cut(sock, -u, band_bot)
     add(sd + "LowerLeg", "Skin", knee)
     add(sd + "LowerLeg", "Trim", band, None)
-    add(sd + "LowerLeg", "Sock", sock_main)
+    # tozluk: üst yarı (kısa tozlukta tekmelik görünür), orta bant, alt yarı
+    mid = top + u * 0.45 * L
+    sock_top, sock_rest = cut(sock_main, -u, mid)
+    sband, sock_low = cut(sock_rest, -u, mid + u * 0.06 * L)
+    add(sd + "LowerLeg", "SockTop", sock_top)
+    add(sd + "LowerLeg", "SockBand", sband)
+    add(sd + "LowerLeg", "Sock", sock_low)
     landmarks[sd + "SockT"] = float(t)
-    add(sd + "Foot", "Boot", part_mesh[sd + "Foot"])
+    fm = part_mesh[sd + "Foot"]
+    fy0, fy1 = fm.bounds[0][1], fm.bounds[1][1]
+    sole, upper = cut(fm, -up, [0, fy0 + 0.085, 0])
+    collar, upper = cut(upper, up, [0, fy1 - 0.07, 0])
+    add(sd + "Foot", "BootSole", sole)
+    add(sd + "Foot", "BootCollar", collar)
+    add(sd + "Foot", "Boot", upper)
 
 # alt gövde: forma ucu / şort (en büyük yarıçap düşüşü)
 up = np.array([0.0, 1.0, 0.0])
@@ -502,7 +561,7 @@ is_hair = np.where(
 )
 hair = hd.submesh([np.where(is_hair)[0]], append=True)
 face = hd.submesh([np.where(~is_hair)[0]], append=True)
-add("Head", "Hair", hair)
+add("Head", "Hair", hair, "S2")
 add("Head", "Skin", face)
 
 # Yüz işaretleri: çene ucu (ön alt), burun ucu (en önde), ağız (ikisinin arası)
@@ -539,7 +598,10 @@ goat = front_half & (cen[:, 1] > chin_y - 0.04) & (cen[:, 1] < mouth_y - 0.02) &
 add("Head", "Beard", shell(fs, goat | must, 0.012), "Keci")
 brow = front_half & (cen[:, 1] > eye_y + 0.035) & (cen[:, 1] < eye_y + 0.075) & (np.abs(cen[:, 0]) > 0.03) & (np.abs(cen[:, 0]) < 0.17)
 brow &= cen[:, 2] < fs.bounds[0][2] + 0.16
-add("Head", "Brow", shell(fs, brow, 0.006))
+add("Head", "Brow", shell(fs, brow, 0.006), "Ince")
+brow_k = front_half & (cen[:, 1] > eye_y + 0.025) & (cen[:, 1] < eye_y + 0.09) & (np.abs(cen[:, 0]) > 0.025) & (np.abs(cen[:, 0]) < 0.18)
+brow_k &= cen[:, 2] < fs.bounds[0][2] + 0.17
+add("Head", "Brow", shell(fs, brow_k, 0.008), "Kalin")
 
 # Kafa derisi (kel ve sıfır saç): saç parçası, kafatasına oturan bir elipsoide yansıtılır
 hv = hair.vertices
@@ -559,6 +621,109 @@ k_ = np.sqrt((d[:, 0] / rx) ** 2 + (d[:, 1] / ry) ** 2 + (d[:, 2] / rz) ** 2)
 sc.vertices = np.array([0.0, cy, cz]) + d / np.maximum(k_, 1.0)[:, None]
 add("Head", "Scalp", sc)
 
+from skimage import measure
+
+C0 = np.array([0.0, cy, cz])
+RR = np.array([rx, ry, rz])
+
+
+def sd_skull(P):
+    q = (P - C0) / RR
+    k = np.linalg.norm(q, axis=-1)
+    return (k - 1) * RR.min()
+
+
+def smin(a, b, k):
+    h = np.clip(0.5 + 0.5 * (b - a) / k, 0, 1)
+    return b * (1 - h) + a * h - k * h * (1 - h)
+
+
+def hairline(z):
+    # önde alın, yanda kulak üstü, arkada ense (önceki saç bölgesiyle aynı)
+    return np.interp(
+        z,
+        [zf - 1, cz - 0.14, cz - 0.06, cz + 0.1, cz + 0.18, zb + 1],
+        [eye_y + 0.21, eye_y + 0.21, eye_y + 0.07, eye_y + 0.07, eye_y - 0.12, eye_y - 0.12],
+    )
+
+
+def region(P):
+    return hairline(P[..., 2]) - P[..., 1]  # < 0: saç bölgesi
+
+
+def sbox(P, c, b, r):
+    q = np.abs(P - c) - b
+    return np.linalg.norm(np.maximum(q, 0), axis=-1) + np.minimum(q.max(-1), 0) - r
+
+
+def ss(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def hair_sdf(style, P):
+    y, x = P[..., 1], P[..., 0]
+    d0 = sd_skull(P)
+    if style == 3:  # Hacimli: önde kabaran, tepede kalın, geriye taranmış
+        lift = ss(eye_y + 0.18, eye_y + 0.42, y)
+        Q = P + np.stack([0 * y, 0 * y, -0.05 * lift], -1)  # hacim arkaya kayar
+        T = 0.025 + 0.085 * lift
+        d = sd_skull(Q) - T
+        return np.maximum(d, region(P) + 0.02 * (1 - lift))
+    if style == 4:  # Uzun: önde ve yanda normal saç çizgisi, kulak arkasından omuza inen perde
+        d = d0 - 0.045
+        curtain = sbox(P, np.array([0, eye_y - 0.24, cz + rz * 0.6]), np.array([rx * 0.88, 0.34, rz * 0.42]), 0.06)
+        d = smin(d, curtain, 0.08)
+        back = ss(cz - 0.06, cz + 0.04, P[..., 2])  # arka yarı
+        reg = region(P) * (1 - back) + (eye_y - 0.6 - y) * back
+        return np.maximum(d, reg)
+    if style == 5:  # Kıvırcık: tepede sık bukleler, yanlar kısa
+        f = 26.0
+        bumps = 0.022 * np.sin(f * x) * np.sin(f * y) * np.sin(f * P[..., 2])
+        T = 0.03 + 0.06 * ss(eye_y + 0.1, eye_y + 0.3, y) + bumps
+        return np.maximum(d0 - T, region(P))
+    if style == 6:  # Topuz: geriye sıkı toplanmış, tepe arkasında topuz
+        d = d0 - 0.03
+        bun = np.linalg.norm(P - np.array([0, eye_y + 0.31, cz + rz * 0.92]), axis=-1) - 0.13
+        d = np.maximum(d, region(P))
+        return smin(d, bun, 0.04)
+    if style == 7:  # Yanlar kısa: yanlar sıfır, tepede uzun şerit
+        T = 0.018 + 0.1 * (1 - ss(0.09, 0.15, np.abs(x))) * ss(eye_y + 0.18, eye_y + 0.3, y)
+        return np.maximum(d0 - T, region(P))
+    raise ValueError(style)
+
+
+lo = C0 - RR - np.array([0.25, 0.75, 0.25])
+hi = C0 + RR + np.array([0.25, 0.25, 0.3])
+step = 0.016
+gx = np.arange(lo[0], hi[0], step)
+gy = np.arange(lo[1], hi[1], step)
+gz = np.arange(lo[2], hi[2], step)
+Pg = np.stack(np.meshgrid(gx, gy, gz, indexing="ij"), -1)
+for style in (3, 4, 5, 6, 7):
+    vol = hair_sdf(style, Pg)
+    verts, faces_, _, _ = measure.marching_cubes(vol, 0.0, spacing=(step, step, step))
+    verts = verts + lo
+    hm = trimesh.Trimesh(verts, faces_[:, ::-1], process=True)
+    # en büyük bağlı parça (kopuk kırıntılar atılır), önce yumuşatma, sonra hafif sadeleştirme
+    comps = hm.split(only_watertight=False)
+    hm = max(comps, key=lambda m: len(m.faces))
+    trimesh.smoothing.filter_taubin(hm, iterations=8)
+    ref_lo, ref_hi = hm.bounds[0].copy(), hm.bounds[1].copy()
+    target = 2200
+    if len(hm.faces) > target:
+        v2, f2 = fast_simplification.simplify(hm.vertices, hm.faces, target_reduction=1 - target / len(hm.faces), agg=3)
+        cand = trimesh.Trimesh(v2, f2, process=True)
+        # güvenlik: sadeleştirme şekli bozmamalı (sınır kutusu 2 cm'den fazla değişirse vazgeç)
+        if np.abs(cand.bounds - np.array([ref_lo, ref_hi])).max() < 0.02:
+            hm = cand
+        else:
+            print("  saç", style, "sadeleştirme şekli bozdu, tam çözünürlük kullanılıyor")
+    assert np.all(hm.bounds[0] >= lo - 1e-3) and np.all(hm.bounds[1] <= hi + 1e-3), ("saç taşıyor", style, hm.bounds)
+    assert (hm.bounds[1][1] - (cy + ry)) < 0.2, ("saç kafanın çok üstüne çıkıyor", style, hm.bounds)
+    add("Head", "Hair", hm, "S%d" % style)
+    print("saç", style, len(hm.faces))
+
 # ---------------------------------------------------------------- 4. çıktı
 ROLE_COLOR = {
     "Skin": (232, 190, 160),
@@ -573,6 +738,10 @@ ROLE_COLOR = {
     "Beard": (40, 30, 24),
     "Scalp": (200, 160, 130),
     "Brow": (40, 30, 24),
+    "BootSole": (235, 235, 235),
+    "BootCollar": (20, 20, 24),
+    "SockTop": (255, 230, 0),
+    "SockBand": (255, 230, 0),
 }
 
 
@@ -645,7 +814,7 @@ scene.export(OUT_GLB)
 
 prev = trimesh.Scene()
 for p, role, pattern, m in pieces:
-    if pattern not in (None, "Cubuklu", "Tam") or role == "Scalp":
+    if pattern not in (None, "Cubuklu", "Tam", "S2", "Ince") or role == "Scalp":
         continue
     mm = m.copy()
     r, g_, b = ROLE_COLOR[role]

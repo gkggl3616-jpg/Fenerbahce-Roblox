@@ -37,9 +37,10 @@ local function template(): Instance?
 	return (f and f:FindFirstChild("FK_Oyuncu")) or ReplicatedStorage:FindFirstChild("FK_Oyuncu")
 end
 
--- "UpperTorso__Shirt__Cubuklu" -> UpperTorso, Shirt, Cubuklu (içe aktarıcının eklediği ekler yok sayılır)
+-- "UpperTorso__Shirt__Cubuklu" -> UpperTorso, Shirt, Cubuklu; "Head__Hair__S5" -> Head, Hair, S5
+-- (içe aktarıcının eklediği ekler yok sayılır)
 function MeshBody.ParseName(n: string): (string?, string?, string?)
-	local part, role, pattern = string.match(n, "^(%a+)__(%a+)__(%a+)")
+	local part, role, pattern = string.match(n, "^(%a+)__(%a+)__(%w+)")
 	if part then
 		return part, role, pattern
 	end
@@ -109,6 +110,15 @@ function MeshBody.Load(): { pieces: { Piece } }?
 	return cache
 end
 
+-- Karakter eksenlerindeki ölçeği (genişlik, boy, derinlik) parçanın kendi eksenlerine çevirir;
+-- içe aktarıcı parçayı döndürmüşse Size yanlış eksende ölçeklenmesin
+local function localScale(cf: CFrame, kk: Vector3): Vector3
+	local function along(axis: Vector3): number
+		return math.abs(axis.X) * kk.X + math.abs(axis.Y) * kk.Y + math.abs(axis.Z) * kk.Z
+	end
+	return Vector3.new(along(cf.RightVector), along(cf.UpVector), along(cf.LookVector))
+end
+
 -- R15 iskeletini mesh gövdenin eklem noktalarına taşır
 local function fitRig(character: Model, k: Vector3): boolean
 	local centers: { [string]: Vector3 } = { HumanoidRootPart = MeshRig.RootCenter }
@@ -153,10 +163,25 @@ end
 -- Config.BeardNames: 0 Yok, 1 Kirli, 2 Bıyık, 3 Tam, 4 Keçi (kirli sakal, tam sakal kabuğunu açık renkle kullanır)
 local BEARD = { [1] = "Tam", [2] = "Biyik", [3] = "Tam", [4] = "Keci" }
 
-local FABRIC = { Shirt = true, Stripe = true, Sleeve = true, Trim = true, Shorts = true, Sock = true }
+-- Yüzler (Config.Appearance.Faces = 6): kafa oranı (genişlik, boy, derinlik)
+local FACES = {
+	Vector3.new(1, 1, 1),
+	Vector3.new(1.05, 0.98, 1.0), -- geniş çene
+	Vector3.new(0.95, 1.04, 0.98), -- uzun yüz
+	Vector3.new(1.03, 1.03, 1.03), -- iri
+	Vector3.new(0.96, 0.97, 0.98), -- ince
+	Vector3.new(1.06, 1.0, 1.04), -- yuvarlak
+}
+-- krampon modelleri: 1 Klasik (tek renk), 2 Hız (beyaz taban), 3 Kontrol (siyah örgü bilek),
+-- 4 Retro (siyah gövde, beyaz taban)
+local RETRO = Color3.fromRGB(16, 18, 22)
+local SOLE_WHITE = Color3.fromRGB(242, 242, 242)
+local SHIN_PAD = Color3.fromRGB(237, 237, 237)
+
+local FABRIC = { Shirt = true, Stripe = true, Sleeve = true, Trim = true, Shorts = true, Sock = true, SockTop = true, SockBand = true }
 
 --[[
-	colors = { skin, hair, boot, glove, long (uzun kol), keeper, hairStyle, beard }
+	colors = { skin, hair, boot, glove, long (uzun kol), keeper, hairStyle, beard, face, bootModel, shortSocks }
 ]]
 function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolean
 	local data = MeshBody.Load()
@@ -171,6 +196,12 @@ function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolea
 	local style = colors.hairStyle or 2
 	local shaved = style == 1 or style == 8
 	local beardWant = BEARD[colors.beard or 0]
+	-- yüz: kafa oranı ve kaş kalınlığı (çift sıradaki yüzlerde kalın kaş)
+	local face = math.clamp(colors.face or 1, 1, #FACES)
+	local fs = FACES[face]
+	local brow = if face % 2 == 0 then "Kalin" else "Ince"
+	local bootModel = colors.bootModel or 1
+	local short = colors.shortSocks == true
 	for _, pc in ipairs(data.pieces) do
 		local r = pc.role
 		if r == "Shirt" or r == "Stripe" then
@@ -182,7 +213,12 @@ function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolea
 				continue
 			end
 		elseif r == "Hair" then
-			if shaved then
+			-- saç modelleri S2..S7 (2 Kısa: modelin kendi saçı); Sıfır ve Kel kafa derisini kullanır
+			if shaved or (pc.pattern ~= nil and pc.pattern ~= "S" .. tostring(style)) then
+				continue
+			end
+		elseif r == "Brow" then
+			if pc.pattern ~= nil and pc.pattern ~= brow then
 				continue
 			end
 		elseif r == "Scalp" then
@@ -209,7 +245,26 @@ function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolea
 		elseif role == "Brow" then
 			color = colors.hair:Lerp(Color3.new(0, 0, 0), 0.1)
 		elseif role == "Boot" then
-			color = colors.boot
+			color = if bootModel == 4 then RETRO else colors.boot
+		elseif role == "BootSole" then
+			color = if bootModel == 2 or bootModel == 4 then SOLE_WHITE else colors.boot:Lerp(Color3.new(0, 0, 0), 0.35)
+		elseif role == "BootCollar" then
+			color = if bootModel == 3 or bootModel == 4 then RETRO else colors.boot
+		elseif role == "SockTop" then
+			-- kısa tozlukta tozluk aşağı katlanır, tekmelik görünür
+			if short then
+				color = SHIN_PAD
+			else
+				color, tag = kit.Sock, "Sock"
+			end
+		elseif role == "SockBand" then
+			if short then
+				color, tag = kit.Trim, "Trim"
+			else
+				color, tag = kit.Sock, "Sock"
+			end
+		elseif role == "Trim" and short and pc.part:find("LowerLeg") then
+			color = colors.skin -- kısa tozlukta dizdeki bant yerine ten
 		elseif kit[role] then
 			color, tag = kit[role], role
 		end
@@ -222,14 +277,15 @@ function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolea
 		m.Massless = true
 		m.CastShadow = true
 		m.TextureID = ""
-		m.Size = pc.size * k
+		local kk = if pc.part == "Head" then k * fs else k
+		m.Size = pc.size * localScale(pc.offset, kk)
 		m.Color = color
 		m.Material = if FABRIC[role] or tag == "Sleeve" then Enum.Material.Fabric else Enum.Material.SmoothPlastic
 		m:SetAttribute("Role", role)
 		if tag then
 			m:SetAttribute("FK", tag)
 		end
-		m.CFrame = holder.CFrame * CFrame.new(pc.offset.Position * k) * pc.offset.Rotation
+		m.CFrame = holder.CFrame * CFrame.new(pc.offset.Position * kk) * pc.offset.Rotation
 		local w = Instance.new("WeldConstraint")
 		w.Part0 = holder
 		w.Part1 = m
