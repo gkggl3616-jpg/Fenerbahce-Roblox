@@ -1254,10 +1254,49 @@ do
 	end)
 	local panel = sg:FindFirstChild("SkillTree")
 	check("yetenek ağacı açıldı", panel ~= nil)
+	local view
+	for _, d in ipairs(panel:GetDescendants()) do
+		if d.Name == "View" then
+			view = d
+		end
+	end
+	check("hareket önizlemesi kurulur", view ~= nil and view:FindFirstChild("WorldModel") ~= nil)
+	local previewModel = view and view.WorldModel:FindFirstChild("Mate")
+	check("önizlemede forma giymiş oyuncu var", previewModel ~= nil)
+	-- bir düğümün üstüne gelince önizleme o hareketi oynatır
+	local gokkusagi
+	for _, d in ipairs(panel:GetDescendants()) do
+		if d.ClassName == "TextLabel" and d.Text == "GÖKKUŞAĞI" then
+			gokkusagi = d.Parent
+		end
+	end
+	if gokkusagi then
+		gokkusagi.MouseEnter:Fire()
+	end
+	local moved = false
+	if previewModel then
+		local m
+		for _, d in ipairs(previewModel:GetDescendants()) do
+			if d.ClassName == "Motor6D" and d.Name == "RightKnee" then
+				m = d
+			end
+		end
+		local before = m and m.Transform
+		local RS2 = game:GetService("RunService")
+		for _ = 1, 20 do
+			RS2.RenderStepped:Fire(1 / 60)
+			__advance(1 / 60)
+		end
+		moved = m ~= nil
+			and before ~= nil
+			and (m.Transform.Position - before.Position).Magnitude + math.abs(m.Transform.r[5] - before.r[5]) > 1e-4
+	end
+	check("önizleme hareketi oynatır", moved)
 	local nodes, statButtons = 0, 0
 	for _, t in ipairs(panel:GetDescendants()) do
 		if
 			t.ClassName == "TextLabel"
+			and t.Parent.Name ~= "Preview"
 			and (
 				t.Text == "AÇIK"
 				or string.find(t.Text, "KİLİTLİ", 1, true)

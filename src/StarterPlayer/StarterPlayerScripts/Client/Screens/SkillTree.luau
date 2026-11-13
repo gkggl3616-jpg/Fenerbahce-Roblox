@@ -22,6 +22,8 @@ local SkillTree = {}
 
 local C = Theme.Color
 local open: any = nil
+local setPreview: (string, string, boolean) -> ()
+local buildPreview: (Instance, UDim2, UDim2) -> ()
 
 local function corner(o: Instance, r: number)
 	local u = Instance.new("UICorner")
@@ -80,6 +82,136 @@ local STAT_INFO = {
 	Defans = "Müdahale başarısı",
 	Fizik = "Dayanıklılık, kafa gücü",
 }
+
+--------------------------------------------------------------------------------
+-- Hareket önizlemesi: ViewportFrame içinde forma giymiş bir oyuncu, seçilen hareketi döngüde oynar
+--------------------------------------------------------------------------------
+local RunService = game:GetService("RunService")
+local Animator = require(script.Parent.Parent.Anim.Animator)
+local Poses = require(script.Parent.Parent.Anim.Poses)
+local preview: any = nil
+
+local function stopPreview()
+	if preview then
+		if preview.conn then
+			preview.conn:Disconnect()
+		end
+		if preview.animator then
+			preview.animator:Destroy()
+		end
+		preview = nil
+	end
+end
+
+local lastPreview = { "Shoot", "Normal şut", true }
+setPreview = function(action: string, name: string, unlocked: boolean)
+	if not preview or not Poses.Actions[action] then
+		return
+	end
+	lastPreview = { action, name, unlocked }
+	preview.action = action
+	preview.wait = 0
+	preview.title.Text = Theme.Upper(name)
+	preview.state.Text = if unlocked then "AÇIK" else "KİLİTLİ · önce aç"
+	preview.state.TextColor3 = if unlocked then C.Good else C.Muted
+	if preview.animator then
+		preview.animator:Play(action, { Mirror = false })
+	end
+end
+
+buildPreview = function(parent: Instance, pos: UDim2, size: UDim2)
+	stopPreview()
+	local box = Instance.new("Frame")
+	box.Name = "Preview"
+	box.Position = pos
+	box.Size = size
+	box.BackgroundColor3 = Color3.fromRGB(8, 14, 46)
+	box.BorderSizePixel = 0
+	corner(box, 10)
+	stroke(box, C.Yellow, 1.5, 0.3)
+	box.Parent = parent
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Color = ColorSequence.new(Color3.fromRGB(40, 70, 170), Color3.fromRGB(10, 40, 30))
+	g.Parent = box
+	local vp = Instance.new("ViewportFrame")
+	vp.Name = "View"
+	vp.BackgroundTransparency = 1
+	vp.Size = UDim2.fromScale(1, 1)
+	vp.Ambient = Color3.fromRGB(170, 170, 185)
+	vp.LightColor = Color3.fromRGB(255, 248, 235)
+	vp.LightDirection = Vector3.new(-0.4, -1, 0.6)
+	vp.Parent = box
+	local world = Instance.new("WorldModel")
+	world.Parent = vp
+	local cam = Instance.new("Camera")
+	cam.FieldOfView = 34
+	cam.Parent = vp
+	vp.CurrentCamera = cam
+	-- çim zemin ve top
+	local floor = Instance.new("Part")
+	floor.Anchored = true
+	floor.Size = Vector3.new(30, 0.2, 30)
+	floor.CFrame = CFrame.new(0, -0.1, 0)
+	floor.Color = Color3.fromRGB(52, 150, 72)
+	floor.Material = Enum.Material.Grass
+	floor.Parent = world
+	local ball = Instance.new("Part")
+	ball.Shape = Enum.PartType.Ball
+	ball.Anchored = true
+	ball.Size = Vector3.new(1.1, 1.1, 1.1)
+	ball.CFrame = CFrame.new(0.6, 0.55, -1.6)
+	ball.Color = Color3.fromRGB(250, 250, 250)
+	ball.Parent = world
+	local title = Components.Label({ Text = "", Size = 15, Font = Theme.Font.Display, Color = C.White, Frame = UDim2.new(1, -20, 0, 20) })
+	title.Position = UDim2.fromOffset(10, 8)
+	title.ZIndex = 3
+	title.Parent = box
+	local state = Components.Label({ Text = "", Size = 11, Font = Theme.Font.Title, Color = C.Good, Frame = UDim2.new(1, -20, 0, 16) })
+	state.Position = UDim2.fromOffset(10, 28)
+	state.ZIndex = 3
+	state.Parent = box
+	preview = { box = box, title = title, state = state, action = "Shoot", wait = 0 }
+	-- forma giymiş şablon oyuncu (sunucunun kurduğu takım arkadaşı)
+	local folder = ReplicatedStorage:FindFirstChild("FK_BotTemplates")
+	local tpl = folder and folder:FindFirstChild("Mate")
+	if tpl then
+		local model = tpl:Clone()
+		local hrp = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if hrp then
+			hrp.Anchored = true
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			local h = if hum then hum.HipHeight + hrp.Size.Y / 2 else 3
+			model:PivotTo(CFrame.new(0, h, 0) * CFrame.Angles(0, math.rad(200), 0))
+			model.Parent = world
+			preview.model = model
+			preview.animator = Animator.new(model)
+			cam.CFrame = CFrame.lookAt(Vector3.new(7.5, 4.2, -9.5), Vector3.new(0, 2.4, 0))
+		end
+	else
+		state.Text = "Önizleme, oyun içinde şablon oyuncu yüklenince görünür"
+	end
+	if preview.animator then
+		preview.animator:Play("Shoot", {})
+		preview.conn = RunService.RenderStepped:Connect(function(dt)
+			if not preview or not preview.box.Parent then
+				stopPreview()
+				return
+			end
+			local an = preview.animator
+			if not an:Current() then
+				preview.wait += dt
+				if preview.wait > 0.7 then
+					preview.wait = 0
+					an:Play(preview.action, {})
+				end
+			end
+			an:Update(dt, { speed = 0, sprinting = false, tired = false, grounded = true, turn = 0, vy = 0 })
+		end)
+	end
+	-- yeniden çizimde (ör. yetenek açılınca) son seçilen hareket kalır
+	setPreview(lastPreview[1], lastPreview[2], lastPreview[3])
+end
 
 local function draw()
 	if not open then
@@ -164,6 +296,12 @@ local function draw()
 				if unlocked or isNext then 0 else 0.5
 			)
 			node.Parent = body
+			node.MouseEnter:Connect(function()
+				setPreview(sk.Id, sk.Name, unlocked)
+			end)
+			node.MouseButton1Down:Connect(function()
+				setPreview(sk.Id, sk.Name, unlocked)
+			end)
 			if unlocked then
 				local g = Instance.new("UIGradient")
 				g.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 165, 230))
@@ -256,13 +394,26 @@ local function draw()
 	-- özellikler
 	local sx = areaW + 24
 	local sw = 1216 - sx
-	text(body, "ÖZELLİKLER", 20, C.Yellow, UDim2.fromOffset(sx, 0), UDim2.fromOffset(sw, 26), Theme.Font.Display)
-	text(body, "Bakiye ile yükselt (en çok " .. Config.StatMax .. ")", 11, C.Muted, UDim2.fromOffset(sx, 26), UDim2.fromOffset(sw, 16))
+	-- hareket önizlemesi (üstte), özellikler (altta)
+	text(body, "HAREKET ÖNİZLEME", 20, C.Yellow, UDim2.fromOffset(sx, 0), UDim2.fromOffset(sw, 26), Theme.Font.Display)
+	text(body, "Bir hareketin üstüne gel ya da tıkla", 11, C.Muted, UDim2.fromOffset(sx, 26), UDim2.fromOffset(sw, 16))
+	buildPreview(body, UDim2.fromOffset(sx, 48), UDim2.fromOffset(sw, 196))
+	text(body, "ÖZELLİKLER", 20, C.Yellow, UDim2.fromOffset(sx, 252), UDim2.fromOffset(sw, 26), Theme.Font.Display)
+	text(
+		body,
+		"Bakiye ile yükselt (en çok " .. Config.StatMax .. ")",
+		11,
+		C.Muted,
+		UDim2.fromOffset(sx + 150, 258),
+		UDim2.fromOffset(sw - 150, 16),
+		nil,
+		Enum.TextXAlignment.Right
+	)
 	for i, key in ipairs(Config.Stats) do
 		local v = (data.stats and data.stats[key]) or 1
-		local y = 52 + (i - 1) * 92
+		local y = 290 + (i - 1) * 64
 		local card = Instance.new("Frame")
-		card.Size = UDim2.fromOffset(sw, 80)
+		card.Size = UDim2.fromOffset(sw, 58)
 		card.Position = UDim2.fromOffset(sx, y)
 		card.BackgroundColor3 = DARK
 		card.BorderSizePixel = 0
@@ -278,22 +429,22 @@ local function draw()
 			UDim2.fromOffset(sw - 120, 20),
 			Theme.Font.Title
 		)
-		text(card, STAT_INFO[key] or "", 11, C.Muted, UDim2.fromOffset(12, 28), UDim2.fromOffset(sw - 120, 16))
+		text(card, STAT_INFO[key] or "", 11, C.Muted, UDim2.fromOffset(12, 24), UDim2.fromOffset(sw - 120, 14))
 		text(
 			card,
 			tostring(v),
 			26,
 			C.Yellow,
-			UDim2.fromOffset(sw - 196, 6),
-			UDim2.fromOffset(80, 30),
+			UDim2.fromOffset(sw - 196, 4),
+			UDim2.fromOffset(80, 28),
 			Theme.Font.Number,
 			Enum.TextXAlignment.Right
 		)
 		-- 10 bölmeli çubuk
 		for k = 1, Config.StatMax do
 			local seg = Instance.new("Frame")
-			seg.Size = UDim2.fromOffset((sw - 124 - (Config.StatMax - 1) * 3) / Config.StatMax, 10)
-			seg.Position = UDim2.fromOffset(12 + (k - 1) * ((sw - 124) / Config.StatMax), 56)
+			seg.Size = UDim2.fromOffset((sw - 124 - (Config.StatMax - 1) * 3) / Config.StatMax, 8)
+			seg.Position = UDim2.fromOffset(12 + (k - 1) * ((sw - 124) / Config.StatMax), 42)
 			seg.BackgroundColor3 = if k <= v then C.Yellow else C.Ground
 			if prevStats and k <= v and k > (prevStats[key] or v) then
 				task.defer(function()
@@ -311,7 +462,7 @@ local function draw()
 			Text = if maxed then "TAM" else "+ " .. Theme.FormatNumber(cost),
 			Style = if maxed then "Ghost" elseif (data.coins or 0) >= cost then "Primary" else "Secondary",
 			TextSize = 15,
-			Size = UDim2.fromOffset(96, 44),
+			Size = UDim2.fromOffset(96, 40),
 			OnClick = function()
 				if maxed then
 					return
@@ -323,7 +474,7 @@ local function draw()
 				Remotes.Get("UpgradeStat"):FireServer(key)
 			end,
 		})
-		b.Position = UDim2.fromOffset(sw - 106, 18)
+		b.Position = UDim2.fromOffset(sw - 106, 9)
 		b.Parent = card
 	end
 	-- bir sonraki çizimde neyin yeni açıldığını bilmek için şimdiki seviyeler saklanır
@@ -344,6 +495,7 @@ function SkillTree.Close()
 	if not open then
 		return
 	end
+	stopPreview()
 	local root = open.root
 	open = nil
 	UIMotion.Out(root, Vector2.new(0, 20), true)
