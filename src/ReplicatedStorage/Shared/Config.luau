@@ -344,6 +344,19 @@ Config.Facilities = {
 	Antrenman = { Name = "Antrenman sahası", Max = 2, Cost = { 600, 1000 } },
 	Saglik = { Name = "Sağlık merkezi", Max = 2, Cost = { 800, 1200 } },
 }
+-- Tesislerin gerçek etkileri (seviye başına). Açıklamalar tesis ekranında bu sayılardan yazılır.
+Config.FacilityEffects = {
+	Cim = { Control = 0.6, Info = "Top kontrolü +%s (seviye başına 0,6) · yıpranmış toprak kalkar, biçme desenleri belirginleşir" },
+	TribunEki = { Income = 0.2, Info = "Maç başı kulüp kasası geliri +%%%s · statta ek tribün" },
+	Aydinlatma = { Light = 0.12, Info = "Projektörler yanar, maç ışığı %%%s daha parlak" },
+	Soyunma = { Xp = 0.1, Info = "Maç XP'si +%%%s" },
+	Antrenman = { Training = 0.5, Info = "Antrenman ödülleri +%%%s (bakiye ve XP)" },
+	Saglik = { Regen = 0.15, Info = "Dayanıklılık yenilenmesi +%%%s" },
+}
+-- Bir tesisin seviyesi (veri yoksa 0)
+function Config.FacilityLevel(data, id: string): number
+	return (data and data.club and data.club.facilities and data.club.facilities[id]) or 0
+end
 
 -- Görünüm sınırları (sunucu bu aralıkları doğrular)
 Config.Appearance = {

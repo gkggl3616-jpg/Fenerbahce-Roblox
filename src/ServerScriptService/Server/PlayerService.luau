@@ -487,14 +487,16 @@ local function onTrainingGoal(player: Player, kind)
 	lastTrainingGoal[player.UserId] = now
 	progress(player, "training", 1)
 	local bonus = if kind == "Header" or kind == "UcanKafa" or kind == "Rovesata" or kind == "Vole" then R.HeaderBonus else 0
+	-- antrenman sahası tesisi ödülleri büyütür
+	local mult = 1 + Config.FacilityLevel(data, "Antrenman") * Config.FacilityEffects.Antrenman.Training
 	if kind == "Feint" or kind == "Tackle" then
 		-- çalım ve top kapma: gol ödülünün yarısı
-		data.coins += math.floor(R.Coins / 2)
-		PlayerService.AddXp(player, math.floor(R.Xp / 2))
+		data.coins += math.floor(R.Coins / 2 * mult)
+		PlayerService.AddXp(player, math.floor(R.Xp / 2 * mult))
 		return
 	end
-	data.coins += R.Coins + bonus
-	PlayerService.AddXp(player, R.Xp + bonus)
+	data.coins += math.floor((R.Coins + bonus) * mult)
+	PlayerService.AddXp(player, math.floor((R.Xp + bonus) * mult))
 end
 
 -- MAÇ: istemci maçı oynatır, sunucu sonucu makullük sınamasından geçirip ödülü verir
@@ -530,8 +532,11 @@ local function onMatchEnd(player: Player, r)
 	local tier = Config.Tiers[data.club.tier]
 	local coins = MC.Reward[outcome] + (r.myGoals - r.myHeaderGoals) * MC.Reward.Goal + r.myHeaderGoals * MC.Reward.HeaderGoal
 	local xp = MC.Reward.Xp[outcome] + r.myGoals * MC.Reward.Xp.Goal
+	-- tesisler: soyunma odası XP'yi, tribün eki kasa gelirini artırır
+	xp = math.floor(xp * (1 + Config.FacilityLevel(data, "Soyunma") * Config.FacilityEffects.Soyunma.Xp))
+	local income = math.floor(tier.MatchIncome * (1 + Config.FacilityLevel(data, "TribunEki") * Config.FacilityEffects.TribunEki.Income))
 	data.coins += coins
-	data.club.funds += tier.MatchIncome
+	data.club.funds += income
 	data.career.matches += 1
 	data.career.goals += r.myGoals
 	data.career.headerGoals += r.myHeaderGoals
@@ -567,7 +572,7 @@ local function onMatchEnd(player: Player, r)
 		outcome = outcome,
 		coins = coins,
 		xp = xp,
-		income = tier.MatchIncome,
+		income = income,
 		played = season.played,
 		points = season.points,
 		seasonOver = seasonOver,

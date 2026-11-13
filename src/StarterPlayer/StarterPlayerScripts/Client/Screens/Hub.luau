@@ -342,14 +342,26 @@ end
 -- Kulüp tesisleri
 --------------------------------------------------------------------------------
 local FACILITY_ORDER = { "Cim", "TribunEki", "Aydinlatma", "Soyunma", "Antrenman", "Saglik" }
-local FACILITY_INFO = {
-	Cim = "Çim kalitesi: saha daha bakımlı görünür",
-	TribunEki = "Küçük statlarda karşı tribünü büyütür",
-	Aydinlatma = "Mahalle sahasında projektörler yanar",
-	Soyunma = "Kulübün itibarı",
-	Antrenman = "Antrenman sahası",
-	Saglik = "Sağlık merkezi",
-}
+-- Tesis açıklaması: gerçek etki, şimdiki ve bir sonraki seviyedeki değeriyle
+local function facilityInfo(id: string, level: number, max: number): string
+	local e = Config.FacilityEffects[id]
+	if not e then
+		return ""
+	end
+	local per = e.Control or e.Income or e.Light or e.Xp or e.Training or e.Regen or 0
+	local function value(lv: number): string
+		local v = per * lv
+		if e.Control then
+			return string.format("%.1f", v)
+		end
+		return tostring(math.floor(v * 100 + 0.5))
+	end
+	local now = string.format(e.Info, value(level))
+	if level < max then
+		now ..= "  ›  sonraki: " .. string.format(e.Info, value(level + 1)):match("^[^·]+")
+	end
+	return now
+end
 
 function Hub.OpenClub(gui: ScreenGui, getData: () -> any)
 	window(gui, "Club", "Kulüp Tesisleri", 900, 640, function(body)
@@ -398,7 +410,9 @@ function Hub.OpenClub(gui: ScreenGui, getData: () -> any)
 			icon.Position = UDim2.fromOffset(16, 18)
 			icon.Parent = row
 			text(row, Theme.Upper(f.Name), 16, C.White, 68, 12, 320, 22)
-			text(row, FACILITY_INFO[id] or "", 12, C.Muted, 68, 36, 380, 18, Theme.Font.Body)
+			local info = text(row, facilityInfo(id, level, f.Max), 12, C.Muted, 68, 34, 390, 34, Theme.Font.Body)
+			info.TextWrapped = true
+			info.TextYAlignment = Enum.TextYAlignment.Top
 			for k = 1, f.Max do
 				local pip = Instance.new("Frame")
 				pip.Size = UDim2.fromOffset(34, 12)

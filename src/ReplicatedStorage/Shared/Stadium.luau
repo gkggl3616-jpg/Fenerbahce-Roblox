@@ -645,8 +645,36 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		)
 	end
 
-	if tier == 1 then
-		-- yıpranmış çim: kale önleri ve orta saha toprak
+	local grassLv = fac.Cim or 0
+	if grassLv >= 2 then
+		-- bakımlı çim: enine biçme desenleri (seviye 3'te dama deseni)
+		for i = 0, 19 do
+			if i % 2 == 0 then
+				local strip = part(
+					Vector3.new(hx * 2, 0.02, hz * 2 / 20),
+					CFrame.new(0, gy + 0.015, midZ - hz + (i + 0.5) * hz * 2 / 20),
+					rgb(64, 168, 84),
+					Enum.Material.Grass
+				)
+				strip.Transparency = if grassLv >= 3 then 0.45 else 0.6
+			end
+		end
+		if grassLv >= 3 then
+			for i = 0, 11 do
+				if i % 2 == 0 then
+					local strip = part(
+						Vector3.new(hx * 2 / 12, 0.02, hz * 2),
+						CFrame.new(-hx + (i + 0.5) * hx * 2 / 12, gy + 0.016, midZ),
+						rgb(38, 128, 60),
+						Enum.Material.Grass
+					)
+					strip.Transparency = 0.7
+				end
+			end
+		end
+	end
+	if tier == 1 and grassLv == 0 then
+		-- yıpranmış çim: kale önleri ve orta saha toprak (çim tesisi geliştirilince kalkar)
 		local dirt = rgb(132, 110, 76)
 		for _, s in ipairs({ { 0, -hz + 14, 34, 22 }, { 0, hz - 14, 34, 22 }, { 0, 0, 22, 22 }, { -50, 60, 26, 16 }, { 56, -70, 30, 18 } }) do
 			local d = part(
@@ -686,7 +714,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		stand(FR.E, { len = 150 + 40 * (fac.TribunEki or 0), margin = 22, depth = 14, y0 = 3, rise = 7, density = 0.4 })
 		fence(20, 24, 8)
 		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			tower(c[1] * (hx + 46), c[2] * (hz + 10), 62, 8, false)
+			tower(c[1] * (hx + 46), c[2] * (hz + 10), 62, 8, (fac.Aydinlatma or 0) >= 1)
 		end
 		screen(FR.N * CFrame.new(0, 16, 30), 40, 16, false)
 		ext = 80
@@ -699,7 +727,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		stand(FR.N, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.6 })
 		stand(FR.S, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.55 })
 		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
-			tower(c[1] * (hx + 64), c[2] * (hz + 44), 96, 12, false)
+			tower(c[1] * (hx + 64), c[2] * (hz + 44), 96, 12, (fac.Aydinlatma or 0) >= 1)
 		end
 		screen(FR.N * CFrame.new(0, 26, 52), 56, 22, false)
 		ext = 110
@@ -839,6 +867,12 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 
 	if withMood then
 		mood(Config.Tiers[tier].Light)
+		-- aydınlatma tesisi: maç ışığı daha parlak
+		local lightLv = fac.Aydinlatma or 0
+		if lightLv > 0 then
+			Lighting.Brightness *= 1 + lightLv * Config.FacilityEffects.Aydinlatma.Light
+			Lighting.ExposureCompensation += lightLv * 0.08
+		end
 	end
 end
 

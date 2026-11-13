@@ -97,11 +97,120 @@ local function ensureFx()
 	fxPart, dust = p, e
 end
 
+local updateWind: (BasePart, boolean, number, number) -> ()
+
 local function puff(pos: Vector3, count: number)
 	ensureFx()
 	if fxPart and dust then
 		fxPart.CFrame = CFrame.new(pos)
 		dust:Emit(count)
+	end
+end
+
+-- Rüzgâr: gövdenin iki yanında ve başın üstünde ince beyaz izler (Trail) + akan hava parçacıkları;
+-- ekranda kenarlardan merkeze akan hız çizgileri. Yalnız depar sırasında görünür.
+local wind: { trails: { Trail }, emitter: ParticleEmitter?, lines: { Frame }, holder: Frame?, char: Instance? } =
+	{ trails = {}, lines = {} }
+local function buildWind(hrp: BasePart)
+	for _, t in ipairs(wind.trails) do
+		t:Destroy()
+	end
+	wind.trails = {}
+	-- üç iz: sol omuz, sağ omuz, baş üstü (her biri bir çift eklenti)
+	for _, off in ipairs({ { -1.3, 0.9 }, { 1.3, 0.9 }, { 0, 2.3 }, { -0.7, -1.6 }, { 0.7, -1.6 } }) do
+		local a0 = Instance.new("Attachment")
+		a0.Name = "FK_Wind"
+		a0.Position = Vector3.new(off[1], off[2], 0.4)
+		a0.Parent = hrp
+		local a1 = Instance.new("Attachment")
+		a1.Name = "FK_Wind"
+		a1.Position = Vector3.new(off[1], off[2] + 0.12, 0.4)
+		a1.Parent = hrp
+		local t = Instance.new("Trail")
+		t.Name = "FK_Wind"
+		t.Attachment0 = a0
+		t.Attachment1 = a1
+		t.Color = ColorSequence.new(Color3.fromRGB(235, 245, 255))
+		t.LightEmission = 0.8
+		t.Lifetime = 0.22
+		t.MinLength = 0.05
+		t.FaceCamera = true
+		t.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+		t.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) })
+		t.Enabled = false
+		t.Parent = hrp
+		table.insert(wind.trails, t)
+	end
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "FK_Wind"
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(Color3.fromRGB(230, 240, 255))
+	e.LightEmission = 0.6
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.12), NumberSequenceKeypoint.new(1, 0.02) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+	e.Lifetime = NumberRange.new(0.18, 0.3)
+	e.Speed = NumberRange.new(26, 34)
+	e.EmissionDirection = Enum.NormalId.Back
+	e.SpreadAngle = Vector2.new(12, 12)
+	e.Rate = 0
+	e.Parent = hrp
+	wind.emitter = e
+	wind.char = hrp
+end
+
+local function windLines(root: Instance)
+	if wind.holder and wind.holder.Parent then
+		return
+	end
+	local holder = Instance.new("Frame")
+	holder.Name = "SpeedLines"
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromScale(1, 1)
+	holder.ZIndex = 0
+	holder.Parent = root
+	wind.holder = holder
+	wind.lines = {}
+	for i = 1, 18 do
+		local l = Instance.new("Frame")
+		l.BorderSizePixel = 0
+		l.BackgroundColor3 = Color3.new(1, 1, 1)
+		l.AnchorPoint = Vector2.new(0.5, 0.5)
+		l.BackgroundTransparency = 1
+		local side = if i % 2 == 0 then 1 else -1
+		local y = ((i * 37) % 100) / 100
+		l.Position = UDim2.fromScale(0.5 + side * (0.36 + ((i * 13) % 12) / 100), y)
+		l.Size = UDim2.fromOffset(140 + (i * 23) % 120, 3)
+		l.Rotation = side * (y - 0.5) * -28
+		l:SetAttribute("Side", side)
+		l:SetAttribute("Y", y)
+		l.Parent = holder
+		table.insert(wind.lines, l)
+	end
+end
+
+updateWind = function(hrp: BasePart, on: boolean, speed: number, dt: number)
+	if wind.char ~= hrp then
+		buildWind(hrp)
+	end
+	for _, t in ipairs(wind.trails) do
+		t.Enabled = on
+	end
+	if wind.emitter then
+		wind.emitter.Rate = if on then 60 else 0
+	end
+	if ui.root then
+		windLines(ui.root)
+	end
+	local k = if on then math.clamp((speed - M.Run) / (M.Sprint - M.Run), 0, 1) else 0
+	for i, l in ipairs(wind.lines) do
+		local side = l:GetAttribute("Side") or 1
+		-- çizgiler kenardan merkeze kayar, sonra başa döner
+		local x = l.Position.X.Scale - side * dt * (0.9 + (i % 4) * 0.25) * k
+		if math.abs(x - 0.5) < 0.26 or k == 0 then
+			x = 0.5 + side * (0.4 + ((i * 13) % 10) / 100)
+		end
+		l.Position = UDim2.fromScale(x, l.Position.Y.Scale)
+		l.BackgroundTransparency = 1 - k * (0.25 + (i % 3) * 0.12) * math.clamp((math.abs(x - 0.5) - 0.26) * 6, 0, 1)
 	end
 end
 
@@ -681,7 +790,10 @@ local function onEvent(event: string, action: string)
 				dir = hum.MoveDirection,
 				speed = state.speed,
 				sprinting = action == "sprint",
-				control = stat("TopKontrolu"),
+				-- çim kalitesi tesisi maçta top kontrolünü artırır
+				control = stat("TopKontrolu") + (if matchApi
+					then Config.FacilityLevel(state.getData and state.getData(), "Cim") * Config.FacilityEffects.Cim.Control
+					else 0),
 			})
 		end
 	elseif event == "end" then
@@ -734,7 +846,9 @@ local function step(dt: number)
 			banner("Yoruldun", C.Bad)
 		end
 	else
-		state.stamina = math.min(M.StaminaMax, state.stamina + M.Regen * dt * (if moving then 0.6 else 1))
+		-- sağlık merkezi tesisi yenilenmeyi hızlandırır
+		local health = 1 + Config.FacilityLevel(state.getData and state.getData(), "Saglik") * Config.FacilityEffects.Saglik.Regen
+		state.stamina = math.min(M.StaminaMax, state.stamina + M.Regen * health * dt * (if moving then 0.6 else 1))
 		-- Yorgunluk, sprint tuşu bırakılmadan geçmez: tuş basılıyken hız gidip gelmesin
 		if state.tired and state.stamina >= M.TiredUntil and not state.sprintHeld then
 			state.tired = false
@@ -789,6 +903,16 @@ local function step(dt: number)
 		turn = turn,
 		vy = vel.Y,
 	})
+
+	-- depar: karakterde rüzgâr çizgileri, ekran kenarında hız çizgileri, kalkışta toz ve ses
+	local sprinting = wantSprint and state.speed > M.Run + 2
+	updateWind(hrp, sprinting, state.speed, dt)
+	if sprinting and not state.wasSprinting then
+		puff(hrp.Position - Vector3.new(0, 2.8, 0) - hrp.CFrame.LookVector * 1.5, 12)
+		UIMotion.Sound("WhooshSound", 1.15)
+		banner("Depar!", C.Yellow)
+	end
+	state.wasSprinting = sprinting
 
 	-- turbo parlaması
 	local turbo = os.clock() < state.turboUntil
@@ -1098,7 +1222,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		place(roundButton("Orta", 76, false, cross), 250, 220)
 		place(roundButton("Top", 76, false, fetchBall), 340, 220)
 		place(
-			roundButton("Sprint", 88, false, function()
+			roundButton("Depar", 88, false, function()
 				state.sprintHeld = true
 			end, function()
 				state.sprintHeld = false
@@ -1123,7 +1247,7 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 		hp.Parent = root
 		ui.keysPanel = hp
 		local lines = {
-			{ "WASD", "Koş  ·  Shift: sprint" },
+			{ "WASD", "Koş  ·  Shift: depar (rüzgâr efekti)" },
 			{ "Sol tık", "Şut: basılı tut, yeşilde bırak" },
 			{ "", "Top sende değilse: müdahale" },
 			{ "Sağ tık", 'Pas  ·  topsuzken: "pas ver!"' },
