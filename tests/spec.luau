@@ -315,7 +315,7 @@ do
 	check("gövde temel şekillerden kurulur (40+ parça)", extras >= 40, extras)
 	check("hazır gövde parçaları gizlenir", visibleBody == 0, visibleBody)
 	check("forma, kol, şort, çorap ve şerit etiketli", roles.Shirt and roles.Sleeve and roles.Shorts and roles.Sock and roles.Trim)
-	check("forma (göğüs ve bel blokları, ön ve arka) ve yüz çizilir", kit == 5, kit)
+	check("forma (gövdeye oturan ön ve arka baskı levhaları) ve yüz çizilir", kit == 3, kit)
 	check("hazır yüz çıkartması kaldırılır", not faceDecal)
 end
 local Bots = require(__tree.Match.Bots)
@@ -1678,6 +1678,8 @@ do
 			end
 		end
 		-- kariyer sayfası: istatistik, kupa dolabı, başarımlar
+		HubS.Close()
+		frames(30)
 		local CareerS = require(__tree.Screens.Career)
 		local cdata = getData()
 		cdata.career = {
@@ -1689,7 +1691,7 @@ do
 			promotions = 1,
 			trophies = { { league = Config.Tiers[1].League, season = 1, points = 22 } },
 		}
-		cdata.achievements = { IlkGol = 1, IlkGalibiyet = 1, Gol10 = 1, HatTrick = 1, LigAtla = 1 }
+		cdata.achievements = { IlkGol = 1, IlkGalibiyet = 1, Gol10 = 1, HatTrick = 1, LigAtla = 1, Kaptan = 1 }
 		CareerS.Open(lobby, function()
 			return cdata
 		end)

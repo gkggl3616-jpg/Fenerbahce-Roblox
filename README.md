@@ -22,6 +22,12 @@ Rojo kurmak gerekmez. Kod değişirse dosyayı yeniden üretmek için: `python3 
 - Ofsayt: pas anında son ikinci savunmacının ilerisindeki oyuncu topla buluşursa çalınır (santra, taç, korner, aut ve serbest vuruştan sonraki ilk paslarda aranmaz). Elle oynama yok.
 - Devre arası ekranı: özet, ikinci yarı emri ve oyuncu değişikliği (5 yedek, 3 hak; oyuncunun kendisi değiştirilemez). Rakip 62. dakikada bir değişiklik yapar. Oyuncular sahada kaldıkça yorulur, giren oyuncu dinçtir.
 - Maç sonu: oyuncu puanları (3,5-10) ve maçın adamı; gol ve asist oyuncuya yazılır.
+- Karakter: hazır R15 gövdesi gizlenir; görünen gövde (yuvarlak yanlı gövde kesiti, V gövde, kas hatları, çene, eller, krampon) kodla kurulur. Forma deseni, isim, numara ve arma düz ön/arka yüzlere basılır.
+- Depar: Shift (mobilde "Depar"); kalkışta toz ve ses, gövdede rüzgâr izleri ve hava parçacıkları, ekran kenarında hız çizgileri.
+- Tesislerin gerçek etkileri: Çim (maçta top kontrolü +0,6/seviye, toprak kalkar), Tribün eki (kasa geliri +%20/seviye), Aydınlatma (projektörler, daha parlak ışık), Soyunma (maç XP +%10/seviye), Antrenman sahası (antrenman ödülü +%50/seviye), Sağlık (dayanıklılık yenilenmesi +%15/seviye).
+- Yetenek ağacı: hareket önizlemesi (üstüne gelinen hareketi forma giymiş oyuncu oynar), açılma efektleri.
+- Mağaza topları farklı desenlerde (klasik, kuşak, yıldız, dikiş, yaldızlı). Sıralamada ilk üçe madalya.
+- Maç spikeri, yağmurlu maçlar (2. kademeden itibaren yaklaşık 1/4), başarımlar ve kariyer/kupa dolabı sayfası.
 - Maç öncesi kadro ekranı: iki kulüp, armalar, teknik direktörler, 11'ler ve oyuncu özellikleri (`Shared/Squads.luau`).
 
 ## Çalıştırma

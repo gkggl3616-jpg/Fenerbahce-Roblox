@@ -1331,7 +1331,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 	}
 	Remotes.Get("MatchStart"):FireServer()
 	Stadium.Build(if data.career and data.career.atFenerbahce then 6 else data.club.tier, {
-		club = data.club.name,
+		club = if data.career and data.career.atFenerbahce then "Fenerbahçe" else data.club.name,
 		abbr = data.club.abbr,
 		facilities = data.club.facilities,
 	})

@@ -148,7 +148,7 @@ end
 -- yeni tipte parça ölçüsü doğrudan baştır.
 -- Görünen baş, iskeletin baş parçasından küçüktür (sporcu oranı); aşağı kaydırılır ki boyuna otursun.
 -- Döner: genişlik, yükseklik, dikey kayma
-local HEAD_W, HEAD_H = 0.82, 0.88
+local HEAD_W, HEAD_H = 0.76, 0.82
 local function headDims(head: BasePart): (number, number, number)
 	local s = head.Size
 	local mesh = head:FindFirstChildOfClass("SpecialMesh")
@@ -305,79 +305,180 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 	local ut = part("UpperTorso")
 	if ut then
 		local s = ut.Size
-		-- Gövde kesiti gerçek gövdeye yakın: önü ve arkası düz, yanları yuvarlak (iki yanında dikey
-		-- silindir). Alttaki bel bloğu dar, üstteki göğüs bloğu geniş: V gövde. Desen, isim, numara ve
-		-- arma düz ön ve arka yüzlere basılır.
-		local function prism(center: Vector3, w: number, h: number, d: number): BasePart
-			local core = tag(weldPart(character, ut, Vector3.new(w - d, h, d), CFrame.new(center), kit.Shirt), "Shirt")
-			for _, sx in ipairs({ -1, 1 }) do
-				T(ut, center.Y + h / 2, center.Y - h / 2, d / 2, center.X + sx * (w - d) / 2, kit.Shirt, "Shirt").CFrame *= CFrame.new(
-					0,
-					0,
-					0
-				)
+		-- Gerçek gövdeden esinlenen biçim: göğüs ve sırtta en geniş, bele doğru düzgünce daralan
+		-- (V gövde), forma ucunda hafif açılan profil; omuzlar yuvarlak. Kesit: önü ve arkası düz,
+		-- yanları yuvarlak. Her bölüm, düz yüzü taşıyan bir kutu, iki yanda eğik silindir ve aradaki
+		-- üçgeni dolduran eğik kutudan kurulur; yanlar basamaksız daralır.
+		local d = s.Z * 0.62
+		local back = s.Z * 0.3
+		local cz = back - d / 2
+		-- profil: (yükseklik, genişlik), gövde ölçüsüne oranla, yukarıdan aşağı
+		local PROFILE = { { 0.44, 0.86 }, { 0.2, 0.9 }, { -0.3, 0.74 }, { -0.56, 0.77 } }
+		local function widthAt(y: number): number
+			for i = 1, #PROFILE - 1 do
+				local p, q = PROFILE[i], PROFILE[i + 1]
+				if y <= p[1] and y >= q[1] then
+					return p[2] + (q[2] - p[2]) * (p[1] - y) / (p[1] - q[1])
+				end
 			end
-			return core
+			return if y > PROFILE[1][1] then PROFILE[1][2] else PROFILE[#PROFILE][2]
 		end
-		local waistH, chestH = s.Y * 1.0, s.Y * 0.5
-		local waist = prism(Vector3.new(0, -s.Y * 0.04, 0), s.X * 0.76, waistH, s.Z * 0.6)
-		local chest = prism(Vector3.new(0, s.Y * 0.24, -s.Z * 0.01), s.X * 0.88, chestH, s.Z * 0.64)
-		-- göğüs bloğunun alt kenarını yumuşatan yassı elips ve omuz hattı (trapez)
-		B(ut, Vector3.new(s.X * 0.86, s.Y * 0.22, s.Z * 0.64), Vector3.new(0, s.Y * (0.24 - 0.25), -s.Z * 0.01), kit.Shirt, "Shirt")
-		B(ut, Vector3.new(s.X * 0.6, s.Y * 0.3, s.Z * 0.52), Vector3.new(0, s.Y * 0.47, s.Z * 0.04), kit.Shirt, "Shirt")
-		-- desen ve baskı: iki bloğun ön ve arka yüzlerine
-		for _, blk in ipairs({ { waist, waistH, -s.Y * 0.04 }, { chest, chestH, s.Y * 0.24 } }) do
-			local box, h, cy = blk[1], blk[2], blk[3]
-			for _, face in ipairs({ Enum.NormalId.Front, Enum.NormalId.Back }) do
-				local sg = surface(box, face)
-				sg.CanvasSize = Vector2.new(200, math.floor(200 * h / box.Size.X))
-				if kit.Pattern == "Cubuklu" then
-					for k = 0, 4 do
-						if k % 2 == 1 then
-							local f = Instance.new("Frame")
-							f.Name = "Stripe"
-							f.BorderSizePixel = 0
-							f.BackgroundColor3 = kit.Stripe
-							f.Size = UDim2.fromScale(0.2, 1)
-							f.Position = UDim2.fromScale(k * 0.2, 0)
-							f.Parent = sg
-						end
+		local kusak = kit.Pattern == "Kusakli"
+		local BAND_HI, BAND_LO = 0.2, 0.02 -- kuşaklı formada göğüs kuşağı (gövdeyi saran şerit)
+		local cuts = {}
+		for _, p in ipairs(PROFILE) do
+			table.insert(cuts, p[1])
+		end
+		if kusak then
+			table.insert(cuts, BAND_LO)
+		end
+		table.sort(cuts, function(u, v)
+			return u > v
+		end)
+		local function segment(y1: number, y2: number, c: Color3, role: string)
+			local w1, w2 = s.X * widthAt(y1), s.X * widthAt(y2)
+			y1, y2 = y1 * s.Y, y2 * s.Y
+			local wMin = math.min(w1, w2)
+			tag(weldPart(character, ut, Vector3.new(wMin - d, y1 - y2, d), CFrame.new(0, (y1 + y2) / 2, cz), c), role)
+			for _, sx in ipairs({ -1, 1 }) do
+				local top = Vector3.new(sx * (w1 - d) / 2, y1, cz)
+				local bot = Vector3.new(sx * (w2 - d) / 2, y2, cz)
+				local axis = top - bot
+				local len = axis.Magnitude
+				local ang = math.atan2(axis.Y, axis.X)
+				local mid = (top + bot) / 2
+				-- yan: eğik silindir (Roblox silindirinin ekseni parçanın X ekseni)
+				local cyl = weldPart(
+					character,
+					ut,
+					Vector3.new(len + s.Y * 0.02, d, d),
+					CFrame.new(mid) * CFrame.Angles(0, 0, ang),
+					c,
+					Enum.PartType.Cylinder
+				)
+				tag(cyl, role)
+				local dw = math.abs(w1 - w2) / 2
+				if dw > 0.005 then
+					-- dolgu: dış yüzü silindir ekseninde, içe doğru kutuya kadar uzanır; ön yüzü
+					-- kutunun biraz gerisinde kalır ki baskı ve desen örtülmesin
+					local th = dw + s.X * 0.03
+					local dir = axis.Unit
+					local n = Vector3.new(-dir.Y, dir.X, 0)
+					if n.X * sx > 0 then
+						n = -n
 					end
-				elseif kit.Pattern == "Kusakli" and not (box == waist and face == Enum.NormalId.Back) then
-					-- (arkadaki numara kuşağın üstüne düşmesin diye sırtta kuşak yok)
-					-- kuşak gövdede aynı yükseklikte: bloğa göre konum hesaplanır
-					local bandY, bandH = s.Y * 0.1, s.Y * 0.2
-					local top = cy + h / 2
-					local y0 = (top - (bandY + bandH / 2)) / h
-					local f = Instance.new("Frame")
-					f.Name = "Stripe"
-					f.BorderSizePixel = 0
-					f.BackgroundColor3 = kit.Stripe
-					f.Size = UDim2.fromScale(1, bandH / h)
-					f.Position = UDim2.fromScale(0, y0)
-					f.Parent = sg
-				end
-				if box == waist and face == Enum.NormalId.Back then
-					if (look.name or "") ~= "" then
-						text(sg, Theme.Upper(look.name), UDim2.fromScale(0.96, 0.16), UDim2.fromScale(0.02, 0.0), kit.Ink, kit.InkStroke)
-					end
-					text(sg, tostring(look.number or 9), UDim2.fromScale(0.8, 0.5), UDim2.fromScale(0.1, 0.16), kit.Ink, kit.InkStroke)
-				elseif box == chest and face == Enum.NormalId.Front then
-					local holder = Instance.new("Frame")
-					holder.Name = "FK_Crest"
-					holder.BackgroundTransparency = 1
-					holder.Size = UDim2.fromScale(0.26, 0.5)
-					holder.Position = UDim2.fromScale(0.64, 0.2)
-					holder.Parent = sg
-					local ar = Instance.new("UIAspectRatioConstraint")
-					ar.Parent = holder
-					Crest.Fill(
-						holder,
-						look.crest or Crest.Default(),
-						if look.atFenerbahce then "FB" elseif (look.abbr or "") ~= "" then look.abbr else "FB"
+					local fill = weldPart(
+						character,
+						ut,
+						Vector3.new(th, len, d - 0.012),
+						CFrame.new(mid + n * (th / 2)) * CFrame.Angles(0, 0, ang - math.pi / 2),
+						c
 					)
-					text(sg, tostring(look.number or 9), UDim2.fromScale(0.2, 0.4), UDim2.fromScale(0.12, 0.24), kit.Ink, kit.InkStroke)
+					tag(fill, role)
 				end
+			end
+		end
+		for i = 1, #cuts - 1 do
+			local y1, y2 = cuts[i], cuts[i + 1]
+			local inBand = kusak and y1 <= BAND_HI + 1e-6 and y2 >= BAND_LO - 1e-6
+			segment(y1, y2, if inBand then kit.Stripe else kit.Shirt, if inBand then "Stripe" else "Shirt")
+		end
+		-- omuz kuşağı: boyundan omuz başına inen yuvarlak hat (trapez kası), gövdenin düz üst
+		-- köşelerini örter
+		B(ut, Vector3.new(s.X * 0.94, s.Y * 0.42, d * 0.98), Vector3.new(0, s.Y * 0.38, cz), kit.Shirt, "Shirt")
+
+		-- Baskı: gövdenin düz önüne ve arkasına oturan ince görünmez levhalar. Çubuklar gövdeyle
+		-- birlikte daralır (her bölümde eğik şerit), arma göğüste, isim ve numara sırtta.
+		local top, bottom = s.Y * PROFILE[1][1], s.Y * PROFILE[#PROFILE][1]
+		local pw = s.X * 0.9 - d
+		local ph = top - bottom
+		local PPS = 100
+		for _, face in ipairs({ Enum.NormalId.Front, Enum.NormalId.Back }) do
+			local front = face == Enum.NormalId.Front
+			local sg = printPlate(
+				character,
+				ut,
+				Vector3.new(pw, ph, 0.02),
+				CFrame.new(0, (top + bottom) / 2, if front then cz - d / 2 - 0.012 else back + 0.012),
+				face
+			)
+			sg.Name = if front then "FK_Front" else "FK_Back"
+			sg.CanvasSize = Vector2.new(math.floor(pw * PPS), math.floor(ph * PPS))
+			-- gövde noktası (x, y) → tuval pikseli; önden bakınca karakterin solu (+X değil -X) sağda
+			local function px(x: number, y: number): Vector2
+				local u = if front then (pw / 2 - x) else (x + pw / 2)
+				return Vector2.new(u * PPS, (top - y) * PPS)
+			end
+			if kit.Pattern == "Cubuklu" then
+				-- dokuz şerit, lacivertler çift sıradakiler; her şerit gövdenin o yükseklikteki düz
+				-- genişliğine göre konumlanır (u: -1 sol kenar, 1 sağ kenar)
+				for k = 1, 7, 2 do
+					local u = -1 + (k + 0.5) * 2 / 9
+					local half = 1 / 9
+					for i = 1, #PROFILE - 1 do
+						local ya, yb = s.Y * PROFILE[i][1], s.Y * PROFILE[i + 1][1]
+						local fa, fb = (s.X * PROFILE[i][2] - d) / 2, (s.X * PROFILE[i + 1][2] - d) / 2
+						local a, b = px(u * fa, ya), px(u * fb, yb)
+						local v = a - b
+						local f = Instance.new("Frame")
+						f.Name = "Stripe"
+						f.BorderSizePixel = 0
+						f.BackgroundColor3 = kit.Stripe
+						f.AnchorPoint = Vector2.new(0.5, 0.5)
+						f.Position = UDim2.fromOffset((a.X + b.X) / 2, (a.Y + b.Y) / 2)
+						f.Size = UDim2.fromOffset(half * (fa + fb) * PPS, math.sqrt(v.X * v.X + v.Y * v.Y) + 2)
+						f.Rotation = math.deg(math.atan2(v.X, -v.Y))
+						f.Parent = sg
+					end
+				end
+			end
+			if front then
+				local holder = Instance.new("Frame")
+				holder.Name = "FK_Crest"
+				holder.BackgroundTransparency = 1
+				holder.AnchorPoint = Vector2.new(0.5, 0.5)
+				local c = px(-pw * 0.24, s.Y * 0.28)
+				holder.Position = UDim2.fromOffset(c.X, c.Y)
+				holder.Size = UDim2.fromOffset(pw * 0.27 * PPS, pw * 0.27 * PPS)
+				holder.Parent = sg
+				local ar = Instance.new("UIAspectRatioConstraint")
+				ar.Parent = holder
+				Crest.Fill(
+					holder,
+					look.crest or Crest.Default(),
+					if look.atFenerbahce then "FB" elseif (look.abbr or "") ~= "" then look.abbr else "FB"
+				)
+				local nc = px(pw * 0.24, s.Y * 0.28)
+				local nw = pw * 0.2 * PPS
+				text(
+					sg,
+					tostring(look.number or 9),
+					UDim2.fromOffset(nw, nw * 1.2),
+					UDim2.fromOffset(nc.X - nw / 2, nc.Y - nw * 0.6),
+					kit.Ink,
+					kit.InkStroke
+				)
+			else
+				local nameTop = px(0, s.Y * 0.36)
+				if (look.name or "") ~= "" then
+					text(
+						sg,
+						Theme.Upper(look.name),
+						UDim2.fromOffset(pw * 0.86 * PPS, s.Y * 0.11 * PPS),
+						UDim2.fromOffset(pw * 0.07 * PPS, nameTop.Y),
+						kit.Ink,
+						kit.InkStroke
+					)
+				end
+				local numTop = px(0, s.Y * 0.22)
+				text(
+					sg,
+					tostring(look.number or 9),
+					UDim2.fromOffset(pw * 0.7 * PPS, s.Y * 0.46 * PPS),
+					UDim2.fromOffset(pw * 0.15 * PPS, numTop.Y),
+					kit.Ink,
+					kit.InkStroke
+				)
 			end
 		end
 		local neck0 = pivots(character, "Neck")

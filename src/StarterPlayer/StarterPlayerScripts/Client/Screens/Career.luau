@@ -206,7 +206,7 @@ local function draw()
 		label(card, Theme.Upper(a.Name), 14, if done then C.White else C.Text, 50, 6, 210, 18)
 		label(card, a.Text, 11, C.Muted, 50, 24, 210, 14, Theme.Font.Body)
 		local barBg = Instance.new("Frame")
-		barBg.Size = UDim2.fromOffset(140, 6)
+		barBg.Size = UDim2.fromOffset(112, 6)
 		barBg.Position = UDim2.fromOffset(50, 46)
 		barBg.BackgroundColor3 = C.Ground
 		barBg.BorderSizePixel = 0
@@ -223,9 +223,9 @@ local function draw()
 			if done then "+" .. a.Coins .. " ✓" else value .. "/" .. a.Goal .. " · +" .. a.Coins,
 			11,
 			if done then C.Gold else C.Muted,
-			196,
+			166,
 			40,
-			64,
+			94,
 			16,
 			Theme.Font.Number,
 			Enum.TextXAlignment.Right
