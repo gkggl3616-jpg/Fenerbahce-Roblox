@@ -121,6 +121,8 @@ CF.__index = function(c, k)
 		return c.p.Y
 	elseif k == "Z" then
 		return c.p.Z
+	elseif k == "Rotation" then
+		return mk(V3.new(0, 0, 0), c.r)
 	end
 	return CF[k]
 end
@@ -143,6 +145,12 @@ function CF:Inverse()
 	local r = self.r
 	local t = { r[1], r[4], r[7], r[2], r[5], r[8], r[3], r[6], r[9] }
 	return mk(-mvec(t, self.p), t)
+end
+function CF:ToObjectSpace(o)
+	return self:Inverse() * o
+end
+function CF:PointToObjectSpace(v)
+	return self:Inverse() * v
 end
 CFrame = {
 	new = function(x, y, z)
@@ -174,6 +182,10 @@ CFrame = {
 			t * y * z + s * x,
 			t * z * z + c,
 		})
+	end,
+	fromMatrix = function(pos, xv, yv, zv)
+		zv = zv or xv:Cross(yv)
+		return mk(pos, { xv.X, yv.X, zv.X, xv.Y, yv.Y, zv.Y, xv.Z, yv.Z, zv.Z })
 	end,
 	lookAt = function(from, to)
 		local f = (to - from).Unit
@@ -467,10 +479,18 @@ function Inst:IsA(class)
 		or (class == "LuaSourceContainer" and (self.ClassName == "Script" or self.ClassName == "LocalScript"))
 		or class == "Instance"
 end
-function Inst:FindFirstChild(name)
+function Inst:FindFirstChild(name, recursive)
 	for _, c in ipairs(self.__children) do
 		if c.Name == name then
 			return c
+		end
+	end
+	if recursive then
+		for _, c in ipairs(self.__children) do
+			local f = c:FindFirstChild(name, true)
+			if f then
+				return f
+			end
 		end
 	end
 	return nil
@@ -770,12 +790,13 @@ moduleNode("Crest", SRC .. "ReplicatedStorage/Shared/Crest.luau", shared)
 moduleNode("Squads", SRC .. "ReplicatedStorage/Shared/Squads.luau", shared)
 moduleNode("Stadium", SRC .. "ReplicatedStorage/Shared/Stadium.luau", shared)
 moduleNode("Remotes", SRC .. "ReplicatedStorage/Shared/Remotes.luau", shared)
+moduleNode("MeshRig", SRC .. "ReplicatedStorage/Shared/MeshRig.luau", shared)
 local uiF = folder("UI", rs)
 for _, n in ipairs({ "Theme", "UIMotion", "Icons", "Components", "Forms" }) do
 	moduleNode(n, SRC .. "ReplicatedStorage/UI/" .. n .. ".luau", uiF)
 end
 local server = folder("Server", service("ServerScriptService"))
-for _, n in ipairs({ "DataService", "PlayerService", "CharacterService" }) do
+for _, n in ipairs({ "DataService", "PlayerService", "CharacterService", "MeshBody" }) do
 	moduleNode(n, SRC .. "ServerScriptService/Server/" .. n .. ".luau", server)
 end
 local client = folder("Client", service("StarterPlayer"))

@@ -1,5 +1,5 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
-<Item class="ReplicatedStorage" referent="RBX14"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX7"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ReplicatedStorage" referent="RBX15"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX8"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[--[[
 	Config
 	Oyundaki bütün ayar sayıları, renkler, kademeler ve yetenek zincirleri burada durur.
 	Başka hiçbir modül sabit sayı gömmez; hepsi buradan okur.
@@ -986,7 +986,179 @@ end
 
 return Kits
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Remotes</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">MeshRig</string><ProtectedString name="Source"><![CDATA[--[[
+	MeshRig (otomatik üretildi: tools/meshgen/oyuncu_r15.py)
+	FK_Oyuncu mesh gövdesinin iskeleti: parça merkezleri ve ölçüleri, eklem noktaları,
+	kalça yüksekliği ve forma baskı yerleri. Karakter uzayı: ayaklar y=0, yüz -Z, sağ el +X.
+	Elle düzenleme; betiği yeniden çalıştır.
+]]
+
+return {
+	Height = 5.3000,
+	HipHeight = 1.7560,
+	Joints = {
+		LeftAnkle = {
+			Part0 = "LeftLowerLeg",
+			Part1 = "LeftFoot",
+			Pivot = Vector3.new(-0.5141, 0.3180, 0.1843),
+		},
+		LeftElbow = {
+			Part0 = "LeftUpperArm",
+			Part1 = "LeftLowerArm",
+			Pivot = Vector3.new(-0.6787, 3.1985, -0.0000),
+		},
+		LeftHip = {
+			Part0 = "LowerTorso",
+			Part1 = "LeftUpperLeg",
+			Pivot = Vector3.new(-0.2810, 2.6500, -0.0000),
+		},
+		LeftKnee = {
+			Part0 = "LeftUpperLeg",
+			Part1 = "LeftLowerLeg",
+			Pivot = Vector3.new(-0.4354, 1.5105, 0.0541),
+		},
+		LeftShoulder = {
+			Part0 = "UpperTorso",
+			Part1 = "LeftUpperArm",
+			Pivot = Vector3.new(-0.6307, 3.8849, -0.0000),
+		},
+		LeftWrist = {
+			Part0 = "LeftLowerArm",
+			Part1 = "LeftHand",
+			Pivot = Vector3.new(-0.7181, 2.6369, -0.0000),
+		},
+		Neck = {
+			Part0 = "UpperTorso",
+			Part1 = "Head",
+			Pivot = Vector3.new(0.0000, 4.4785, -0.0000),
+		},
+		RightAnkle = {
+			Part0 = "RightLowerLeg",
+			Part1 = "RightFoot",
+			Pivot = Vector3.new(0.5174, 0.3180, 0.1776),
+		},
+		RightElbow = {
+			Part0 = "RightUpperArm",
+			Part1 = "RightLowerArm",
+			Pivot = Vector3.new(0.6774, 3.2181, -0.0000),
+		},
+		RightHip = {
+			Part0 = "LowerTorso",
+			Part1 = "RightUpperLeg",
+			Pivot = Vector3.new(0.2906, 2.6500, -0.0000),
+		},
+		RightKnee = {
+			Part0 = "RightUpperLeg",
+			Part1 = "RightLowerLeg",
+			Pivot = Vector3.new(0.4430, 1.5105, 0.0412),
+		},
+		RightShoulder = {
+			Part0 = "UpperTorso",
+			Part1 = "RightUpperArm",
+			Pivot = Vector3.new(0.6307, 3.8849, -0.0000),
+		},
+		RightWrist = {
+			Part0 = "RightLowerArm",
+			Part1 = "RightHand",
+			Pivot = Vector3.new(0.7156, 2.6725, -0.0000),
+		},
+		Root = {
+			Part0 = "HumanoidRootPart",
+			Part1 = "LowerTorso",
+			Pivot = Vector3.new(0.0000, 2.7560, -0.0000),
+		},
+		Waist = {
+			Part0 = "LowerTorso",
+			Part1 = "UpperTorso",
+			Pivot = Vector3.new(0.0000, 3.1800, -0.0000),
+		},
+	},
+	Landmarks = {
+		ChinY = 4.5314,
+		LeftShortsT = 0.8242,
+		LeftSleeveT = 0.3125,
+		LeftSockT = 0.1981,
+		MouthY = 4.6473,
+		NoseY = 4.7889,
+		RightShortsT = 0.8242,
+		RightSleeveT = 0.3125,
+		RightSockT = 0.1981,
+	},
+	Parts = {
+		Head = {
+			Center = Vector3.new(0.0014, 4.8580, -0.0277),
+			Size = Vector3.new(0.6410, 0.9225, 0.7107),
+		},
+		LeftFoot = {
+			Center = Vector3.new(-0.6167, 0.2624, -0.0212),
+			Size = Vector3.new(0.4908, 0.5432, 0.9028),
+		},
+		LeftHand = {
+			Center = Vector3.new(-0.5736, 2.4072, 0.0474),
+			Size = Vector3.new(0.4241, 0.7840, 0.2396),
+		},
+		LeftLowerArm = {
+			Center = Vector3.new(-0.6907, 2.9147, 0.1350),
+			Size = Vector3.new(0.2831, 0.7338, 0.3593),
+		},
+		LeftLowerLeg = {
+			Center = Vector3.new(-0.4585, 0.9654, 0.1403),
+			Size = Vector3.new(0.4748, 1.3742, 0.5507),
+		},
+		LeftUpperArm = {
+			Center = Vector3.new(-0.7556, 3.7071, 0.1242),
+			Size = Vector3.new(0.4130, 1.2512, 0.4731),
+		},
+		LeftUpperLeg = {
+			Center = Vector3.new(-0.3211, 1.9884, 0.0141),
+			Size = Vector3.new(0.7033, 1.1817, 0.7649),
+		},
+		LowerTorso = {
+			Center = Vector3.new(-0.0017, 2.8326, -0.0062),
+			Size = Vector3.new(1.1575, 0.9231, 0.8250),
+		},
+		RightFoot = {
+			Center = Vector3.new(0.6128, 0.2420, -0.0218),
+			Size = Vector3.new(0.4930, 0.5084, 0.9056),
+		},
+		RightHand = {
+			Center = Vector3.new(0.5768, 2.4455, 0.0492),
+			Size = Vector3.new(0.4489, 0.7812, 0.2418),
+		},
+		RightLowerArm = {
+			Center = Vector3.new(0.6902, 2.9586, 0.1366),
+			Size = Vector3.new(0.2838, 0.7177, 0.3659),
+		},
+		RightLowerLeg = {
+			Center = Vector3.new(0.4548, 0.9658, 0.1401),
+			Size = Vector3.new(0.4342, 1.2766, 0.5528),
+		},
+		RightUpperArm = {
+			Center = Vector3.new(0.7571, 3.7301, 0.1377),
+			Size = Vector3.new(0.4176, 1.2694, 0.4565),
+		},
+		RightUpperLeg = {
+			Center = Vector3.new(0.3203, 1.9849, 0.0176),
+			Size = Vector3.new(0.7680, 1.2076, 0.7609),
+		},
+		UpperTorso = {
+			Center = Vector3.new(-0.0069, 3.7998, 0.0000),
+			Size = Vector3.new(1.9280, 1.5011, 0.8610),
+		},
+	},
+	Print = {
+		BackNameY = 4.1075,
+		BackNameZ = 0.4154,
+		BackY = 3.7100,
+		BackZ = 0.3752,
+		ChestW = 0.9223,
+		ChestY = 3.8690,
+		ChestZ = -0.4268,
+	},
+	RootCenter = Vector3.new(0.0000, 2.7560, 0.0000),
+}
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX5"><Properties><string name="Name">Remotes</string><ProtectedString name="Source"><![CDATA[--[[
 	Remotes
 	Bütün RemoteEvent ve RemoteFunction nesnelerini tek yerden oluşturur (sunucu) veya bulur (istemci).
 ]]
@@ -1052,7 +1224,7 @@ end
 
 return Remotes
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX5"><Properties><string name="Name">Squads</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">Squads</string><ProtectedString name="Source"><![CDATA[--[[
 	Squads
 	Kulüpler, teknik direktörler ve kadrolar. Rakip kulüplerin adı, renkleri ve arması hazırdır;
 	oyuncunun kulübü kendi adını ve renklerini kullanır. Her futbolcunun kendi özellikleri vardır.
@@ -1414,7 +1586,7 @@ end
 
 return Squads
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">Stadium</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">Stadium</string><ProtectedString name="Source"><![CDATA[--[[
 	Stadium
 	Kulübün kademesine göre maç sahasının çevresini kurar: tribünler, seyirci, çatı,
 	projektörler, LED panolar, dev ekran, şehir ve ağaçlar. Işık ve atmosfer de buradan ayarlanır.
@@ -2595,7 +2767,7 @@ end
 return Stadium
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX13"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX8"><Properties><string name="Name">Components</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX14"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX9"><Properties><string name="Name">Components</string><ProtectedString name="Source"><![CDATA[--[[
 	Components
 	Ortak arayüz parçaları: Panel, Button, Bar, Badge, Label, Stripes, Toast.
 	Hepsi Theme ve UIMotion kullanır. Ekranlar bu parçalardan kurulur.
@@ -3096,7 +3268,7 @@ end
 
 return Components
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX9"><Properties><string name="Name">Forms</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX10"><Properties><string name="Name">Forms</string><ProtectedString name="Source"><![CDATA[--[[
 	Forms
 	Girdi bileşenleri: TextInput, Chips (tekli/çoklu seçim), Slider, Stepper, Swatches, Tabs, Modal.
 	Hepsi Theme ve UIMotion kullanır; her değişiklikte küçük bir tepki animasyonu oynar.
@@ -3592,7 +3764,7 @@ end
 
 return Forms
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX10"><Properties><string name="Name">Icons</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX11"><Properties><string name="Name">Icons</string><ProtectedString name="Source"><![CDATA[--[[
 	Icons
 	Çerçevelerden çizilen küçük simgeler (resim dosyası gerektirmez). Düğmelerde ve başlıklarda kullanılır.
 	Icons.Build(name, pixels, color) -> Frame
@@ -3692,7 +3864,7 @@ end
 
 return Icons
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX11"><Properties><string name="Name">Theme</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX12"><Properties><string name="Name">Theme</string><ProtectedString name="Source"><![CDATA[--[[
 	Theme
 	Arayüzün tasarım dili: renkler, yazı tipleri, köşe ve çizgi ölçüleri.
 	Bütün bileşenler buradan okur; ekranlarda sabit renk yazılmaz.
@@ -3742,7 +3914,7 @@ end
 
 return Theme
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX12"><Properties><string name="Name">UIMotion</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX13"><Properties><string name="Name">UIMotion</string><ProtectedString name="Source"><![CDATA[--[[
 	UIMotion
 	Arayüzdeki bütün hareketlerin tek kaynağı. Kural: hiçbir şey aniden belirmez.
 	FadeSlide (giriş/çıkış), Stagger (sıralı giriş), Pop, CountUp, Shine, Shake, Pulse, Wipe, Ripple.
@@ -4137,7 +4309,7 @@ return UIMotion
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="ServerScriptService" referent="RBX20"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX19"><Properties><string name="Name">Server</string></Properties><Item class="ModuleScript" referent="RBX15"><Properties><string name="Name">CharacterService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ServerScriptService" referent="RBX22"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX21"><Properties><string name="Name">Server</string></Properties><Item class="ModuleScript" referent="RBX16"><Properties><string name="Name">CharacterService</string><ProtectedString name="Source"><![CDATA[--[[
 	CharacterService
 	Karakterin görünümünü sunucuda uygular: gövde ölçüleri, ten, saç, forma, isim ve numara, aksesuarlar.
 	Ayrıca karakter oluşturma ekranı için küçük bir stüdyo sahnesi kurar.
@@ -4152,6 +4324,8 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Crest = require(ReplicatedStorage.Shared.Crest)
 local Theme = require(ReplicatedStorage.UI.Theme)
+local MeshRig = require(ReplicatedStorage.Shared.MeshRig)
+local MeshBody = require(script.Parent.MeshBody)
 
 local CharacterService = {}
 
@@ -4792,6 +4966,78 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 	end
 end
 
+-- Mesh gövdede forma baskıları (sırtta isim ve numara, göğüste arma ve numara) ve aksesuarlar
+local function meshExtras(character: Model, look, kit, k: Vector3)
+	local ut = character:FindFirstChild("UpperTorso") :: BasePart?
+	local P = MeshRig.Print
+	if ut and P and P.BackZ and P.ChestZ then
+		local c = MeshRig.Parts.UpperTorso.Center
+		local function at(x: number, y: number, z: number): CFrame
+			return CFrame.new((Vector3.new(x, y, z) - c) * k)
+		end
+		-- sırt: isim üstte, numara altta
+		local bw, bh = 1.0 * k.X, (P.BackNameY - P.BackY + 0.75) * k.Y
+		local sg = printPlate(
+			character,
+			ut,
+			Vector3.new(bw, bh, 0.02),
+			at(0, (P.BackNameY + 0.12 + P.BackY - 0.63) / 2, math.max(P.BackZ, P.BackNameZ or P.BackZ) + 0.05),
+			Enum.NormalId.Back
+		)
+		sg.Name = "FK_Back"
+		sg.CanvasSize = Vector2.new(200, math.floor(200 * bh / bw))
+		if (look.name or "") ~= "" then
+			text(sg, Theme.Upper(look.name), UDim2.fromScale(0.96, 0.2), UDim2.fromScale(0.02, 0.0), kit.Ink, kit.InkStroke)
+		end
+		text(sg, tostring(look.number or 9), UDim2.fromScale(0.8, 0.66), UDim2.fromScale(0.1, 0.27), kit.Ink, kit.InkStroke)
+		-- göğüs: armanın sol göğüste (karakterin solu -X), küçük numara sağda
+		local fw = 0.36 * k.X
+		local front =
+			printPlate(character, ut, Vector3.new(fw * 2.6, fw, 0.02), at(0, P.ChestY + 0.12, P.ChestZ - 0.05), Enum.NormalId.Front)
+		front.Name = "FK_Front"
+		front.CanvasSize = Vector2.new(260, 100)
+		local holder = Instance.new("Frame")
+		holder.Name = "FK_Crest"
+		holder.BackgroundTransparency = 1
+		holder.Size = UDim2.fromScale(0.36, 1)
+		holder.Position = UDim2.fromScale(0.64, 0)
+		holder.Parent = front
+		local ar = Instance.new("UIAspectRatioConstraint")
+		ar.Parent = holder
+		Crest.Fill(
+			holder,
+			look.crest or Crest.Default(),
+			if look.atFenerbahce then "FB" elseif (look.abbr or "") ~= "" then look.abbr else "FB"
+		)
+		text(front, tostring(look.number or 9), UDim2.fromScale(0.3, 0.9), UDim2.fromScale(0.02, 0.05), kit.Ink, kit.InkStroke)
+	end
+	-- aksesuarlar: eklem noktalarından konumlanan halkalar
+	local acc = (look.appearance and look.appearance.accessories) or {}
+	local J = MeshRig.Joints
+	local function ring(partName: string, a: Vector3, b: Vector3, t: number, r: number, h: number, color: Color3)
+		local p = character:FindFirstChild(partName) :: BasePart?
+		if not p then
+			return
+		end
+		local pos = (a:Lerp(b, t) - MeshRig.Parts[partName].Center) * k
+		local dir = (b - a).Unit
+		local cf = CFrame.lookAt(pos, pos + dir) * CFrame.Angles(0, math.pi / 2, 0)
+		weldPart(character, p, Vector3.new(h, r * 2, r * 2), cf, color, Enum.PartType.Cylinder)
+	end
+	if (look.level or 1) >= Config.CaptainBandLevel and J.LeftShoulder and J.LeftElbow then
+		ring("LeftUpperArm", J.LeftShoulder.Pivot, J.LeftElbow.Pivot, 0.42, 0.25, 0.14, C.Gold)
+	end
+	if acc.Bileklik and J.RightElbow and J.RightWrist then
+		ring("RightLowerArm", J.RightElbow.Pivot, J.RightWrist.Pivot, 0.86, 0.17, 0.16, C.Yellow)
+	end
+	if acc.SacBandi and J.Neck then
+		local head = MeshRig.Parts.Head
+		local y = head.Center.Y + head.Size.Y * 0.16
+		local a = Vector3.new(0, y - 0.1, 0)
+		ring("Head", a, a + Vector3.new(0, 0.2, 0), 0.5, head.Size.X * 0.47, 0.13, kit.Trim)
+	end
+end
+
 --[[
 	look = {
 		appearance = {...}, position, kitPattern, number, name, abbr, atFenerbahce, level, crest
@@ -4855,7 +5101,28 @@ local function dress(character: Model?, look)
 	end
 
 	local kit = look.kit or Kits.For(look.position, look.kitPattern, look.atFenerbahce)
-	buildBody(character, look, kit, skin)
+	clear(character, "FK_Mesh")
+	-- Gerçekçi mesh gövde (Studio'da içe aktarılmışsa); yoksa kodla kurulan gövde
+	local acc = a.accessories or {}
+	local keeper = look.position == "Kaleci"
+	local k = Vector3.new(1, 1, 1) * desc.HeightScale
+	local wk = (B.Width[a.build] or B.Width.Atletik) / B.Width.Atletik
+	k = Vector3.new(k.X * wk, k.Y, k.Z * wk)
+	local meshOk = MeshBody.Build(character, look, kit, {
+		skin = skin,
+		hair = hex(a.hairColor),
+		boot = hex(a.bootColor),
+		glove = Color3.fromRGB(242, 242, 242),
+		long = acc.UzunKol == true or keeper,
+		keeper = keeper,
+		hairStyle = a.hairStyle,
+		beard = a.beard,
+	}, k)
+	if meshOk then
+		meshExtras(character, look, kit, k)
+	else
+		buildBody(character, look, kit, skin)
+	end
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 end
 
@@ -5170,7 +5437,7 @@ end
 
 return CharacterService
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX16"><Properties><string name="Name">DataService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX17"><Properties><string name="Name">DataService</string><ProtectedString name="Source"><![CDATA[--[[
 	DataService
 	Oyuncu verisini DataStore'dan yükler ve kaydeder.
 	- Oturum kilidi: aynı hesap iki sunucuda aynı anda açılamaz.
@@ -5395,7 +5662,7 @@ end
 
 return DataService
 ]]></ProtectedString></Properties></Item>
-<Item class="Script" referent="RBX17"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Script" referent="RBX18"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
 	Main (sunucu)
 	Servisleri sırayla başlatır.
 ]]
@@ -5420,7 +5687,250 @@ task.spawn(CharacterService.BuildBotTemplates)
 
 print("[FenerKariyer] Sunucu hazır")
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">PlayerService</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX19"><Properties><string name="Name">MeshBody</string><ProtectedString name="Source"><![CDATA[--[[
+	MeshBody
+	Studio'da içe aktarılan gerçekçi futbolcu gövdesini (assets/modeller/FK_Oyuncu.glb) karaktere
+	giydirir. İçe aktarılan model ReplicatedStorage/FK_Assets/FK_Oyuncu (ya da doğrudan
+	ReplicatedStorage/FK_Oyuncu) olarak durur.
+
+	Parçalar "<R15 parçası>__<rol>[__<desen>]" adlı MeshPart'lardır. Roller: Skin, Hair, Shirt,
+	Stripe, Sleeve, Trim, Shorts, Sock, Boot. Desenli forma parçaları Cubuklu, Kusakli ve Duz
+	olarak ayrıdır; karakterin forma desenine uyanlar takılır.
+	FK_Origin, FK_AxisX ve FK_AxisY işaretleri, içe aktarıcının uyguladığı konum, dönme ve ölçeği
+	geri çözmeye yarar. İskelet (eklem noktaları, kalça yüksekliği) MeshRig modülündedir.
+
+	MeshBody.Build(character, look, kit, colors, k) -> boolean
+		Model yoksa false döner; CharacterService o zaman kodla kurulan gövdeyi kullanır.
+		k: ölçek (x ve z genişlik, y boy).
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local MeshRig = require(ReplicatedStorage.Shared.MeshRig)
+
+local MeshBody = {}
+
+export type Piece = {
+	mesh: MeshPart,
+	part: string,
+	role: string,
+	pattern: string?,
+	size: Vector3,
+	offset: CFrame,
+}
+
+local cache: any = nil
+
+local function template(): Instance?
+	local f = ReplicatedStorage:FindFirstChild("FK_Assets")
+	return (f and f:FindFirstChild("FK_Oyuncu")) or ReplicatedStorage:FindFirstChild("FK_Oyuncu")
+end
+
+-- "UpperTorso__Shirt__Cubuklu" -> UpperTorso, Shirt, Cubuklu (içe aktarıcının eklediği ekler yok sayılır)
+function MeshBody.ParseName(n: string): (string?, string?, string?)
+	local part, role, pattern = string.match(n, "^(%a+)__(%a+)__(%a+)")
+	if part then
+		return part, role, pattern
+	end
+	part, role = string.match(n, "^(%a+)__(%a+)")
+	return part, role, nil
+end
+
+function MeshBody.Reset()
+	cache = nil
+end
+
+-- Şablonu okur ve parça listesini önbelleğe alır. Şablon yoksa nil.
+function MeshBody.Load(): { pieces: { Piece } }?
+	if cache ~= nil then
+		return cache or nil
+	end
+	local tpl = template()
+	if not tpl then
+		cache = false
+		return nil
+	end
+	local o, ax, ay
+	for _, d in ipairs(tpl:GetDescendants()) do
+		if d:IsA("BasePart") then
+			if string.find(d.Name, "^FK_Origin") then
+				o = d
+			elseif string.find(d.Name, "^FK_AxisX") then
+				ax = d
+			elseif string.find(d.Name, "^FK_AxisY") then
+				ay = d
+			end
+		end
+	end
+	if not (o and ax and ay) then
+		warn("[MeshBody] FK_Oyuncu içinde FK_Origin / FK_AxisX / FK_AxisY işaretleri yok; kodla kurulan gövde kullanılacak")
+		cache = false
+		return nil
+	end
+	local xv = ax.Position - o.Position
+	local scale = xv.Magnitude
+	local frame = CFrame.fromMatrix(o.Position, xv.Unit, (ay.Position - o.Position).Unit)
+	local pieces = {}
+	for _, d in ipairs(tpl:GetDescendants()) do
+		if d:IsA("MeshPart") and not string.find(d.Name, "^FK_") then
+			local part, role, pattern = MeshBody.ParseName(d.Name)
+			local info = part and MeshRig.Parts[part]
+			if info and role then
+				local rel = frame:ToObjectSpace(d.CFrame)
+				local pos = rel.Position / scale
+				table.insert(pieces, {
+					mesh = d,
+					part = part,
+					role = role,
+					pattern = pattern,
+					size = d.Size / scale,
+					offset = CFrame.new(pos - info.Center) * rel.Rotation,
+				})
+			end
+		end
+	end
+	if #pieces == 0 then
+		warn("[MeshBody] FK_Oyuncu içinde tanınan parça yok")
+		cache = false
+		return nil
+	end
+	cache = { pieces = pieces }
+	return cache
+end
+
+-- R15 iskeletini mesh gövdenin eklem noktalarına taşır
+local function fitRig(character: Model, k: Vector3): boolean
+	local centers: { [string]: Vector3 } = { HumanoidRootPart = MeshRig.RootCenter }
+	for name, info in pairs(MeshRig.Parts) do
+		centers[name] = info.Center
+		local p = character:FindFirstChild(name)
+		if not (p and p:IsA("BasePart")) then
+			return false
+		end
+	end
+	for name, j in pairs(MeshRig.Joints) do
+		local p0, p1 = character:FindFirstChild(j.Part0), character:FindFirstChild(j.Part1)
+		local motor = character:FindFirstChild(name, true)
+		if p0 and p1 and motor and motor:IsA("Motor6D") then
+			local c0 = (j.Pivot - centers[j.Part0]) * k
+			local c1 = (j.Pivot - centers[j.Part1]) * k
+			motor.C0 = CFrame.new(c0)
+			motor.C1 = CFrame.new(c1)
+			-- Humanoid eklemleri bu eklentilerden yeniden kurarsa aynı yere kursun
+			local a0 = p0:FindFirstChild(name .. "RigAttachment")
+			if a0 and a0:IsA("Attachment") then
+				a0.Position = c0
+			end
+			local a1 = p1:FindFirstChild(name .. "RigAttachment")
+			if a1 and a1:IsA("Attachment") then
+				a1.Position = c1
+			end
+		end
+	end
+	for name, info in pairs(MeshRig.Parts) do
+		local p = character:FindFirstChild(name) :: BasePart
+		p.Size = info.Size * k
+		p.Transparency = 1
+	end
+	local hum = character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.HipHeight = MeshRig.HipHeight * k.Y
+	end
+	return true
+end
+
+-- Config.BeardNames: 0 Yok, 1 Kirli, 2 Bıyık, 3 Tam, 4 Keçi (kirli sakal, tam sakal kabuğunu açık renkle kullanır)
+local BEARD = { [1] = "Tam", [2] = "Biyik", [3] = "Tam", [4] = "Keci" }
+
+local FABRIC = { Shirt = true, Stripe = true, Sleeve = true, Trim = true, Shorts = true, Sock = true }
+
+--[[
+	colors = { skin, hair, boot, glove, long (uzun kol), keeper, hairStyle, beard }
+]]
+function MeshBody.Build(character: Model, look, kit, colors, k: Vector3): boolean
+	local data = MeshBody.Load()
+	if not data then
+		return false
+	end
+	if not fitRig(character, k) then
+		return false
+	end
+	local pattern = kit.Pattern or "Duz"
+	-- saç: 1 Sıfır ve 8 Kel kafa derisi kabuğunu, diğerleri modelin saçını kullanır
+	local style = colors.hairStyle or 2
+	local shaved = style == 1 or style == 8
+	local beardWant = BEARD[colors.beard or 0]
+	for _, pc in ipairs(data.pieces) do
+		local r = pc.role
+		if r == "Shirt" or r == "Stripe" then
+			if pc.pattern ~= nil and pc.pattern ~= pattern then
+				continue
+			end
+		elseif r == "Beard" then
+			if pc.pattern ~= beardWant then
+				continue
+			end
+		elseif r == "Hair" then
+			if shaved then
+				continue
+			end
+		elseif r == "Scalp" then
+			if not shaved then
+				continue
+			end
+		end
+		local holder = character:FindFirstChild(pc.part) :: BasePart
+		local color, tag = colors.skin, nil
+		local role = pc.role
+		local isArm = string.find(pc.part, "Arm") ~= nil
+		if role == "Skin" then
+			if colors.long and isArm then
+				color, tag = kit.Sleeve, "Sleeve" -- uzun kol: kol derisi forma kolu olur
+			elseif colors.keeper and string.find(pc.part, "Hand") then
+				color = colors.glove
+			end
+		elseif role == "Hair" then
+			color = colors.hair
+		elseif role == "Scalp" then
+			color = if style == 8 then colors.skin:Lerp(Color3.new(0, 0, 0), 0.06) else colors.hair:Lerp(colors.skin, 0.4)
+		elseif role == "Beard" then
+			color = if colors.beard == 1 then colors.hair:Lerp(colors.skin, 0.5) else colors.hair
+		elseif role == "Brow" then
+			color = colors.hair:Lerp(Color3.new(0, 0, 0), 0.1)
+		elseif role == "Boot" then
+			color = colors.boot
+		elseif kit[role] then
+			color, tag = kit[role], role
+		end
+		local m = pc.mesh:Clone()
+		m.Name = "FK_Mesh"
+		m.Anchored = false
+		m.CanCollide = false
+		m.CanQuery = false
+		m.CanTouch = false
+		m.Massless = true
+		m.CastShadow = true
+		m.TextureID = ""
+		m.Size = pc.size * k
+		m.Color = color
+		m.Material = if FABRIC[role] or tag == "Sleeve" then Enum.Material.Fabric else Enum.Material.SmoothPlastic
+		m:SetAttribute("Role", role)
+		if tag then
+			m:SetAttribute("FK", tag)
+		end
+		m.CFrame = holder.CFrame * CFrame.new(pc.offset.Position * k) * pc.offset.Rotation
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = holder
+		w.Part1 = m
+		w.Parent = m
+		m.Parent = character
+	end
+	return true
+end
+
+return MeshBody
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">PlayerService</string><ProtectedString name="Source"><![CDATA[--[[
 	PlayerService
 	İstemciden gelen bütün istekleri doğrular ve veriyi yalnızca sunucuda değiştirir.
 	- Kariyer oluşturma: isim filtresi, mevki kilidi, görünüm aralık kontrolü
@@ -6131,7 +6641,7 @@ return PlayerService
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX51"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX48"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX47"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX23"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX21"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterPlayer" referent="RBX53"><Properties><string name="Name">StarterPlayer</string><bool name="LoadCharacterAppearance">false</bool></Properties><Item class="StarterPlayerScripts" referent="RBX50"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX49"><Properties><string name="Name">Client</string></Properties><Item class="Folder" referent="RBX25"><Properties><string name="Name">Anim</string></Properties><Item class="ModuleScript" referent="RBX23"><Properties><string name="Name">Animator</string><ProtectedString name="Source"><![CDATA[--[[
 	Animator
 	Kodla çalışan katmanlı animasyon motoru (R15).
 	- Alt katman: duruş ve koşu döngüsü hızdan üretilir (yürüyüşten sprinte kesintisiz).
@@ -6482,7 +6992,7 @@ end
 
 return Animator
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX22"><Properties><string name="Name">Poses</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX24"><Properties><string name="Name">Poses</string><ProtectedString name="Source"><![CDATA[--[[
 	Poses
 	Kodla tanımlanan animasyonlar. Hiçbir animasyon dosyası yüklenmez.
 	Her eylem anahtar karelerden oluşur; açılar derece cinsindendir.
@@ -7869,7 +8379,7 @@ Poses.Names = {
 return Poses
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX25"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX24"><Properties><string name="Name">PlayerController</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX27"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX26"><Properties><string name="Name">PlayerController</string><ProtectedString name="Source"><![CDATA[--[[
 	PlayerController
 	Oyuncunun hareketi, dayanıklılığı, eylem girdileri, efektleri ve saha içi arayüzü.
 	- Hareket: ivmelenme, yavaşlama, ani dönüşte hız kaybı ve fren animasyonu, sprint ve yorgunluk.
@@ -9586,7 +10096,7 @@ end
 return Controller
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="LocalScript" referent="RBX26"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="LocalScript" referent="RBX28"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
 	Main (istemci)
 	Adım 1-2 vitrini: yükleme ekranı, çubuklu perde geçişi ve bileşen kütüphanesini kullanan
 	lobi katmanı (oyuncu kartı, bakiye, menü, görevler, bildirimler). Sunucu verisiyle canlı çalışır.
@@ -10155,7 +10665,7 @@ showLoading(function()
 	end
 end)
 ]]></ProtectedString></Properties></Item>
-<Item class="Folder" referent="RBX36"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX27"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX38"><Properties><string name="Name">Match</string></Properties><Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">Ball</string><ProtectedString name="Source"><![CDATA[--[[
 	Ball
 	Top fiziği ve topla oynama. Top ayrı bir nesnedir; oyuncuya yapışmaz, her dokunuşla itilir.
 	- Fizik: yerçekimi, hava direnci, yuvarlanma sürtünmesi, sekme, falso, saha sınırları, kale ve direk.
@@ -10773,7 +11283,7 @@ end
 
 return Ball
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX28"><Properties><string name="Name">Bots</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX30"><Properties><string name="Name">Bots</string><ProtectedString name="Source"><![CDATA[--[[
 	Bots
 	Deneme sahasındaki yapay zekalı oyuncular. Maç tek oyunculu olduğu için istemcide çalışır.
 	- Savunmacı: topun önünü keser (kademe), yaklaşınca müdahale hazırlığı yapar. Hazırlık sırasında
@@ -11195,7 +11705,7 @@ end
 
 return Bots
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX29"><Properties><string name="Name">Commentary</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">Commentary</string><ProtectedString name="Source"><![CDATA[--[[
 	Commentary
 	Maç spikeri: skor tabelasının altında akan kısa anlatım satırları. Olaylara (başlama, şut,
 	kurtarış, gol, faul, kart, ofsayt, korner, taç, değişiklik, devre arası, maç sonu) göre
@@ -11328,7 +11838,7 @@ end
 
 return Commentary
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX30"><Properties><string name="Name">MatchAI</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">MatchAI</string><ProtectedString name="Source"><![CDATA[--[[
 	MatchAI
 	11'e 11 maçtaki 21 botun yapay zekası (oyuncu dışındaki herkes). İstemcide çalışır.
 	Her bot bir rol oynar:
@@ -12559,7 +13069,7 @@ end
 
 return MatchAI
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX31"><Properties><string name="Name">MatchController</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">MatchController</string><ProtectedString name="Source"><![CDATA[--[[
 	MatchController
 	Maçın akışı ve arayüzü:
 	VS ekranı > başlama vuruşu > ilk yarı > devre arası > ikinci yarı > maç sonu > ödüller.
@@ -14055,7 +14565,7 @@ end)
 
 return MatchController
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX32"><Properties><string name="Name">Referee</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">Referee</string><ProtectedString name="Source"><![CDATA[--[[
 	Referee
 	Sahadaki hakem: oyunu çaprazdan takip eder, düdük çalar, kart gösterir.
 	Kurallar ve cezalar MatchController'da uygulanır; burası hakemin sahadaki bedeni ve sesidir.
@@ -14232,7 +14742,7 @@ end
 
 return Referee
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX33"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX35"><Properties><string name="Name">RemoteAnim</string><ProtectedString name="Source"><![CDATA[--[[
 	RemoteAnim
 	Aynı sunucudaki diğer oyuncuların karakterlerini de kodla canlandırır.
 	Koşu döngüsü onların hızından üretilir; eylemler sunucudan gelen bildirimle oynar.
@@ -14299,7 +14809,7 @@ end
 
 return RemoteAnim
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX34"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX36"><Properties><string name="Name">TimeScale</string><ProtectedString name="Source"><![CDATA[--[[
 	TimeScale
 	Oyunun kendi zaman çarpanı: yavaş çekim ve vuruş anı duraksaması (hit-stop).
 	Animasyon, top ve oyuncu hızı bu çarpanla çalışır. Maç tek oyunculu ve istemcide
@@ -14324,7 +14834,7 @@ end
 
 return TimeScale
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX35"><Properties><string name="Name">Training</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX37"><Properties><string name="Name">Training</string><ProtectedString name="Source"><![CDATA[--[[
 	Training
 	Deneme sahasında süreli antrenman oyunları (savunmacı ve kaleci yoktur):
 	  "Kose" - Köşe avı: kalenin parlayan köşesine gol at. Her isabet +1 puan, hedef yer değiştirir.
@@ -14512,7 +15022,7 @@ end
 return Training
 ]]></ProtectedString></Properties></Item>
 </Item>
-<Item class="Folder" referent="RBX46"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX37"><Properties><string name="Name">Career</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="Folder" referent="RBX48"><Properties><string name="Name">Screens</string></Properties><Item class="ModuleScript" referent="RBX39"><Properties><string name="Name">Career</string><ProtectedString name="Source"><![CDATA[--[[
 	Career
 	Kariyer sayfası: istatistikler, kupa dolabı (lig atlamalar ve Fenerbahçe) ve başarımlar.
 
@@ -14800,7 +15310,7 @@ end
 
 return Career
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX38"><Properties><string name="Name">Celebration</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX40"><Properties><string name="Name">Celebration</string><ProtectedString name="Source"><![CDATA[--[[
 	Celebration
 	Kariyerin büyük anları için tam ekran kutlama:
 	  Celebration.Promotion(gui, tierId, onClose)  lig atlama: yeni lig, yeni stat, kapasite
@@ -15049,7 +15559,7 @@ end
 
 return Celebration
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX39"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX41"><Properties><string name="Name">Creator</string><ProtectedString name="Source"><![CDATA[--[[
 	Creator (karakter ve kulüp oluşturma ekranı)
 	Solda sekmeli seçenek paneli, sağda stüdyo sahnesinde dönen gerçek karakter.
 	Her seçim sunucuya önizleme isteği gönderir; sunucu doğrular ve karaktere uygular.
@@ -15760,7 +16270,7 @@ end
 
 return Creator
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX40"><Properties><string name="Name">CrestDesigner</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX42"><Properties><string name="Name">CrestDesigner</string><ProtectedString name="Source"><![CDATA[--[[
 	CrestDesigner
 	Kulüp arması tasarım ekranı: biçim, desen, simge ve iki renk seçilir; sonuç anında önizlenir.
 	Kaydedilen arma forma göğsünde, maç öncesi kadro ekranında ve takım arkadaşlarının formasında görünür.
@@ -15977,7 +16487,7 @@ end
 
 return CrestDesigner
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX41"><Properties><string name="Name">Halftime</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX43"><Properties><string name="Name">Halftime</string><ProtectedString name="Source"><![CDATA[--[[
 	Halftime
 	Devre arası ekranı: ilk yarının özeti, takım emri ve oyuncu değişikliği.
 	Sahadan bir oyuncu ve kulübeden bir yedek seçilip "Değiştir" denir (en çok 3 değişiklik).
@@ -16289,7 +16799,7 @@ end
 
 return Halftime
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX42"><Properties><string name="Name">Hub</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX44"><Properties><string name="Name">Hub</string><ProtectedString name="Source"><![CDATA[--[[
 	Hub
 	Lobiden açılan üç ekran: mağaza (top, şut izi, gol sevinci), kulüp tesisleri ve dünya sıralaması.
 
@@ -16918,7 +17428,7 @@ end
 
 return Hub
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX43"><Properties><string name="Name">League</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX45"><Properties><string name="Name">League</string><ProtectedString name="Source"><![CDATA[--[[
 	League
 	Puan durumu ekranı: ligdeki altı kulüp, oynanan maç, galibiyet/beraberlik/mağlubiyet ve puan.
 	Oyuncunun kulübü sarı satırdadır. Lig atlama çizgisi tabloda gösterilir.
@@ -17081,7 +17591,7 @@ end
 
 return League
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX44"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX46"><Properties><string name="Name">Lineup</string><ProtectedString name="Source"><![CDATA[--[[
 	Lineup
 	Maç öncesi tanıtım: iki kulüp, armalar, teknik direktörler, diziliş ve 11'ler.
 	Her futbolcunun genel gücü ve altı özelliği görünür. "Maça çık" ile santraya geçilir.
@@ -17376,7 +17886,7 @@ end
 
 return Lineup
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX45"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="ModuleScript" referent="RBX47"><Properties><string name="Name">SkillTree</string><ProtectedString name="Source"><![CDATA[--[[
 	SkillTree
 	Yetenek ağacı sayfası. Solda zincirler (Şut, Çalım, Hava, Defans, kaleciyse Kaleci): her zincirde
 	hareketler sırayla açılır ve aynı tuş, açılan en üst hareketi oynatır. Sağda özellikler
@@ -17946,7 +18456,7 @@ return SkillTree
 </Item>
 </Item>
 </Item>
-<Item class="StarterCharacterScripts" referent="RBX50"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX49"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
+<Item class="StarterCharacterScripts" referent="RBX52"><Properties><string name="Name">StarterCharacterScripts</string></Properties><Item class="LocalScript" referent="RBX51"><Properties><string name="Name">Animate</string><ProtectedString name="Source"><![CDATA[--[[
 	Animate (boş)
 	Bu ad, Roblox'un varsayılan "Animate" betiğinin yerine geçer: hazır yürüme/koşma animasyonları
 	hiç yüklenmez. Bütün hareketler Client/Anim/Animator tarafından eklemlere doğrudan yazılır.
@@ -17954,7 +18464,7 @@ return SkillTree
 ]]></ProtectedString></Properties></Item>
 </Item>
 </Item>
-<Item class="StarterGui" referent="RBX52"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
-<Item class="Workspace" referent="RBX53"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
-<Item class="Lighting" referent="RBX54"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
+<Item class="StarterGui" referent="RBX54"><Properties><string name="Name">StarterGui</string><token name="ScreenOrientation">2</token></Properties></Item>
+<Item class="Workspace" referent="RBX55"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="Lighting" referent="RBX56"><Properties><string name="Name">Lighting</string><token name="Technology">4</token></Properties></Item>
 </roblox>

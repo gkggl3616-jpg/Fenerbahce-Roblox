@@ -318,6 +318,108 @@ do
 	check("forma (gövdeye oturan ön ve arka baskı levhaları) ve yüz çizilir", kit == 3, kit)
 	check("hazır yüz çıkartması kaldırılır", not faceDecal)
 end
+-- Gerçekçi mesh gövde: Studio'da içe aktarılan FK_Oyuncu şablonunun taklidi. İçe aktarıcı
+-- modeli kaydırmış, döndürmüş ve ölçeklemiş olabilir; işaretler bunu geri çözer.
+do
+	local MeshRig = require(__tree.Shared.MeshRig)
+	local MeshBody = require(__tree.Server.MeshBody)
+	local Kits = require(__tree.Shared.Kits)
+	local function same(a, b)
+		return a ~= nil and b ~= nil and a:ToHex() == b:ToHex()
+	end
+	local CS = require(__tree.Server.CharacterService)
+	local assets = Instance.new("Folder")
+	assets.Name = "FK_Assets"
+	local tpl = Instance.new("Model")
+	tpl.Name = "FK_Oyuncu"
+	tpl.Parent = assets
+	local frame = CFrame.new(40, 2, -7) * CFrame.Angles(0, math.rad(90), 0)
+	local SCALE = 0.3 -- içe aktarıcının (varsayımsal) birim dönüşümü
+	local function piece(name: string, at: Vector3, size: Vector3)
+		local m = Instance.new("MeshPart")
+		m.Name = name
+		m.Size = size * SCALE
+		m.CFrame = frame * CFrame.new(at * SCALE)
+		m.Parent = tpl
+		return m
+	end
+	piece("FK_Origin", Vector3.new(0, 0, 0), Vector3.new(0.04, 0.04, 0.04))
+	piece("FK_AxisX", Vector3.new(1, 0, 0), Vector3.new(0.04, 0.04, 0.04))
+	piece("FK_AxisY", Vector3.new(0, 1, 0), Vector3.new(0.04, 0.04, 0.04))
+	local ut = MeshRig.Parts.UpperTorso.Center
+	piece("UpperTorso__Shirt__Cubuklu", ut + Vector3.new(0, 0.1, 0), Vector3.new(1.6, 1.4, 0.8))
+	piece("UpperTorso__Stripe__Cubuklu", ut, Vector3.new(1.2, 1.4, 0.82))
+	piece("UpperTorso__Shirt__Duz", ut, Vector3.new(1.6, 1.4, 0.8))
+	piece("UpperTorso__Trim", ut + Vector3.new(0, 0.7, 0), Vector3.new(0.6, 0.1, 0.5))
+	piece("Head__Hair", MeshRig.Parts.Head.Center + Vector3.new(0, 0.3, 0), Vector3.new(0.7, 0.4, 0.8))
+	piece("Head__Skin", MeshRig.Parts.Head.Center, Vector3.new(0.7, 0.9, 0.8))
+	piece("LeftUpperArm__Skin", MeshRig.Parts.LeftUpperArm.Center, Vector3.new(0.3, 0.6, 0.3))
+	piece("RightFoot__Boot", MeshRig.Parts.RightFoot.Center, Vector3.new(0.35, 0.3, 0.8))
+	assets.Parent = RS
+	MeshBody.Reset()
+	check("mesh şablonu okunur (8 parça, işaretler hariç)", MeshBody.Load() ~= nil and #MeshBody.Load().pieces == 8)
+	local plr = Instance.new("Player")
+	plr.Name = "MeshDeneme"
+	local char = __makeRig("MeshDeneme")
+	char.Parent = workspace
+	plr.Character = char
+	CS.Apply(plr, {
+		appearance = {
+			height = 180,
+			build = "Atletik",
+			skin = 3,
+			face = 1,
+			hairStyle = 2,
+			hairColor = "5A4326",
+			beard = 0,
+			bootModel = 1,
+			bootColor = "E33A3A",
+			accessories = { UzunKol = true, Bileklik = true, SacBandi = false, KisaTozluk = false },
+		},
+		position = "Forvet",
+		kitPattern = "Cubuklu",
+		number = 9,
+		name = "Mesh",
+		abbr = "MOD",
+		level = 12,
+	})
+	__advance(0.5)
+	local meshes, extras, fk, roles = {}, 0, {}, {}
+	for _, d in ipairs(char:GetDescendants()) do
+		if d.Name == "FK_Mesh" then
+			table.insert(meshes, d)
+			roles[d:GetAttribute("Role")] = d
+			if d:GetAttribute("FK") then
+				fk[d:GetAttribute("FK")] = d
+			end
+		elseif d.Name == "FK_Extra" then
+			extras += 1
+		end
+	end
+	check("desene uyan mesh parçaları takılır (düz forma takılmaz)", #meshes == 7, #meshes)
+	check("kodla kurulan eski gövde kurulmaz (yalnız baskı ve aksesuar)", extras <= 6, extras)
+	check("çubuk rengi formanın ikinci rengi", fk.Stripe ~= nil and same(fk.Stripe.Color, Kits.Club.Cubuklu.Stripe))
+	check("uzun kolda kol derisi forma kolu rengini alır", fk.Sleeve ~= nil and same(fk.Sleeve.Color, Kits.Club.Cubuklu.Sleeve))
+	check("saç rengi uygulanır", roles.Hair ~= nil and same(roles.Hair.Color, Color3.fromHex("5A4326")))
+	check("krampon rengi uygulanır", roles.Boot ~= nil and same(roles.Boot.Color, Color3.fromHex("E33A3A")))
+	-- 180 cm: boy ölçeği aralığın ortası (Config.Body); Atletik yapıda genişlik çarpanı 1
+	local B = require(__tree.Shared.Config).Body
+	local K = B.HeightScaleMin + (B.HeightScaleMax - B.HeightScaleMin) * 0.5
+	local ls = char:FindFirstChild("LeftShoulder", true)
+	local want = (MeshRig.Joints.LeftShoulder.Pivot - MeshRig.Parts.UpperTorso.Center) * K
+	check("omuz eklemi mesh gövdenin omzuna taşınır", ls and (ls.C0.Position - want).Magnitude < 0.01, ls and ls.C0.Position)
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	check("kalça yüksekliği mesh gövdeye göre", hum and math.abs(hum.HipHeight - MeshRig.HipHeight * K) < 0.01, hum and hum.HipHeight)
+	-- parça, kendi R15 parçasına şablondaki göreli yerinde oturur (dönme ve ölçek geri çözüldü)
+	local upper = char:FindFirstChild("UpperTorso")
+	local stripe = fk.Stripe
+	local rel = upper.CFrame:ToObjectSpace(stripe.CFrame).Position
+	check("mesh parçası doğru yerde (işaretlerle geri çözülen konum)", rel.Magnitude < 0.01, rel)
+	check("mesh parçası doğru ölçüde", math.abs(stripe.Size.X - 1.2 * K) < 0.01, stripe.Size.X)
+	assets:Destroy()
+	char:Destroy()
+	MeshBody.Reset()
+end
 local Bots = require(__tree.Match.Bots)
 local ev = { steal = 0, save = 0, escape = 0, telegraph = 0 }
 for k in pairs(ev) do

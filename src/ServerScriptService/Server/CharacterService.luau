@@ -13,6 +13,8 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Kits = require(ReplicatedStorage.Shared.Kits)
 local Crest = require(ReplicatedStorage.Shared.Crest)
 local Theme = require(ReplicatedStorage.UI.Theme)
+local MeshRig = require(ReplicatedStorage.Shared.MeshRig)
+local MeshBody = require(script.Parent.MeshBody)
 
 local CharacterService = {}
 
@@ -653,6 +655,78 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 	end
 end
 
+-- Mesh gövdede forma baskıları (sırtta isim ve numara, göğüste arma ve numara) ve aksesuarlar
+local function meshExtras(character: Model, look, kit, k: Vector3)
+	local ut = character:FindFirstChild("UpperTorso") :: BasePart?
+	local P = MeshRig.Print
+	if ut and P and P.BackZ and P.ChestZ then
+		local c = MeshRig.Parts.UpperTorso.Center
+		local function at(x: number, y: number, z: number): CFrame
+			return CFrame.new((Vector3.new(x, y, z) - c) * k)
+		end
+		-- sırt: isim üstte, numara altta
+		local bw, bh = 1.0 * k.X, (P.BackNameY - P.BackY + 0.75) * k.Y
+		local sg = printPlate(
+			character,
+			ut,
+			Vector3.new(bw, bh, 0.02),
+			at(0, (P.BackNameY + 0.12 + P.BackY - 0.63) / 2, math.max(P.BackZ, P.BackNameZ or P.BackZ) + 0.05),
+			Enum.NormalId.Back
+		)
+		sg.Name = "FK_Back"
+		sg.CanvasSize = Vector2.new(200, math.floor(200 * bh / bw))
+		if (look.name or "") ~= "" then
+			text(sg, Theme.Upper(look.name), UDim2.fromScale(0.96, 0.2), UDim2.fromScale(0.02, 0.0), kit.Ink, kit.InkStroke)
+		end
+		text(sg, tostring(look.number or 9), UDim2.fromScale(0.8, 0.66), UDim2.fromScale(0.1, 0.27), kit.Ink, kit.InkStroke)
+		-- göğüs: armanın sol göğüste (karakterin solu -X), küçük numara sağda
+		local fw = 0.36 * k.X
+		local front =
+			printPlate(character, ut, Vector3.new(fw * 2.6, fw, 0.02), at(0, P.ChestY + 0.12, P.ChestZ - 0.05), Enum.NormalId.Front)
+		front.Name = "FK_Front"
+		front.CanvasSize = Vector2.new(260, 100)
+		local holder = Instance.new("Frame")
+		holder.Name = "FK_Crest"
+		holder.BackgroundTransparency = 1
+		holder.Size = UDim2.fromScale(0.36, 1)
+		holder.Position = UDim2.fromScale(0.64, 0)
+		holder.Parent = front
+		local ar = Instance.new("UIAspectRatioConstraint")
+		ar.Parent = holder
+		Crest.Fill(
+			holder,
+			look.crest or Crest.Default(),
+			if look.atFenerbahce then "FB" elseif (look.abbr or "") ~= "" then look.abbr else "FB"
+		)
+		text(front, tostring(look.number or 9), UDim2.fromScale(0.3, 0.9), UDim2.fromScale(0.02, 0.05), kit.Ink, kit.InkStroke)
+	end
+	-- aksesuarlar: eklem noktalarından konumlanan halkalar
+	local acc = (look.appearance and look.appearance.accessories) or {}
+	local J = MeshRig.Joints
+	local function ring(partName: string, a: Vector3, b: Vector3, t: number, r: number, h: number, color: Color3)
+		local p = character:FindFirstChild(partName) :: BasePart?
+		if not p then
+			return
+		end
+		local pos = (a:Lerp(b, t) - MeshRig.Parts[partName].Center) * k
+		local dir = (b - a).Unit
+		local cf = CFrame.lookAt(pos, pos + dir) * CFrame.Angles(0, math.pi / 2, 0)
+		weldPart(character, p, Vector3.new(h, r * 2, r * 2), cf, color, Enum.PartType.Cylinder)
+	end
+	if (look.level or 1) >= Config.CaptainBandLevel and J.LeftShoulder and J.LeftElbow then
+		ring("LeftUpperArm", J.LeftShoulder.Pivot, J.LeftElbow.Pivot, 0.42, 0.25, 0.14, C.Gold)
+	end
+	if acc.Bileklik and J.RightElbow and J.RightWrist then
+		ring("RightLowerArm", J.RightElbow.Pivot, J.RightWrist.Pivot, 0.86, 0.17, 0.16, C.Yellow)
+	end
+	if acc.SacBandi and J.Neck then
+		local head = MeshRig.Parts.Head
+		local y = head.Center.Y + head.Size.Y * 0.16
+		local a = Vector3.new(0, y - 0.1, 0)
+		ring("Head", a, a + Vector3.new(0, 0.2, 0), 0.5, head.Size.X * 0.47, 0.13, kit.Trim)
+	end
+end
+
 --[[
 	look = {
 		appearance = {...}, position, kitPattern, number, name, abbr, atFenerbahce, level, crest
@@ -716,7 +790,28 @@ local function dress(character: Model?, look)
 	end
 
 	local kit = look.kit or Kits.For(look.position, look.kitPattern, look.atFenerbahce)
-	buildBody(character, look, kit, skin)
+	clear(character, "FK_Mesh")
+	-- Gerçekçi mesh gövde (Studio'da içe aktarılmışsa); yoksa kodla kurulan gövde
+	local acc = a.accessories or {}
+	local keeper = look.position == "Kaleci"
+	local k = Vector3.new(1, 1, 1) * desc.HeightScale
+	local wk = (B.Width[a.build] or B.Width.Atletik) / B.Width.Atletik
+	k = Vector3.new(k.X * wk, k.Y, k.Z * wk)
+	local meshOk = MeshBody.Build(character, look, kit, {
+		skin = skin,
+		hair = hex(a.hairColor),
+		boot = hex(a.bootColor),
+		glove = Color3.fromRGB(242, 242, 242),
+		long = acc.UzunKol == true or keeper,
+		keeper = keeper,
+		hairStyle = a.hairStyle,
+		beard = a.beard,
+	}, k)
+	if meshOk then
+		meshExtras(character, look, kit, k)
+	else
+		buildBody(character, look, kit, skin)
+	end
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 end
 

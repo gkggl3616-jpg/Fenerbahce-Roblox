@@ -145,3 +145,12 @@ Bu sınamalar Studio testinin yerini tutmaz; görünüm, Roblox fiziği ve gerç
 - `TEK_PROMPT.md`: oyunun tamamının tarifi
 - `OYUN_TASARIM_VE_PROMPT.md`, `PROMPTLAR.md`, `tasarim/`: tasarım ve görseller
 - `docs/onizleme/`: arayüz tasarım önizlemeleri (Roblox ekran görüntüsü değil)
+
+- **Gerçekçi oyuncu modeli:** Yapay zekâyla üretilmiş gerçek oranlı futbolcu meshi
+  (`assets/modeller/FK_Oyuncu.glb`) 15 R15 parçasına bölündü.
+  - Kollar ve avuçlar doğal duruşta.
+  - Forma, şort, tozluk, krampon, ten, saç, sakal bölgeleri ayrı parçalar; oyunda
+    özelleştirilebilir.
+  - Studio'da bir kez içe aktarılınca karakterler bu gövdeyle giyinir; aktarılmazsa eski gövde
+    kullanılır.
+  - Ayrıntılar: `assets/modeller/OKU.md`.
