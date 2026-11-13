@@ -1066,25 +1066,238 @@ function Stadium.Lobby()
 	local T = Config.TestPitch
 	local cz = (T.MinZ + T.MaxZ) / 2
 	part(Vector3.new(2000, 1, 2000), CFrame.new(0, T.GroundY - 1.3, cz), rgb(96, 128, 82), Enum.Material.Grass)
-	-- antrenman tesisi: çit, küçük tribün, binalar, ağaçlar
-	for _, sx in ipairs({ -1, 1 }) do
-		local f = part(Vector3.new(0.3, 10, 200), CFrame.new(sx * 128, 5, cz), rgb(120, 126, 132), Enum.Material.DiamondPlate)
-		f.Transparency = 0.55
-		for i = 0, 8 do
-			part(Vector3.new(0.7, 11, 0.7), CFrame.new(sx * 128, 5.5, cz - 100 + i * 25), DARK, Enum.Material.Metal)
+	-- Mahalle halı sahası: deneme sahasının çevresi (oyun koordinatları değişmez)
+	local x0, x1 = T.MinX - 6, T.MaxX + 6
+	local z0, z1 = T.MinZ - 6, T.MaxZ + 8
+	local NET = rgb(31, 77, 43)
+	local STEEL = rgb(167, 173, 179)
+	-- (çim şeritleri deneme sahasının kendi zemininde; üstüne ikinci şerit konmaz, satranç tahtası olur)
+	-- file kafes: galvaniz direkler, yarı saydam file, yatay teller; önde giriş kapısı
+	local H = 18
+	local function fence(ax: number, az: number, bx: number, bz: number, gapFrom: number?, gapTo: number?)
+		local len = math.sqrt((bx - ax) ^ 2 + (bz - az) ^ 2)
+		local dir = Vector3.new(bx - ax, 0, bz - az).Unit
+		local function seg(t0: number, t1: number)
+			local m = (t0 + t1) / 2
+			local c = Vector3.new(ax, 0, az) + dir * m
+			local cf = CFrame.lookAt(c + Vector3.new(0, H / 2, 0), c + Vector3.new(0, H / 2, 0) + dir)
+			local net = part(Vector3.new(0.12, H, t1 - t0), cf, NET)
+			net.Transparency = 0.62
+			for k = 1, 6 do
+				part(Vector3.new(0.14, 0.1, t1 - t0), cf * CFrame.new(0, -H / 2 + k * 3, 0), STEEL, Enum.Material.Metal)
+			end
+		end
+		if gapFrom and gapTo then
+			seg(0, gapFrom)
+			seg(gapTo, len)
+		else
+			seg(0, len)
+		end
+		for t = 0, len + 0.01, 9 do
+			local c = Vector3.new(ax, 0, az) + dir * t
+			local post = part(
+				Vector3.new(H + 1, 0.5, 0.5),
+				CFrame.new(c + Vector3.new(0, (H + 1) / 2, 0)) * CFrame.Angles(0, 0, math.pi / 2),
+				STEEL,
+				Enum.Material.Metal,
+				true
+			)
+			post.Shape = Enum.PartType.Cylinder
 		end
 	end
-	local back = part(Vector3.new(256, 10, 0.3), CFrame.new(0, 5, T.MaxZ + 22), rgb(120, 126, 132), Enum.Material.DiamondPlate)
-	back.Transparency = 0.55
-	for i = 0, 5 do
-		local a = R() * 0.2
-		local x = -330 + i * 132
-		local h = 40 + R() * 50
-		local cf = CFrame.new(x, 0, T.MaxZ + 190 + R() * 80) * CFrame.Angles(0, a, 0)
-		part(Vector3.new(60, h, 44), cf * CFrame.new(0, h / 2, 0), rgb(200, 192, 176), Enum.Material.Concrete, true)
-		for f = 1, 3 do
-			part(Vector3.new(60.4, 3.4, 44.4), cf * CFrame.new(0, h * f / 4, 0), rgb(70, 88, 120), Enum.Material.Glass)
+	fence(x0, z0, x0, z1)
+	fence(x1, z0, x1, z1)
+	fence(x0, z1, x1, z1)
+	fence(x0, z0, x1, z0, (x1 - x0) / 2 - 12, (x1 - x0) / 2 + 12) -- önde kapı aralığı
+	for _, gx in ipairs({ -12, 12 }) do
+		part(Vector3.new(0.8, H + 2, 0.8), CFrame.new(gx, (H + 2) / 2, z0), C.Yellow, Enum.Material.Metal, true)
+	end
+	part(Vector3.new(24.8, 0.8, 0.8), CFrame.new(0, H + 1.6, z0), C.Yellow, Enum.Material.Metal)
+	-- alt panolar: uydurma yerel sponsorlar
+	local SPONSORS = { "MODA TÜP", "KADIKÖY KIRTASİYE", "YOĞURTÇU FIRINI", "BAHARİYE SPOR", "SARI LACİVERT KAFE", "FENER KARİYER" }
+	local si = 0
+	for _, side in ipairs({ -1, 1 }) do
+		for z = z0 + 12, z1 - 20, 24 do
+			si += 1
+			local x = if side < 0 then x0 + 0.5 else x1 - 0.5
+			local board = part(
+				Vector3.new(0.4, 3, 22),
+				CFrame.new(x, 1.5, z + 11) * CFrame.Angles(0, if side < 0 then -math.pi / 2 else math.pi / 2, 0),
+				if si % 2 == 0 then C.Navy else rgb(150, 110, 70),
+				Enum.Material.Wood
+			)
+			board.Size = Vector3.new(22, 3, 0.4)
+			local g = surface(board, 8)
+			label(
+				g,
+				SPONSORS[(si % #SPONSORS) + 1],
+				if si % 2 == 0 then C.Yellow else C.White,
+				UDim2.fromScale(0.94, 0.8),
+				UDim2.fromScale(0.03, 0.1)
+			)
 		end
+	end
+	-- projektörler: uzun kenarlarda dörder direk, sahaya bakan LED başlıklar
+	for _, side in ipairs({ -1, 1 }) do
+		for i = 0, 3 do
+			local z = z0 + 18 + i * ((z1 - z0 - 36) / 3)
+			local x = if side < 0 then x0 - 4 else x1 + 4
+			local pole =
+				part(Vector3.new(32, 1.2, 1.2), CFrame.new(x, 16, z) * CFrame.Angles(0, 0, math.pi / 2), STEEL, Enum.Material.Metal, true)
+			pole.Shape = Enum.PartType.Cylinder
+			local head = part(
+				Vector3.new(7, 3.4, 1.2),
+				CFrame.lookAt(Vector3.new(x, 32.5, z), Vector3.new(0, 0, z)) * CFrame.Angles(math.rad(-30), 0, 0),
+				DARK,
+				Enum.Material.Metal
+			)
+			local lamp = part(Vector3.new(6.4, 2.8, 0.2), head.CFrame * CFrame.new(0, 0, -0.65), rgb(255, 244, 222), Enum.Material.Neon)
+			if i == 1 or i == 2 then
+				local sl = Instance.new("SpotLight")
+				sl.Brightness = 3
+				sl.Range = 90
+				sl.Angle = 70
+				sl.Color = rgb(255, 241, 220)
+				sl.Face = Enum.NormalId.Front
+				sl.Parent = lamp
+			end
+		end
+	end
+	-- yedek kulübesi: bank ve şeffaf çatı (sahanın sol kenarında)
+	do
+		local bz = (z0 + z1) / 2
+		local bx = x0 + 3
+		part(Vector3.new(2.4, 1.6, 20), CFrame.new(bx, 0.8, bz), C.Navy, Enum.Material.SmoothPlastic, true)
+		part(Vector3.new(0.6, 3, 20), CFrame.new(bx - 1.2, 2.3, bz), C.Navy)
+		local roof = part(
+			Vector3.new(4, 0.3, 21),
+			CFrame.new(bx + 0.2, 6.5, bz) * CFrame.Angles(0, 0, math.rad(-8)),
+			rgb(200, 220, 235),
+			Enum.Material.Glass
+		)
+		roof.Transparency = 0.5
+		for _, dz in ipairs({ -10, 10 }) do
+			part(Vector3.new(0.3, 6.5, 0.3), CFrame.new(bx - 1.5, 3.25, bz + dz), STEEL, Enum.Material.Metal)
+		end
+	end
+	-- elle çevrilen skor tabelası (kale arkasında)
+	do
+		local board = part(
+			Vector3.new(16, 7, 0.6),
+			CFrame.new(40, 9, z1 + 3), -- ön yüzü sahaya (-Z) bakar
+			rgb(30, 34, 40),
+			Enum.Material.Metal,
+			true
+		)
+		local g = surface(board, 10)
+		label(g, "EV  0 - 0  DEP", C.White, UDim2.fromScale(0.9, 0.6), UDim2.fromScale(0.05, 0.2))
+		for _, dx in ipairs({ -6, 6 }) do
+			part(Vector3.new(0.5, 6, 0.5), CFrame.new(40 + dx, 3, z1 + 3), STEEL, Enum.Material.Metal)
+		end
+	end
+	-- çay ocağı: tezgâh, semaver, ince belli bardaklar, plastik sandalyeler (kapının solunda)
+	do
+		local kx, kz = -44, z0 - 18
+		part(Vector3.new(16, 9, 10), CFrame.new(kx, 4.5, kz - 2), rgb(236, 230, 214), Enum.Material.Concrete, true)
+		part(Vector3.new(18, 0.6, 13), CFrame.new(kx, 9.3, kz - 0.5), rgb(178, 34, 34), Enum.Material.SmoothPlastic, true)
+		part(Vector3.new(14, 3.4, 2), CFrame.new(kx, 1.7, kz + 4), rgb(120, 84, 52), Enum.Material.Wood, true)
+		local sign = part(Vector3.new(14, 2.6, 0.3), CFrame.new(kx, 11, kz + 4.6) * CFrame.Angles(0, math.pi, 0), C.Navy)
+		label(surface(sign, 12), "ÇAY OCAĞI", C.Yellow, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+		-- semaver
+		local body = part(
+			Vector3.new(2.2, 1.4, 1.4),
+			CFrame.new(kx - 4, 4.5, kz + 4) * CFrame.Angles(0, 0, math.pi / 2),
+			rgb(196, 160, 90),
+			Enum.Material.Metal
+		)
+		body.Shape = Enum.PartType.Cylinder
+		local top = part(
+			Vector3.new(1.2, 1, 1),
+			CFrame.new(kx - 4, 5.9, kz + 4) * CFrame.Angles(0, 0, math.pi / 2),
+			rgb(196, 160, 90),
+			Enum.Material.Metal
+		)
+		top.Shape = Enum.PartType.Cylinder
+		-- çay bardakları ve tabakları
+		for i = 0, 5 do
+			local gx = kx - 1 + i * 1.1
+			local plate = part(Vector3.new(0.08, 0.7, 0.7), CFrame.new(gx, 3.45, kz + 4) * CFrame.Angles(0, 0, math.pi / 2), C.White)
+			plate.Shape = Enum.PartType.Cylinder
+			local glass = part(
+				Vector3.new(0.7, 0.36, 0.36),
+				CFrame.new(gx, 3.85, kz + 4) * CFrame.Angles(0, 0, math.pi / 2),
+				rgb(170, 60, 30),
+				Enum.Material.Glass
+			)
+			glass.Shape = Enum.PartType.Cylinder
+			glass.Transparency = 0.25
+		end
+		-- plastik sandalyeler ve masa
+		for i = 0, 3 do
+			local cx = kx - 6 + i * 4
+			local cz2 = kz + 10
+			part(Vector3.new(2.2, 0.3, 2.2), CFrame.new(cx, 2, cz2), rgb(230, 230, 228), Enum.Material.SmoothPlastic, true)
+			part(Vector3.new(2.2, 2.4, 0.3), CFrame.new(cx, 3.2, cz2 + 1), rgb(230, 230, 228))
+			for _, d in ipairs({
+				Vector3.new(-0.9, 0, -0.9),
+				Vector3.new(0.9, 0, -0.9),
+				Vector3.new(-0.9, 0, 0.9),
+				Vector3.new(0.9, 0, 0.9),
+			}) do
+				part(Vector3.new(0.2, 2, 0.2), CFrame.new(cx + d.X, 1, cz2 + d.Z), rgb(230, 230, 228))
+			end
+		end
+	end
+	-- soyunma konteyneri (kapının sağında)
+	do
+		local cx, cz = 46, z0 - 16
+		part(Vector3.new(22, 9, 8), CFrame.new(cx, 4.5, cz), rgb(238, 238, 236), Enum.Material.Metal, true)
+		part(Vector3.new(3, 6.6, 0.3), CFrame.new(cx - 5, 3.3, cz + 4.1), rgb(70, 76, 84))
+		local win = part(Vector3.new(6, 2.6, 0.3), CFrame.new(cx + 4, 5.6, cz + 4.1), rgb(150, 190, 220), Enum.Material.Glass)
+		win.Transparency = 0.3
+		local sign = part(Vector3.new(12, 1.8, 0.3), CFrame.new(cx, 8, cz + 4.2) * CFrame.Angles(0, math.pi, 0), C.Navy)
+		label(surface(sign, 12), "SOYUNMA ODASI", C.White, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+	end
+	-- turuncu koniler (giriş önünde sıra)
+	for i = 0, 7 do
+		local c =
+			part(Vector3.new(1.4, 0.9, 0.9), CFrame.new(-21 + i * 6, 0.7, z0 + 3) * CFrame.Angles(0, 0, math.pi / 2), rgb(255, 120, 20))
+		c.Shape = Enum.PartType.Cylinder
+		part(Vector3.new(1.4, 0.15, 1.4), CFrame.new(-21 + i * 6, 0.08, z0 + 3), rgb(255, 120, 20))
+	end
+	-- balkonlu apartmanlar ve sokak lambaları (arkada)
+	for i = 0, 6 do
+		local w, d = 36 + R() * 14, 26
+		local floors = 5 + math.floor(R() * 3)
+		local h = floors * 9
+		local x = -260 + i * 86 + (R() - 0.5) * 12
+		local z = z1 + 90 + R() * 60
+		local cf = CFrame.new(x, 0, z) * CFrame.Angles(0, (R() - 0.5) * 0.2, 0)
+		local tones = { rgb(214, 200, 176), rgb(196, 178, 160), rgb(222, 214, 196), rgb(184, 170, 150) }
+		part(Vector3.new(w, h, d), cf * CFrame.new(0, h / 2, 0), tones[(i % #tones) + 1], Enum.Material.Concrete, true)
+		for f = 1, floors do
+			part(Vector3.new(w * 0.8, 0.5, 3), cf * CFrame.new(0, f * 9 - 4.5, -d / 2 - 1.5), rgb(150, 140, 128), Enum.Material.Concrete)
+			local win = part(
+				Vector3.new(w * 0.7, 3, 0.2),
+				cf * CFrame.new(0, f * 9 - 2.5, -d / 2 - 0.1),
+				if R() < 0.4 then rgb(255, 214, 140) else rgb(60, 78, 104),
+				if R() < 0.4 then Enum.Material.Neon else Enum.Material.Glass
+			)
+			win.Transparency = 0.1
+		end
+		part(Vector3.new(w + 1, 1.2, d + 1), cf * CFrame.new(0, h + 0.6, 0), rgb(150, 70, 50), Enum.Material.Slate)
+	end
+	for i = 0, 5 do
+		local lx = -150 + i * 60
+		local lz = z0 - 34
+		local pole = part(Vector3.new(16, 0.5, 0.5), CFrame.new(lx, 8, lz) * CFrame.Angles(0, 0, math.pi / 2), DARK, Enum.Material.Metal)
+		pole.Shape = Enum.PartType.Cylinder
+		local bulb = part(Vector3.new(1.6, 0.6, 1.6), CFrame.new(lx, 16.2, lz), rgb(255, 226, 170), Enum.Material.Neon)
+		local pl = Instance.new("PointLight")
+		pl.Range = 22
+		pl.Brightness = 1.2
+		pl.Color = rgb(255, 214, 160)
+		pl.Parent = bulb
 	end
 	for _ = 1, 46 do
 		local a = R() * math.pi * 2
