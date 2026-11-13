@@ -446,6 +446,10 @@ Config.Economy = { StartCoins = 100, StartClubFunds = 0 }
 Config.Remote = { MinInterval = 0.2 } -- aynı oyuncudan iki istek arası en az süre
 Config.Data = { AutoSave = 90, Retries = 4, LockTimeout = 600 }
 
+-- Stadyum görselleri. Kutu parçalardan yapılan 3B seyirci ve saha kenarı figürleri gerçekçi
+-- görünmediği için kapalı; Studio'da dokulu seyirci/figür modelleri gelince yerlerine konacak.
+Config.StadiumFx = { Crowd3D = false, SideFigures = false, Pyro = true }
+
 -- Hareket (stud/saniye). Özellikler bu değerleri sonraki adımlarda ölçekler.
 Config.Movement = {
 	Run = 17,

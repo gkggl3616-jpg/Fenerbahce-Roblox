@@ -397,7 +397,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 			end
 		end
 		-- ön sıralarda 3B seyirci: gövde ve baş, bir kısmının elinde atkı; yalnız alt katta
-		if o.density and o.density > 0 and y0 <= 4 then
+		if Config.StadiumFx.Crowd3D and o.density and o.density > 0 and y0 <= 4 then
 			local rows = if tier <= 4 then 2 else 3 -- telefon için sınırlı: aynı boyutlu parçalar toplu çizilir
 			local casual = {
 				rgb(70, 76, 90),
@@ -1018,7 +1018,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		local head = part(Vector3.new(0.95, 0.95, 0.95), cf * CFrame.new(0, 4.3 + lift, 0), SKIN_TONES[1 + math.floor(R() * #SKIN_TONES)])
 		head.Shape = Enum.PartType.Ball
 	end
-	if tier >= 2 then
+	if tier >= 2 and Config.StadiumFx.SideFigures then
 		-- yedek kulübeleri: tünelin iki yanında, şeffaf kavisli çatı, oturan yedekler, ayakta teknik direktör
 		for _, sx in ipairs({ -1, 1 }) do
 			local f = FR.W * CFrame.new(sx * 22, 0, 8)
@@ -1056,7 +1056,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 			end
 		end
 	end
-	if tier >= 3 then
+	if tier >= 3 and Config.StadiumFx.SideFigures then
 		-- TV kamera kulesi: karşı tarafta orta çizgi hizasında iskele, platform, kameraman
 		local fe = FR.E * CFrame.new(0, 0, 13)
 		for _, dx in ipairs({ -2, 2 }) do
@@ -1069,7 +1069,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		part(Vector3.new(0.9, 0.9, 2.2), fe * CFrame.new(0.2, 13.4, -0.6), rgb(30, 30, 34), Enum.Material.Metal)
 		part(Vector3.new(0.3, 3.2, 0.3), fe * CFrame.new(0.2, 11.4, -0.3), rgb(60, 60, 64), Enum.Material.Metal)
 	end
-	if tier >= 5 then
+	if tier >= 5 and Config.StadiumFx.Pyro then
 		-- meşale dumanı: alt kat önlerinde gizli yayıcılar, golde sarı ve lacivert duman yükselir
 		for _, name in ipairs({ "N", "S", "W", "E" }) do
 			for k = -1, 1 do
