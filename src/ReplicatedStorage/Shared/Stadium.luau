@@ -386,8 +386,30 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 				crowd(slab, segLen * 10, slope * 10, o.density)
 			end
 		end
+		-- merdivenler: tribünü bölen açık renkli basamak şeritleri (koltuk bloklarını ayırır)
+		local slabCF = frame * CFrame.new(off, y0 + rise / 2, margin + depth / 2) * CFrame.Angles(math.pi / 2 - a, 0, 0)
+		local aisles = math.max(1, math.floor(len / 26))
+		for k = 1, aisles - 1 do
+			local x = -len / 2 + len * k / aisles
+			part(Vector3.new(2.4, slope, 0.7), slabCF * CFrame.new(x, 0, -0.08), rgb(186, 190, 198), Enum.Material.Concrete)
+			-- tünel ağzı (vomitorium): derin tribünlerde ortada karanlık giriş
+			if depth >= 20 and k % 2 == 1 then
+				local tunnel = part(Vector3.new(7, slope * 0.16, 2.2), slabCF * CFrame.new(x, -slope * 0.05, 0.2), rgb(14, 16, 24))
+				tunnel.Name = "Tunnel"
+			end
+		end
 		-- ön duvar
 		part(Vector3.new(len, y0 + 1.2, 1), frame * CFrame.new(off, (y0 + 1.2) / 2, margin - 0.5), wallC, Enum.Material.Concrete, true)
+		-- korkuluk: ön duvarın üstünde metal boru ve dikmeler
+		part(Vector3.new(len, 0.22, 0.22), frame * CFrame.new(off, y0 + 2.3, margin - 0.6), rgb(200, 204, 212), Enum.Material.Metal)
+		for k = 0, math.floor(len / 14) do
+			part(
+				Vector3.new(0.18, 1.1, 0.18),
+				frame * CFrame.new(off - len / 2 + k * 14, y0 + 1.75, margin - 0.6),
+				rgb(200, 204, 212),
+				Enum.Material.Metal
+			)
+		end
 		if o.solid ~= false then
 			-- altını dolduran basamaklı gövde
 			for k = 1, 3 do
@@ -430,7 +452,20 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		local span = zBack - zFront + 4
 		local tilt = math.rad(5)
 		local cf = frame * CFrame.new(0, y, (zFront + zBack) / 2 + 2) * CFrame.Angles(-tilt, 0, 0)
-		part(Vector3.new(len, 1.2, span), cf, if tier >= 5 then rgb(176, 184, 204) else rgb(140, 146, 158), Enum.Material.Metal, true)
+		local roofC = if tier >= 6 then rgb(52, 62, 96) elseif tier >= 5 then rgb(96, 106, 128) else rgb(120, 126, 138)
+		part(Vector3.new(len, 1.2, span), cf, roofC, Enum.Material.Metal, true)
+		-- çatı sacı nervürleri ve öndeki saydam şerit (yukarıdan bakınca düz gri levha gibi durmasın)
+		for k = 0, math.floor(len / 9) do
+			part(
+				Vector3.new(0.6, 0.3, span),
+				cf * CFrame.new(-len / 2 + k * 9, 0.7, 0),
+				roofC:Lerp(Color3.new(1, 1, 1), 0.25),
+				Enum.Material.Metal
+			)
+		end
+		local glass =
+			part(Vector3.new(len, 1.3, span * 0.22), cf * CFrame.new(0, 0.05, -span * 0.39), rgb(150, 190, 230), Enum.Material.Glass)
+		glass.Transparency = 0.35
 		local edge = part(
 			Vector3.new(len, 2.2, 0.8),
 			cf * CFrame.new(0, -0.5, -span / 2),
@@ -441,6 +476,16 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		if glow then
 			-- çatı altı ışık hattı
 			part(Vector3.new(len * 0.96, 0.5, 1.6), cf * CFrame.new(0, -1, -span / 2 + 3), rgb(255, 250, 235), Enum.Material.Neon)
+		end
+		-- çatının üstünde sarı-lacivert bayraklar (3. kademeden itibaren)
+		if tier >= 3 then
+			local flags = math.max(2, math.floor(len / 34))
+			for i = 0, flags do
+				local x = -len / 2 + 4 + (len - 8) * i / flags
+				local base = cf * CFrame.new(x, 0.6, -span / 2 + 1)
+				part(Vector3.new(0.3, 9, 0.3), base * CFrame.new(0, 4.5, 0), rgb(210, 214, 222), Enum.Material.Metal)
+				part(Vector3.new(4.6, 2.8, 0.1), base * CFrame.new(2.3, 7.6, 0), if i % 2 == 0 then C.Yellow else C.Navy)
+			end
 		end
 		local n = math.max(2, math.floor(len / 60))
 		for i = 0, n do
@@ -836,6 +881,65 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		led(FR.E, hz * 2 - 10, 17)
 		led(FR.W, hz * 2 - 10, 17)
 	end
+	-- köşe bayrakları
+	for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
+		local base = CFrame.new(c[1] * hx, gy, midZ + c[2] * hz)
+		local pole = part(
+			Vector3.new(5, 0.22, 0.22),
+			base * CFrame.new(0, 2.5, 0) * CFrame.Angles(0, 0, math.pi / 2),
+			rgb(240, 240, 240),
+			Enum.Material.SmoothPlastic
+		)
+		pole.Shape = Enum.PartType.Cylinder
+		part(Vector3.new(0.08, 1.2, 1.6), base * CFrame.new(0, 4.4, 0.8), if tier >= 6 then C.Yellow else rgb(230, 70, 60))
+	end
+	if tier >= 3 then
+		-- kale arkasında fotoğrafçılar (diz çökmüş, büyük objektifli)
+		for _, sz in ipairs({ -1, 1 }) do
+			for k = 0, 5 do
+				local x = (if k < 3 then -1 else 1) * (24 + (k % 3) * 7)
+				local base = CFrame.lookAt(Vector3.new(x, gy, midZ + sz * (hz + 7)), Vector3.new(0, gy, midZ))
+				part(Vector3.new(1.6, 1.8, 1.2), base * CFrame.new(0, 0.9, 0), rgb(240, 120, 30), Enum.Material.SmoothPlastic, true) -- yelek
+				local head = part(Vector3.new(1, 1, 1), base * CFrame.new(0, 2.3, 0), rgb(214, 170, 136))
+				head.Shape = Enum.PartType.Ball
+				part(Vector3.new(0.7, 0.7, 1.6), base * CFrame.new(0, 2.2, -1), rgb(24, 24, 28), Enum.Material.Metal) -- objektif
+				part(Vector3.new(1.6, 0.7, 1.6), base * CFrame.new(0, 0.35, 0.6), rgb(30, 34, 50)) -- diz
+			end
+		end
+	end
+	if tier >= 2 then
+		-- oyuncu tüneli: orta çizgi hizasında, körük biçimli çıkış
+		local f = FR.W * CFrame.new(0, 0, 14)
+		for k = 0, 3 do
+			local seg = part(
+				Vector3.new(9, 5.2 - k * 0.3, 2.6),
+				f * CFrame.new(0, 2.6 - k * 0.15, -k * 2.4),
+				if k % 2 == 0 then C.Navy else rgb(30, 50, 140),
+				Enum.Material.Fabric,
+				true
+			)
+			seg.Name = "PlayerTunnel"
+		end
+		part(Vector3.new(6, 4, 0.4), f * CFrame.new(0, 2, -8.6), rgb(10, 12, 20))
+		sign(f * CFrame.new(0, 5.6, -9), 9, 1.4, "SAHA", C.Yellow, C.Navy)
+	end
+	if tier >= 5 then
+		-- üst kat önünde taraftar pankartları
+		local texts = { "SARI LACİVERT", "1907", "ŞAMPİYON", "FENER KARİYER", "HEP SENİNLEYİZ" }
+		for i, name in ipairs({ "W", "E" }) do
+			for k = -2, 2 do
+				sign(
+					FR[name] * CFrame.new(k * 56, 26.5 - (k % 2) * 1.5, 22 + 40 * 0.72 - 1.9),
+					34,
+					5,
+					texts[1 + (k + 2 + i) % #texts],
+					if (k + i) % 2 == 0 then C.Navy else C.Yellow,
+					if (k + i) % 2 == 0 then C.Yellow else C.Navy
+				)
+			end
+		end
+	end
+
 	-- yedek kulübeleri
 	if tier >= 2 then
 		for _, z in ipairs({ -44, 44 }) do
@@ -851,6 +955,41 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 
 	------------------------------------------------------------------ çevre
 	local r0 = math.sqrt((hx + ext) ^ 2 + (hz + ext) ^ 2) * 0.86
+	if tier >= 3 then
+		-- statı çevreleyen yol, otopark ve sokak lambaları
+		local ring = hx + ext + 22
+		local ringZ = hz + ext + 22
+		local asphalt = rgb(48, 52, 60)
+		for _, sx in ipairs({ -1, 1 }) do
+			part(Vector3.new(16, 0.3, ringZ * 2 + 16), CFrame.new(sx * ring, gy - 0.5, midZ), asphalt, Enum.Material.Asphalt)
+			part(Vector3.new(ring * 2 + 16, 0.3, 16), CFrame.new(0, gy - 0.5, midZ + sx * ringZ), asphalt, Enum.Material.Asphalt)
+		end
+		local carColors = { rgb(200, 30, 40), rgb(240, 240, 240), rgb(30, 30, 34), rgb(40, 90, 190), rgb(160, 166, 176), rgb(255, 200, 40) }
+		for k = 0, 27 do
+			local sz = if k < 14 then -1 else 1
+			local x = -ring + 24 + (k % 14) * ((ring * 2 - 48) / 13)
+			local z = midZ + sz * (ringZ + 18)
+			local c = carColors[1 + (k * 7) % #carColors]
+			local body = part(Vector3.new(4.4, 1.8, 8.6), CFrame.new(x, gy + 0.6, z), c, Enum.Material.SmoothPlastic, true)
+			body.Name = "Car"
+			part(Vector3.new(4, 1.4, 4.6), CFrame.new(x, gy + 2.1, z + 0.4), rgb(70, 90, 120), Enum.Material.Glass)
+			-- park çizgisi
+			part(Vector3.new(0.3, 0.05, 9.4), CFrame.new(x + 3.2, gy - 0.32, z), rgb(230, 230, 230))
+		end
+		for k = 0, 9 do
+			for _, sx in ipairs({ -1, 1 }) do
+				local z = midZ - ringZ + k * (ringZ * 2 / 9)
+				local x = sx * (ring + 10)
+				part(Vector3.new(0.5, 14, 0.5), CFrame.new(x, gy + 7, z), rgb(70, 74, 84), Enum.Material.Metal)
+				part(
+					Vector3.new(2.6, 0.5, 1.2),
+					CFrame.new(x - sx * 1.2, gy + 14, z),
+					if night then rgb(255, 228, 170) else rgb(200, 204, 210),
+					if night then Enum.Material.Neon else Enum.Material.Metal
+				)
+			end
+		end
+	end
 	if tier == 1 then
 		trees(34, r0 + 10, r0 + 170)
 		city(16, r0 + 70, r0 + 330, 28, 56)
