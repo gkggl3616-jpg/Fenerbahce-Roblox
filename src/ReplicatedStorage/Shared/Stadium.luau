@@ -17,6 +17,7 @@
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -32,9 +33,12 @@ local MONO = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeig
 local CONCRETE = rgb(150, 154, 162)
 local DARK = rgb(52, 57, 72)
 local SKIN = rgb(226, 184, 150)
+local SKIN_TONES = { rgb(245, 214, 190), rgb(232, 190, 160), rgb(205, 160, 125), rgb(170, 120, 88), rgb(125, 84, 60), rgb(84, 56, 42) }
 
 local current: Model? = nil
 local crowdLayers: { Frame } = {}
+local crowd3d: { { model: Model, base: CFrame, phase: number } } = {} -- ön sıralardaki 3B seyirci
+local pyro: { ParticleEmitter } = {} -- golde yanan meşale dumanı (Fenerbahçe stadı)
 local screens: { { title: TextLabel, text: TextLabel, score: TextLabel, bar: Frame } } = {}
 local boards: { TextLabel } = {}
 local screenToken = 0
@@ -390,6 +394,69 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 			slab.Name = "Seats"
 			if o.density and o.density > 0 then
 				crowd(slab, segLen * 10, slope * 10, o.density)
+			end
+		end
+		-- ön sıralarda 3B seyirci: gövde ve baş, bir kısmının elinde atkı; yalnız alt katta
+		if o.density and o.density > 0 and y0 <= 4 then
+			local rows = if tier <= 4 then 2 else 3 -- telefon için sınırlı: aynı boyutlu parçalar toplu çizilir
+			local casual = {
+				rgb(70, 76, 90),
+				rgb(30, 34, 44),
+				rgb(150, 40, 40),
+				rgb(40, 90, 60),
+				rgb(220, 220, 220),
+				rgb(110, 80, 60),
+				rgb(40, 60, 120),
+			}
+			local home = { C.Yellow, C.Yellow, C.Navy, C.Navy, C.Yellow, rgb(245, 245, 245) }
+			local awayC = { rgb(200, 30, 40), rgb(245, 245, 245), rgb(200, 30, 40) }
+			local tanA = math.tan(a)
+			for r = 1, rows do
+				local d = 1.4 + (r - 1) * 2.7
+				if d > depth - 1 then
+					break
+				end
+				local rowModel = Instance.new("Model")
+				rowModel.Name = "Seyirci"
+				local yS = y0 + d * tanA
+				local n = math.floor(len / 2.6)
+				for k = 0, n - 1 do
+					if R() < math.min(0.85, o.density + 0.2) then
+						local x = off - len / 2 + (k + 0.5) * (len / n) + (R() - 0.5) * 0.5
+						local isAway = tier >= 3 and o.awayEnd == true and x < off - len * 0.3
+						local pal = if isAway then awayC elseif tier >= 3 then home else casual
+						local shirt = pal[1 + math.floor(R() * #pal)]
+						local cf = frame * CFrame.new(x, yS, margin + d) * CFrame.Angles(0, (R() - 0.5) * 0.3, 0)
+						local body = Instance.new("Part")
+						body.Anchored, body.CanCollide, body.CanQuery, body.CanTouch, body.CastShadow = true, false, false, false, false
+						body.Size = Vector3.new(1.35, 1.7, 0.8)
+						body.CFrame = cf * CFrame.new(0, 1.55, 0)
+						body.Color = shirt
+						body.Material = Enum.Material.Fabric
+						body.Parent = rowModel
+						local head = body:Clone()
+						head.Shape = Enum.PartType.Ball
+						head.Size = Vector3.new(0.92, 0.92, 0.92)
+						head.CFrame = cf * CFrame.new(0, 2.85, 0)
+						head.Color = SKIN_TONES[1 + math.floor(R() * #SKIN_TONES)]
+						head.Material = Enum.Material.SmoothPlastic
+						head.Parent = rowModel
+						if R() < 0.1 then
+							-- atkı: iki elle başın üstünde gerilmiş (iki renk)
+							local sc = body:Clone()
+							sc.Size = Vector3.new(2.4, 0.42, 0.12)
+							sc.CFrame = cf * CFrame.new(0, 3.75, -0.1)
+							sc.Color = if isAway then rgb(200, 30, 40) else C.Yellow
+							sc.Parent = rowModel
+							local sc2 = sc:Clone()
+							sc2.Size = Vector3.new(2.4, 0.16, 0.13)
+							sc2.Color = if isAway then rgb(245, 245, 245) else C.Navy
+							sc2.Parent = rowModel
+						end
+					end
+				end
+				rowModel.Parent = model
+				table.insert(crowd3d, { model = rowModel, base = rowModel:GetPivot(), phase = R() * 6.28 })
 			end
 		end
 		-- merdivenler: tribünü bölen açık renkli basamak şeritleri (koltuk bloklarını ayırır)
@@ -775,7 +842,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 				stand(FR[s], { len = 300, margin = 22, depth = 34, y0 = 3, rise = 18, density = 0.68, flip = if s == "E" then 1 else 0 })
 			roof(FR[s], 300, 30, back, top + 14, false)
 		end
-		stand(FR.N, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.6 })
+		stand(FR.N, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.6, awayEnd = true })
 		stand(FR.S, { len = 190, margin = 26, depth = 22, y0 = 3, rise = 11, density = 0.55 })
 		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
 			tower(c[1] * (hx + 64), c[2] * (hz + 44), 96, 12, (fac.Aydinlatma or 0) >= 1)
@@ -795,7 +862,10 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		for name, frame in pairs(FR) do
 			i += 1
 			local len = HALF[name] * 2 + margin * 2
-			local top, back = stand(frame, { len = len, margin = margin, depth = depth, y0 = 3.5, rise = rise, density = dens, flip = i })
+			local top, back = stand(
+				frame,
+				{ len = len, margin = margin, depth = depth, y0 = 3.5, rise = rise, density = dens, flip = i, awayEnd = name == "N" }
+			)
 			if tier >= 5 then
 				local um = margin + depth * 0.72
 				top, back = stand(frame, {
@@ -936,6 +1006,94 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		part(Vector3.new(6, 4, 0.4), f * CFrame.new(0, 2, -8.6), rgb(10, 12, 20))
 		sign(f * CFrame.new(0, 5.6, -9), 9, 1.4, "SAHA", C.Yellow, C.Navy)
 	end
+	-- Saha kenarı insanları: ayakta ya da oturan basit figür (yer noktası, yüzü -Z'ye)
+	local function person(cf: CFrame, shirt: Color3, seated: boolean?, pants: Color3?)
+		local lift = if seated then -0.9 else 0
+		if not seated then
+			part(Vector3.new(1.25, 2.0, 0.7), cf * CFrame.new(0, 1.0, 0), pants or rgb(28, 30, 38), Enum.Material.Fabric)
+		else
+			part(Vector3.new(1.25, 0.6, 1.7), cf * CFrame.new(0, 1.3, -0.5), pants or rgb(28, 30, 38), Enum.Material.Fabric)
+		end
+		part(Vector3.new(1.4, 1.8, 0.8), cf * CFrame.new(0, 2.9 + lift, 0), shirt, Enum.Material.Fabric)
+		local head = part(Vector3.new(0.95, 0.95, 0.95), cf * CFrame.new(0, 4.3 + lift, 0), SKIN_TONES[1 + math.floor(R() * #SKIN_TONES)])
+		head.Shape = Enum.PartType.Ball
+	end
+	if tier >= 2 then
+		-- yedek kulübeleri: tünelin iki yanında, şeffaf kavisli çatı, oturan yedekler, ayakta teknik direktör
+		for _, sx in ipairs({ -1, 1 }) do
+			local f = FR.W * CFrame.new(sx * 22, 0, 8)
+			local kitC = if sx < 0 then C.Yellow else rgb(200, 30, 40)
+			part(Vector3.new(16, 3.4, 0.5), f * CFrame.new(0, 1.7, 1.6), rgb(40, 44, 56), Enum.Material.Metal, true)
+			part(Vector3.new(16, 1, 2), f * CFrame.new(0, 1.2, 0.4), rgb(24, 28, 40), Enum.Material.Plastic, true)
+			local roof = part(
+				Vector3.new(16.4, 0.3, 3.6),
+				f * CFrame.new(0, 4.6, -0.2) * CFrame.Angles(math.rad(-10), 0, 0),
+				rgb(190, 215, 235),
+				Enum.Material.Glass
+			)
+			roof.Transparency = 0.45
+			for _, ex in ipairs({ -8, 8 }) do
+				local side = part(Vector3.new(0.3, 4.4, 3.4), f * CFrame.new(ex, 2.2, -0.1), rgb(190, 215, 235), Enum.Material.Glass)
+				side.Transparency = 0.5
+			end
+			for k = -2, 2 do
+				person(f * CFrame.new(k * 3, 0, 0.4), if (k % 2) == 0 then kitC else rgb(20, 24, 40), true)
+			end
+			-- teknik direktör: teknik alanda ayakta (koyu takım)
+			person(f * CFrame.new(-sx * 6, 0, -5) * CFrame.Angles(0, -sx * 0.3, 0), rgb(26, 28, 34), false, rgb(26, 28, 34))
+		end
+		-- dördüncü hakem ve LED oyuncu değişikliği tabelası
+		local f4 = FR.W * CFrame.new(0, 0, 4)
+		person(f4, rgb(30, 30, 30), false)
+		local board = part(Vector3.new(1.8, 1.1, 0.3), f4 * CFrame.new(1.1, 3.6, -0.6), rgb(16, 16, 20), Enum.Material.Metal)
+		local g = surface(board, 30)
+		label(g, "9  ⇄  13", rgb(255, 60, 60), UDim2.fromScale(0.95, 0.8), UDim2.fromScale(0.025, 0.1))
+		-- top toplayıcılar: köşelerde, turuncu yelek
+		for _, sx in ipairs({ -1, 1 }) do
+			for _, sz in ipairs({ -1, 1 }) do
+				local pos = Vector3.new(sx * (hx + 4), gy, midZ + sz * (hz - 8))
+				person(CFrame.lookAt(pos, Vector3.new(0, gy, midZ)), rgb(250, 130, 20), false, rgb(30, 34, 50))
+			end
+		end
+	end
+	if tier >= 3 then
+		-- TV kamera kulesi: karşı tarafta orta çizgi hizasında iskele, platform, kameraman
+		local fe = FR.E * CFrame.new(0, 0, 13)
+		for _, dx in ipairs({ -2, 2 }) do
+			for _, dz in ipairs({ -2, 2 }) do
+				part(Vector3.new(0.35, 9, 0.35), fe * CFrame.new(dx, 4.5, dz), rgb(150, 156, 164), Enum.Material.Metal)
+			end
+		end
+		part(Vector3.new(5, 0.4, 5), fe * CFrame.new(0, 9.2, 0), rgb(60, 64, 76), Enum.Material.DiamondPlate, true)
+		person(fe * CFrame.new(0, 9.4, 0.8), rgb(20, 22, 30), false)
+		part(Vector3.new(0.9, 0.9, 2.2), fe * CFrame.new(0.2, 13.4, -0.6), rgb(30, 30, 34), Enum.Material.Metal)
+		part(Vector3.new(0.3, 3.2, 0.3), fe * CFrame.new(0.2, 11.4, -0.3), rgb(60, 60, 64), Enum.Material.Metal)
+	end
+	if tier >= 5 then
+		-- meşale dumanı: alt kat önlerinde gizli yayıcılar, golde sarı ve lacivert duman yükselir
+		for _, name in ipairs({ "N", "S", "W", "E" }) do
+			for k = -1, 1 do
+				local p = part(Vector3.new(1, 1, 1), FR[name] * CFrame.new(k * 50, 4, 24), C.Yellow)
+				p.Transparency = 1
+				local e = Instance.new("ParticleEmitter")
+				e.Enabled = false
+				e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				e.Color = if k == 0 then ColorSequence.new(rgb(30, 50, 160)) else ColorSequence.new(rgb(255, 225, 40))
+				e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 14) })
+				e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+				e.Lifetime = NumberRange.new(3, 5)
+				e.Rate = 26
+				e.Speed = NumberRange.new(6, 10)
+				e.SpreadAngle = Vector2.new(25, 25)
+				e.Acceleration = Vector3.new(0, 2, 0)
+				e.Rotation = NumberRange.new(0, 360)
+				e.RotSpeed = NumberRange.new(-30, 30)
+				e.EmissionDirection = Enum.NormalId.Top
+				e.Parent = p
+				table.insert(pyro, e)
+			end
+		end
+	end
 	if tier >= 5 then
 		-- üst kat önünde taraftar pankartları
 		local texts = { "SARI LACİVERT", "1907", "ŞAMPİYON", "FENER KARİYER", "HEP SENİNLEYİZ" }
@@ -1037,6 +1195,8 @@ function Stadium.Clear()
 		current = nil
 	end
 	crowdLayers = {}
+	crowd3d = {}
+	pyro = {}
 	screens = {}
 	boards = {}
 	screenToken += 1
@@ -1342,8 +1502,43 @@ function Stadium.Lobby()
 	model.Parent = Workspace
 end
 
--- Seyirci zıplaması (golde)
+-- Seyirci zıplaması (golde): boyanmış seyirci katmanları, 3B ön sıralar, meşale dumanı
+local cheerToken = 0
 function Stadium.Cheer()
+	cheerToken += 1
+	local token = cheerToken
+	if #crowd3d > 0 then
+		local t0 = os.clock()
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			local t = os.clock() - t0
+			if t > 2.6 or token ~= cheerToken then
+				conn:Disconnect()
+				for _, row in ipairs(crowd3d) do
+					if row.model.Parent then
+						row.model:PivotTo(row.base)
+					end
+				end
+				return
+			end
+			local fade = math.min(1, (2.6 - t) * 2)
+			for _, row in ipairs(crowd3d) do
+				if row.model.Parent then
+					row.model:PivotTo(row.base * CFrame.new(0, math.abs(math.sin(t * 9 + row.phase)) * 0.9 * fade, 0))
+				end
+			end
+		end)
+	end
+	for _, e in ipairs(pyro) do
+		e.Enabled = true
+	end
+	task.delay(4.5, function()
+		if token == cheerToken then
+			for _, e in ipairs(pyro) do
+				e.Enabled = false
+			end
+		end
+	end)
 	for i, holder in ipairs(crowdLayers) do
 		local base = holder.Position
 		local up = UDim2.new(base.X.Scale, base.X.Offset, base.Y.Scale, base.Y.Offset - 9)

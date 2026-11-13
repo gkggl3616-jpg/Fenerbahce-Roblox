@@ -1274,7 +1274,8 @@ do
 				end
 			end
 		end
-		check("kademe " .. tier .. ": parça sayısı makul (" .. n .. ")", n > 80 and n < 2500)
+		-- ön sıralardaki 3B seyirci aynı boyutlu, az renkli parçalardır (Roblox toplu çizer); sınır buna göre
+		check("kademe " .. tier .. ": parça sayısı makul (" .. n .. ")", n > 80 and n < 5600)
 		check("kademe " .. tier .. ": tribün var (" .. seats .. ")", seats >= 2)
 		check("kademe " .. tier .. ": tribün önceki kademeden küçük değil", seats >= last)
 		last = seats

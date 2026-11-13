@@ -557,15 +557,31 @@ end
 function Inst:GetPropertyChangedSignal()
 	return Signal()
 end
--- Modeli kökünden taşır: bütün parçalar birlikte gider (gerçekteki gibi)
+-- Modelin döndürme noktası: PrimaryPart ya da kök parça; yoksa parçaların ortası (gerçekteki
+-- sınır kutusu merkezine yakın)
+function Inst:GetPivot()
+	if PARTS[self.ClassName] then
+		return self.CFrame
+	end
+	local root = rawget(self, "PrimaryPart") or self:FindFirstChild("HumanoidRootPart")
+	if root then
+		return root.CFrame
+	end
+	local sum, n = V3.new(0, 0, 0), 0
+	for _, d in ipairs(self:GetDescendants()) do
+		if PARTS[d.ClassName] and rawget(d, "CFrame") then
+			sum += d.CFrame.Position
+			n += 1
+		end
+	end
+	return CFrame.new(if n > 0 then sum / n else sum)
+end
+-- Modeli döndürme noktasından taşır: bütün parçalar birlikte gider (gerçekteki gibi)
 function Inst:PivotTo(cf)
-	local hrp = self:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		local delta = cf * hrp.CFrame:Inverse()
-		for _, d in ipairs(self:GetDescendants()) do
-			if PARTS[d.ClassName] and rawget(d, "CFrame") then
-				d.CFrame = delta * d.CFrame
-			end
+	local delta = cf * self:GetPivot():Inverse()
+	for _, d in ipairs(self:GetDescendants()) do
+		if PARTS[d.ClassName] and rawget(d, "CFrame") then
+			d.CFrame = delta * d.CFrame
 		end
 	end
 end
