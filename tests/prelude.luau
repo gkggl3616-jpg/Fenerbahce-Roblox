@@ -799,6 +799,7 @@ moduleNode("CrestDesigner", CL .. "Screens/CrestDesigner.luau", screens)
 moduleNode("League", CL .. "Screens/League.luau", screens)
 moduleNode("Halftime", CL .. "Screens/Halftime.luau", screens)
 moduleNode("Hub", CL .. "Screens/Hub.luau", screens)
+moduleNode("Celebration", CL .. "Screens/Celebration.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 __tree.Client = client
 moduleNode("Main", CL .. "Main.client.luau", client)

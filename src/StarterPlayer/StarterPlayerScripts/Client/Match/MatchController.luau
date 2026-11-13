@@ -27,6 +27,7 @@ local Ball = require(script.Parent.Ball)
 local MatchAI = require(script.Parent.MatchAI)
 local Referee = require(script.Parent.Referee)
 local Halftime = require(script.Parent.Parent.Screens.Halftime)
+local Celebration = require(script.Parent.Parent.Screens.Celebration)
 local PlayerController = require(script.Parent.Parent.Controllers.PlayerController)
 
 local P = Config.MatchPitch
@@ -749,11 +750,8 @@ local function resultScreen(gui: ScreenGui, result, onClose: () -> ())
 	btn.Parent = content
 	UIMotion.In(panel, Vector2.new(0, 40))
 	UIMotion.Pop(panel, 0.92)
-	if result and result.promoted then
-		task.delay(1.6, function()
-			Components.Toast("level", "Lig atladın! Yeni stadyum yakında.")
-		end)
-	end
+	-- büyük anlar sonuç ekranı kapanınca gösterilir (MatchController.Start içindeki onDone'dan önce)
+	M.pendingCelebration = if result and result.ok then result else nil
 end
 
 local function finish(gui: ScreenGui, forfeit: boolean)
@@ -786,7 +784,22 @@ local function finish(gui: ScreenGui, forfeit: boolean)
 				ui.root:Destroy()
 			end
 			ui = {}
+			local celebrate = M.pendingCelebration
+			local playerData = M.data
 			M = nil
+			if celebrate and celebrate.promoted then
+				task.delay(0.6, function()
+					Celebration.Promotion(gui, celebrate.tier)
+				end)
+			end
+			if celebrate and celebrate.offer then
+				task.delay(if celebrate.promoted then 1.2 else 0.6, function()
+					local copy = table.clone(playerData or {})
+					Celebration.Offer(gui, copy, function()
+						Remotes.Get("AcceptOffer"):FireServer()
+					end)
+				end)
+			end
 			teleport(Vector3.new(0, 0, 4), Vector3.new(0, 0, 40))
 			onDone()
 		end)
@@ -1253,6 +1266,7 @@ function MatchController.Start(gui: ScreenGui, data, onDone: () -> (), fixture: 
 		position = data.position,
 		cards = {}, -- cards["home:9"] = "yellow" | "red"
 		fixture = fixture,
+		data = data,
 		subsLeft = 3,
 		bench = if fixture then table.clone(fixture.home.bench) else {},
 		order = "Dengeli",

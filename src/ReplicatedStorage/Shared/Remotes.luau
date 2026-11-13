@@ -15,6 +15,7 @@ local EVENTS = {
 	"UpgradeFacility",
 	"SetCrest",
 	"ClaimDaily",
+	"AcceptOffer",
 	"BuyItem",
 	"EquipItem",
 	"PreviewAppearance",

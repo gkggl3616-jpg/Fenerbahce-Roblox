@@ -382,6 +382,22 @@ local function onEquipItem(player: Player, id)
 	push(player)
 end
 
+-- Fenerbahçe teklifini kabul et: forma ve stat değişir (geri dönüşü yok)
+local function onAcceptOffer(player: Player)
+	local data = DataService.Get(player)
+	if not data or not data.created or not allowed(player, "offer") then
+		return
+	end
+	if data.career.atFenerbahce or data.career.offer ~= true then
+		return notify(player, "error", "Açık bir teklif yok.")
+	end
+	data.career.atFenerbahce = true
+	data.career.offer = nil
+	push(player)
+	CharacterService.Apply(player, CharacterService.LookFromData(data))
+	notify(player, "level", "Fenerbahçe'ye hoş geldin!")
+end
+
 -- Kulüp arması tasarımı
 local function onSetCrest(player: Player, spec)
 	local data = DataService.Get(player)
@@ -540,6 +556,11 @@ local function onMatchEnd(player: Player, r)
 		season.played = 0
 		season.points = 0
 	end
+	-- Fenerbahçe teklifi: seviye ve güç yeterliyse (bir kez gelir, kabul edilene kadar açık kalır)
+	local O = Config.FenerbahceOffer
+	if not data.career.atFenerbahce and data.level >= O.Level and Config.Power(data.stats, data.level) >= O.Power then
+		data.career.offer = true
+	end
 	PlayerService.AddXp(player, xp) -- veriyi de istemciye yollar
 	Remotes.Get("MatchResult"):FireClient(player, {
 		ok = true,
@@ -552,6 +573,7 @@ local function onMatchEnd(player: Player, r)
 		seasonOver = seasonOver,
 		promoted = promoted,
 		tier = data.club.tier,
+		offer = data.career.offer == true and not data.career.atFenerbahce,
 	})
 	task.spawn(DataService.Save, player, false)
 end
@@ -568,6 +590,7 @@ function PlayerService.Init()
 	Remotes.Get("UpgradeFacility").OnServerEvent:Connect(onUpgradeFacility)
 	Remotes.Get("SetCrest").OnServerEvent:Connect(onSetCrest)
 	Remotes.Get("ClaimDaily").OnServerEvent:Connect(onClaimDaily)
+	Remotes.Get("AcceptOffer").OnServerEvent:Connect(onAcceptOffer)
 	Remotes.Get("BuyItem").OnServerEvent:Connect(onBuyItem)
 	Remotes.Get("EquipItem").OnServerEvent:Connect(onEquipItem)
 	-- Dünya sıralaması: genel güce göre ilk 50. Kayıt bellekteyse (Studio) liste boş gelir.

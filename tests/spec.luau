@@ -1604,7 +1604,52 @@ do
 		__snapIf("siralama", lobby)
 		HubS.Close()
 		frames(30)
+		-- kutlama ekranları
+		local Cel = require(__tree.Screens.Celebration)
+		local closed = false
+		Cel.Promotion(lobby, 3, function()
+			closed = true
+		end)
+		frames(30)
+		check("lig atlama ekranı açılır", lobby:FindFirstChild("Promotion") ~= nil)
+		__snapIf("ligatlama", lobby)
+		for _, d in ipairs(lobby.Promotion:GetDescendants()) do
+			if d.ClassName == "TextButton" then
+				d.Activated:Fire()
+				break
+			end
+		end
+		frames(60)
+		check("lig atlama ekranı kapanır", closed and lobby:FindFirstChild("Promotion") == nil)
+		local accepted = false
+		Cel.Offer(lobby, { name = "Frizz", level = 25, power = 86 }, function()
+			accepted = true
+		end)
+		frames(30)
+		__snapIf("teklif", lobby)
+		local signButton
+		for _, d in ipairs(lobby.Offer:GetDescendants()) do
+			if d.ClassName == "TextLabel" and (d.Text == "İMZALA") then
+				signButton = d.Parent
+			end
+		end
+		check("teklif ekranında imza düğmesi var", signButton ~= nil)
+		if signButton then
+			signButton.Activated:Fire()
+		end
+		frames(60)
+		check("imza teklifi kabul eder", accepted)
 	end
+	-- sunucu: teklif kuralları
+	__isServer = true
+	data.career.atFenerbahce = false
+	data.career.offer = nil
+	fire("AcceptOffer")
+	check("teklif yokken kabul edilemez", data.career.atFenerbahce == false)
+	data.career.offer = true
+	fire("AcceptOffer")
+	check("açık teklif kabul edilir: Fenerbahçe formasına geçer", data.career.atFenerbahce == true and data.career.offer == nil)
+	__isServer = false
 end
 
 print(string.format("\nSONUÇ: %d geçti, %d kaldı", passed, failedCount))
