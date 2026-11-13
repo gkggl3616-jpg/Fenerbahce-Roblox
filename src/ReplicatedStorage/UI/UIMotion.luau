@@ -38,16 +38,44 @@ local function scaleOf(gui: GuiObject): UIScale
 	return s
 end
 
-function UIMotion.Sound(key: string)
-	local id = Config.Assets[key]
-	if not id or id == "" then
+-- Hazır sesler: Roblox ile gelen dosyalar (kimlik gerektirmez). Config.Assets içinde aynı adla
+-- bir ses kimliği yazılırsa o kullanılır. { dosya, ses düzeyi, hız }
+local BUILTIN: { [string]: { any } } = {
+	ClickSound = { "rbxasset://sounds/clickfast.wav", 0.6, 1 },
+	HoverSound = { "rbxasset://sounds/switch.wav", 0.16, 1.7 },
+	ConfirmSound = { "rbxasset://sounds/electronicpingshort.wav", 0.4, 1.3 },
+	ErrorSound = { "rbxasset://sounds/bass.mp3", 0.5, 1.5 },
+	RewardSound = { "rbxasset://sounds/victory.wav", 0.5, 1 },
+	WhooshSound = { "rbxasset://sounds/swordslash.wav", 0.3, 1 },
+	KickSound = { "rbxasset://sounds/snap.mp3", 0.7, 0.85 },
+	PostSound = { "rbxasset://sounds/hit.wav", 0.7, 0.8 },
+}
+local soundCache: { [string]: Sound } = {}
+UIMotion.Muted = false
+
+-- key: ses adı; pitch: hız çarpanı (1 = olağan). Aynı ses üst üste çalınabilir (tık tık).
+function UIMotion.Sound(key: string, pitch: number?)
+	if UIMotion.Muted then
 		return
 	end
-	local s = Instance.new("Sound")
-	s.SoundId = id
-	s.Volume = 0.5
+	local def = BUILTIN[key]
+	local custom = Config.Assets[key]
+	local id = if custom and custom ~= "" then custom else (def and def[1])
+	if not id then
+		return
+	end
+	local s = soundCache[key]
+	if not s then
+		s = Instance.new("Sound")
+		s.Name = "FK_" .. key
+		s.SoundId = id
+		s.Volume = if def then def[2] else 0.5
+		s.Parent = SoundService
+		soundCache[key] = s
+	end
+	local base = if def and not (custom and custom ~= "") then def[3] else 1
+	s.PlaybackSpeed = base * (pitch or 1)
 	SoundService:PlayLocalSound(s)
-	s:Destroy()
 end
 
 -- Giriş: kayarak ve saydamlıktan gelerek. offset: başlangıç kayması (piksel).

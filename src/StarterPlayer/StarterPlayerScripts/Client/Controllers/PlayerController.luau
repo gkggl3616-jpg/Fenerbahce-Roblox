@@ -1316,7 +1316,12 @@ local function bindBall()
 		end
 		back(2.4)
 	end)
+	Ball.On("kick", function(_, v)
+		-- vuruş sesi: sert vuruş daha tok
+		UIMotion.Sound("KickSound", math.clamp(1.25 - v.Magnitude / 260, 0.75, 1.25))
+	end)
 	Ball.On("post", function()
+		UIMotion.Sound("PostSound")
 		banner("Direk!", C.White)
 		shake(0.8)
 		UIMotion.Sound("ErrorSound")

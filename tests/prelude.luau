@@ -763,7 +763,7 @@ moduleNode("Squads", SRC .. "ReplicatedStorage/Shared/Squads.luau", shared)
 moduleNode("Stadium", SRC .. "ReplicatedStorage/Shared/Stadium.luau", shared)
 moduleNode("Remotes", SRC .. "ReplicatedStorage/Shared/Remotes.luau", shared)
 local uiF = folder("UI", rs)
-for _, n in ipairs({ "Theme", "UIMotion", "Components", "Forms" }) do
+for _, n in ipairs({ "Theme", "UIMotion", "Icons", "Components", "Forms" }) do
 	moduleNode(n, SRC .. "ReplicatedStorage/UI/" .. n .. ".luau", uiF)
 end
 local server = folder("Server", service("ServerScriptService"))

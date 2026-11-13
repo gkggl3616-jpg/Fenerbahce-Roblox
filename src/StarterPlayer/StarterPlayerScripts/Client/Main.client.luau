@@ -223,9 +223,17 @@ local function buildLobby()
 	holder.Parent = mc
 	list(holder, 8)
 	local buttons = {}
+	local ICONS = {
+		["Maça çık"] = "Ball",
+		["Deneme sahası"] = "Pitch",
+		["Yetenek ağacı"] = "Star",
+		["Kulüp arması"] = "Shield",
+		["Puan durumu"] = "Table",
+	}
 	local function add(text: string, style: string, locked: string?, onClick: (() -> ())?, sub: string?)
 		local b = Components.Button({
 			Text = text,
+			Icon = ICONS[text],
 			Style = style,
 			Locked = locked,
 			Order = #buttons + 1,

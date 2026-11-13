@@ -9,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Theme = require(script.Parent.Theme)
 local UIMotion = require(script.Parent.UIMotion)
+local Icons = require(script.Parent.Icons)
 
 local C = Theme.Color
 local Components = {}
@@ -259,6 +260,19 @@ function Components.Button(props)
 		sub.Parent = b
 	end
 	label.Parent = b
+	-- solda simge (isteğe bağlı): yazılar sağa kayar
+	if props.Icon then
+		local icon = Icons.Build(props.Icon, 30, textColor)
+		icon.AnchorPoint = Vector2.new(0, 0.5)
+		icon.Position = UDim2.new(0, 30, 0.5, 0)
+		icon.Parent = b
+		for _, child in ipairs(b:GetChildren()) do
+			if child:IsA("TextLabel") and hasSub then
+				child.Position = UDim2.fromOffset(72, child.Position.Y.Offset)
+				child.Size = UDim2.new(1, -112, 0, child.Size.Y.Offset)
+			end
+		end
+	end
 
 	-- sağda ok: üzerine gelince ileri kayar
 	local arrow = Components.Label({
@@ -297,6 +311,7 @@ function Components.Button(props)
 	local hover = false
 	b.MouseEnter:Connect(function()
 		hover = true
+		UIMotion.Sound("HoverSound")
 		UIMotion.Tween(scale, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 1.04 })
 		UIMotion.Tween(arrow, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out, { Position = UDim2.new(1, -4, 0, -2) })
 		if not locked then
@@ -309,7 +324,8 @@ function Components.Button(props)
 		UIMotion.Tween(arrow, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Position = UDim2.new(1, -10, 0, -2) })
 	end)
 	b.MouseButton1Down:Connect(function()
-		UIMotion.Tween(scale, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 0.96 })
+		UIMotion.Sound("ClickSound", 0.9) -- basış: "tık"
+		UIMotion.Tween(scale, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, { Scale = 0.94 })
 	end)
 	b.MouseButton1Up:Connect(function()
 		UIMotion.Tween(scale, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out, { Scale = if hover then 1.04 else 1 })
@@ -321,7 +337,7 @@ function Components.Button(props)
 			Components.Toast("error", props.Locked)
 			return
 		end
-		UIMotion.Sound("ClickSound")
+		UIMotion.Sound("ClickSound", 1.25) -- bırakış: daha tiz ikinci "tık"
 		local pos
 		if input and input.Position then
 			pos = Vector2.new(input.Position.X, input.Position.Y)
