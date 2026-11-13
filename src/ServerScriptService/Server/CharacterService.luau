@@ -213,18 +213,22 @@ end
 
 -- Başın görünen genişliği ve yüksekliği. Eski tip başta parça 2x1x1 olup ağ ölçeklidir;
 -- yeni tipte parça ölçüsü doğrudan baştır.
-local function headDims(head: BasePart): (number, number)
+-- Görünen baş, iskeletin baş parçasından küçüktür (sporcu oranı); aşağı kaydırılır ki boyuna otursun.
+-- Döner: genişlik, yükseklik, dikey kayma
+local HEAD_W, HEAD_H = 0.82, 0.88
+local function headDims(head: BasePart): (number, number, number)
 	local s = head.Size
 	local mesh = head:FindFirstChildOfClass("SpecialMesh")
 	local k = if mesh then mesh.Scale.X else 1
-	return math.min(s.X, s.Z) * k, s.Y * k
+	local rawH = s.Y * k
+	return math.min(s.X, s.Z) * k * HEAD_W, rawH * HEAD_H, -rawH * (1 - HEAD_H) * 0.45
 end
 
 -- Saç: başın ölçüsüne göre birkaç yuvarlak hacimden kurulur (ön = -Z, yüzün olduğu taraf)
 local function hair(character: Model, head: BasePart, style: number, c: Color3)
-	local w, h = headDims(head)
+	local w, h, dy = headDims(head)
 	local function lock(sx: number, sy: number, sz: number, x: number, y: number, z: number): BasePart
-		return blob(character, head, Vector3.new(w * sx, h * sy, w * sz), CFrame.new(w * x, h * y, w * z), c)
+		return blob(character, head, Vector3.new(w * sx, h * sy, w * sz), CFrame.new(w * x, h * y + dy, w * z), c)
 	end
 	if style == 1 then
 		lock(1.0, 0.62, 1.03, 0, 0.25, 0.03).Transparency = 0.2 -- sıfıra yakın
@@ -256,8 +260,8 @@ end
 -- Yüz: gözler, kaşlar, ağız ve bıyık, başın önündeki görünmez ince plakaya çizilir
 -- (plaka, baş parçası hangi tipte olursa olsun yüzü doğru ölçüde tutar)
 local function paintFace(character: Model, head: BasePart, face: number, beard: number, hairColor: Color3, skin: Color3)
-	local w, h = headDims(head)
-	local plate = weldPart(character, head, Vector3.new(w * 0.84, h * 0.84, 0.02), CFrame.new(0, 0, -w * 0.53), skin)
+	local w, h, dy = headDims(head)
+	local plate = weldPart(character, head, Vector3.new(w * 0.84, h * 0.84, 0.02), CFrame.new(0, dy, -w * 0.53), skin)
 	plate.Transparency = 1
 	plate.CastShadow = false
 	local sg = Instance.new("SurfaceGui")
@@ -301,9 +305,9 @@ end
 
 -- Gövde oranları (her biri ilgili iskelet parçasının genişliğine ya da yüksekliğine oranla)
 local K = {
-	ShirtW = 0.78, -- forma genişliği / üst gövde genişliği
-	ShirtD = 0.88,
-	HipW = 0.77,
+	ShirtW = 0.7, -- forma genişliği / üst gövde genişliği (yanlara göğüs kanatları eklenir: V gövde)
+	ShirtD = 0.84,
+	HipW = 0.7,
 	ArmAxis = 0.33, -- kol ekseninin gövdeye doğru kayması / kol genişliği
 	UpperArmR = 0.215,
 	LowerArmR = 0.185,
@@ -355,9 +359,24 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 		local shirt =
 			tag(weldPart(character, ut, Vector3.new(s.X * K.ShirtW, s.Y * 1.02, s.Z * K.ShirtD), CFrame.new(), kit.Shirt), "Shirt")
 		paintTorso(shirt, kit, look.name or "", look.number or 9, if look.atFenerbahce then "" else (look.abbr or ""), look.crest)
+		-- V gövde: göğüs kanatları üstte dışa açılır, belde daralır
+		for _, sx in ipairs({ -1, 1 }) do
+			tag(
+				weldPart(
+					character,
+					ut,
+					Vector3.new(s.X * 0.16, s.Y * 0.66, s.Z * K.ShirtD * 0.94),
+					CFrame.new(sx * s.X * 0.36, s.Y * 0.15, 0) * CFrame.Angles(0, 0, -sx * math.rad(11)),
+					kit.Shirt
+				),
+				"Shirt"
+			)
+		end
+		-- omuz hattı (trapez): kutunun köşeli üstünü yumuşatır
+		B(ut, Vector3.new(s.X * 0.92, s.Y * 0.3, s.Z * K.ShirtD * 0.96), Vector3.new(0, s.Y * 0.4, 0), kit.Shirt, "Shirt")
 		local neck0 = pivots(character, "Neck")
 		local ny = if neck0 then neck0.Y else s.Y / 2
-		T(ut, ny - s.Y * 0.04, ny + s.Y * 0.16, s.X * 0.105, 0, skin) -- boyun
+		T(ut, ny - s.Y * 0.04, ny + s.Y * 0.2, s.X * 0.1, 0, skin) -- boyun
 		T(ut, ny - s.Y * 0.02, ny + s.Y * 0.035, s.X * 0.135, 0, kit.Trim, "Trim") -- yaka
 	end
 	local lt = part("LowerTorso")
@@ -370,13 +389,18 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 	---------------------------------------------------------------- baş, yüz, saç
 	local head = part("Head")
 	if head then
-		local w, h = headDims(head)
-		B(head, Vector3.new(w * 0.97, h * 1.05, w), Vector3.zero, skin)
+		local w, h, dy = headDims(head)
+		local function H(x: number, y: number, z: number): Vector3
+			return Vector3.new(x, y + dy, z)
+		end
+		B(head, Vector3.new(w * 0.97, h * 1.05, w), H(0, 0, 0), skin)
+		-- çene: yüzün alt kısmını daraltır (yumurta biçimi)
+		B(head, Vector3.new(w * 0.8, h * 0.5, w * 0.82), H(0, -h * 0.25, -w * 0.06), skin)
 		paintFace(character, head, a.face or 1, a.beard or 0, hairColor, skin)
 		-- burun ve kulaklar
-		B(head, Vector3.new(w * 0.15, h * 0.2, w * 0.16), Vector3.new(0, -h * 0.03, -w * 0.49), skin:Lerp(Color3.new(0, 0, 0), 0.07))
+		B(head, Vector3.new(w * 0.15, h * 0.2, w * 0.16), H(0, -h * 0.03, -w * 0.49), skin:Lerp(Color3.new(0, 0, 0), 0.07))
 		for _, sx in ipairs({ -1, 1 }) do
-			B(head, Vector3.new(w * 0.1, h * 0.22, w * 0.18), Vector3.new(sx * w * 0.485, h * 0.02, w * 0.02), skin)
+			B(head, Vector3.new(w * 0.1, h * 0.22, w * 0.18), H(sx * w * 0.485, h * 0.02, w * 0.02), skin)
 		end
 		-- sakal: çeneyi önden saran kabuk; enseye taşmasın diye öne kaydırılır (1 kirli, 2 sakal, 3 gür)
 		local beard = a.beard or 0
@@ -386,7 +410,7 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 			local shell = B(
 				head,
 				Vector3.new(w * (if big then 1.04 else 0.975), h * (if big then 0.72 else 0.6), w * (if big then 0.78 else 0.7)),
-				Vector3.new(0, -h * (if big then 0.23 else 0.2), -w * (if big then 0.18 else 0.17)),
+				H(0, -h * (if big then 0.23 else 0.2), -w * (if big then 0.18 else 0.17)),
 				hairColor
 			)
 			if beard == 1 then
@@ -395,7 +419,7 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 		end
 		hair(character, head, a.hairStyle, hairColor)
 		if acc.SacBandi then
-			tag(tube(character, head, h * 0.2, h * 0.31, w * 0.535, 0, w * 0.02, C.Yellow), "Trim")
+			tag(tube(character, head, h * 0.2 + dy, h * 0.31 + dy, w * 0.535, 0, w * 0.02, C.Yellow), "Trim")
 		end
 	end
 
@@ -433,6 +457,15 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 				T(ua, hem + s.X * 0.05, hem - s.X * 0.02, r * 1.28, ax, kit.Trim, "Trim") -- kol ağzı
 				B(ua, Vector3.new(r * 2.04, r * 2.04, r * 2.04), Vector3.new(ax, bottom, 0), skin) -- dirsek
 			end
+			-- pazı: kısa kolun altında görünen kas hacmi
+			local bicep = top - (top - bottom) * 0.62
+			B(
+				ua,
+				Vector3.new(r * 2.35, (top - bottom) * 0.52, r * 2.3),
+				Vector3.new(ax, bicep, -r * 0.08),
+				if long then kit.Sleeve else skin,
+				if long then "Sleeve" else nil
+			)
 			if side == "Left" and (look.level or 1) >= Config.CaptainBandLevel then
 				local mid = top - (top - bottom) * 0.3
 				T(ua, mid + s.X * 0.08, mid - s.X * 0.08, r * 1.34, ax, C.Gold) -- kaptanlık bandı
@@ -450,6 +483,14 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 			else
 				T(la, top, bottom, r, ax, skin)
 			end
+			-- ön kol kası: dirseğe yakın kalın, bileğe doğru incelir
+			B(
+				la,
+				Vector3.new(r * 2.3, (top - bottom) * 0.55, r * 2.25),
+				Vector3.new(ax, top - (top - bottom) * 0.32, 0),
+				if long then kit.Sleeve else skin,
+				if long then "Sleeve" else nil
+			)
 			if acc.Bileklik and side == "Right" and not keeper then
 				T(la, bottom + s.X * 0.2, bottom + s.X * 0.06, r * 1.22, ax, C.Yellow)
 			end
@@ -478,6 +519,7 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 			local bottom = if knee0 then knee0.Y else -s.Y * 0.33
 			local r = s.X * K.ThighR
 			T(ul, top, bottom, r, 0, skin) -- uyluk
+			B(ul, Vector3.new(r * 2.3, (top - bottom) * 0.86, r * 2.3), Vector3.new(0, top - (top - bottom) * 0.48, -r * 0.08), skin) -- ön bacak kası
 			local hem = top - (top - bottom) * K.ShortsLen
 			T(ul, top + s.X * 0.16, hem, s.X * K.ShortsR, 0, kit.Shorts, "Shorts") -- şort paçası
 			T(ul, hem + s.X * 0.05, hem - s.X * 0.015, s.X * (K.ShortsR + 0.012), 0, kit.Trim, "Trim")
@@ -489,6 +531,15 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 			local bottom = if ankle0 then ankle0.Y else -s.Y * 0.46
 			local r = s.X * K.CalfR
 			T(ll, top, bottom, r, 0, skin) -- baldır
+			local calfY = top - (top - bottom) * 0.32
+			local sockOverCalf = not acc.KisaTozluk
+			B(
+				ll,
+				Vector3.new(r * 2.2, (top - bottom) * 0.5, r * 2.35),
+				Vector3.new(0, calfY, r * 0.18),
+				if sockOverCalf then kit.Sock else skin,
+				if sockOverCalf then "Sock" else nil
+			) -- baldır kası
 			local sockTop = if acc.KisaTozluk then bottom + (top - bottom) * 0.42 else top - s.X * 0.17
 			T(ll, sockTop, bottom, r * 1.08, 0, kit.Sock, "Sock") -- çorap
 			T(ll, sockTop + s.X * 0.02, sockTop - s.X * 0.07, r * 1.15, 0, kit.Trim, "Trim")
@@ -496,8 +547,9 @@ local function buildBody(character: Model, look, kit, skin: Color3)
 		end
 		if foot then
 			local s = foot.Size
-			weldPart(character, foot, Vector3.new(s.X * K.BootW, s.Y, s.Z * 0.86), CFrame.new(0, 0, -s.Z * 0.1), boot)
-			B(foot, Vector3.new(s.X * K.BootW, s.Y, s.Z * 0.5), Vector3.new(0, 0, -s.Z * 0.52), boot) -- burun
+			-- krampon: yuvarlatılmış gövde (burun öne uzanır) + topuk
+			B(foot, Vector3.new(s.X * K.BootW, s.Y * 1.35, s.Z * 1.12), Vector3.new(0, s.Y * 0.08, -s.Z * 0.2), boot)
+			weldPart(character, foot, Vector3.new(s.X * (K.BootW - 0.04), s.Y * 0.9, s.Z * 0.36), CFrame.new(0, 0, s.Z * 0.22), boot) -- topuk
 			weldPart(
 				character,
 				foot,
