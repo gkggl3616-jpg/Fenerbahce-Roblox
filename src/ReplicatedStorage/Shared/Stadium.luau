@@ -774,7 +774,7 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		for _, c in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }) do
 			tower(c[1] * (hx + 64), c[2] * (hz + 44), 96, 12, (fac.Aydinlatma or 0) >= 1)
 		end
-		screen(FR.N * CFrame.new(0, 26, 52), 56, 22, false)
+		screen(FR.N * CFrame.new(0, 31, 52), 56, 22, false)
 		ext = 110
 	else
 		-- Kapalı çanak: dört tribün + köşeler; 5 ve 6'da çift kat
@@ -869,9 +869,16 @@ local function build(model: Model, tier: number, info: Info, pitch, withMood: bo
 		end
 		-- dev ekranlar: kale arkası üst köşelerde
 		local sw, sh = if tier == 6 then 84 else 66, if tier == 6 then 34 else 27
-		local sy = roofY - sh / 2 - 6
-		screen(FR.N * CFrame.new(0, sy, outer - 8), sw, sh, true)
-		screen(FR.S * CFrame.new(0, sy, outer - 8), sw, sh, true)
+		-- Ekran çatının ön kenarının hemen arkasına asılır: tribünün üstünde boşlukta durur, sahadan
+		-- bakınca hiçbir yeri tribün ya da çatı arkasında kalmaz (eskiden alt yarısı koltukların arkasındaydı)
+		local hangZ = outer - (if tier >= 5 then 46 else 30) + 3
+		local sy = roofY - 4.5 - sh / 2
+		for _, frame in ipairs({ FR.N, FR.S }) do
+			screen(frame * CFrame.new(0, sy, hangZ), sw, sh, true)
+			for _, x in ipairs({ -sw * 0.35, sw * 0.35 }) do
+				part(Vector3.new(0.4, 5, 0.4), frame * CFrame.new(x, roofY - 2.5, hangZ + 1.2), DARK, Enum.Material.Metal) -- askı
+			end
+		end
 		ext = outer + 40
 	end
 

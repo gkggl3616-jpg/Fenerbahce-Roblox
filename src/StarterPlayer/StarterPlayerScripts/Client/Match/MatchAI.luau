@@ -122,7 +122,7 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 	-- rakip kulübün renkleri (kaleci kendi formasında kalır). Gövde parçaları görevlerine göre
 	-- etiketlidir: forma ve kol ana renk, şort ve şeritler ikinci renk, çorap ana renk.
 	if club and team == "away" and slot ~= 1 then
-		local byRole = { Shirt = club.A, Sleeve = club.A, Shorts = club.B, Sock = club.A, Trim = club.B }
+		local byRole = { Shirt = club.A, Sleeve = club.A, Shorts = club.B, Sock = club.A, Trim = club.B, Stripe = club.B }
 		for _, d in ipairs(model:GetDescendants()) do
 			if d:IsA("BasePart") then
 				local c = byRole[d:GetAttribute("FK") or ""]

@@ -315,7 +315,7 @@ do
 	check("gövde temel şekillerden kurulur (40+ parça)", extras >= 40, extras)
 	check("hazır gövde parçaları gizlenir", visibleBody == 0, visibleBody)
 	check("forma, kol, şort, çorap ve şerit etiketli", roles.Shirt and roles.Sleeve and roles.Shorts and roles.Sock and roles.Trim)
-	check("forma önü, arkası ve yüz çizilir", kit == 3, kit)
+	check("forma (göğüs ve bel blokları, ön ve arka) ve yüz çizilir", kit == 5, kit)
 	check("hazır yüz çıkartması kaldırılır", not faceDecal)
 end
 local Bots = require(__tree.Match.Bots)
