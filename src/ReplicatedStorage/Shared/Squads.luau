@@ -281,6 +281,14 @@ function Squads.Table(data)
 		end
 		table.insert(rows, { club = club, played = season.played, won = won, drawn = drawn, lost = lost, points = won * 3 + drawn })
 	end
+	-- kendi kulübünün G/B/M'si: kayıtta varsa o, yoksa (eski kayıt) puan ve oynanan maçtan çıkarılır
+	local myWon, myDrawn, myLost = season.won, season.drawn, season.lost
+	if myWon == nil or myDrawn == nil or myLost == nil then
+		local pts, played = season.points or 0, season.played or 0
+		myWon = math.min(played, math.floor(pts / 3))
+		myDrawn = math.min(played - myWon, pts - myWon * 3)
+		myLost = math.max(0, played - myWon - myDrawn)
+	end
 	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
 	table.insert(rows, {
 		club = {
@@ -292,6 +300,9 @@ function Squads.Table(data)
 			CrestSpec = if tierId == 6 then nil else data.club.crest,
 		},
 		played = season.played,
+		won = myWon,
+		drawn = myDrawn,
+		lost = myLost,
 		points = season.points or 0,
 		mine = true,
 	})
@@ -314,6 +325,14 @@ function Squads.Fixture(data)
 	local avg = (tier.BotPower[1] + tier.BotPower[2]) / 2
 	local season = data.club.season or { number = 1, played = 0 }
 	local oppDef = Squads.Opponent(tierId, season.number, season.played)
+	-- kendi kulübünün G/B/M'si: kayıtta varsa o, yoksa (eski kayıt) puan ve oynanan maçtan çıkarılır
+	local myWon, myDrawn, myLost = season.won, season.drawn, season.lost
+	if myWon == nil or myDrawn == nil or myLost == nil then
+		local pts, played = season.points or 0, season.played or 0
+		myWon = math.min(played, math.floor(pts / 3))
+		myDrawn = math.min(played - myWon, pts - myWon * 3)
+		myLost = math.max(0, played - myWon - myDrawn)
+	end
 	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
 	local homeDef = {
 		Name = homeName,

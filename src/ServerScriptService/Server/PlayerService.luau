@@ -490,6 +490,7 @@ end
 
 -- Deneme sahasında atılan gol: küçük ödül. Bekleme süresi sunucuda tutulur.
 local lastTrainingGoal: { [number]: number } = {}
+local trainingWindow: { [number]: { t0: number, n: number } } = {}
 local function onTrainingGoal(player: Player, kind)
 	local data = DataService.Get(player)
 	local R = Config.TestPitch.Reward
@@ -500,6 +501,16 @@ local function onTrainingGoal(player: Player, kind)
 	if now - (lastTrainingGoal[player.UserId] or 0) < R.Cooldown then
 		return
 	end
+	-- dakikalık tavan: otomatik tıklayıcıyla ödül kasılmasın
+	local win = trainingWindow[player.UserId]
+	if not win or now - win.t0 > 60 then
+		win = { t0 = now, n = 0 }
+		trainingWindow[player.UserId] = win
+	end
+	if win.n >= R.PerMinute then
+		return
+	end
+	win.n += 1
 	lastTrainingGoal[player.UserId] = now
 	progress(player, "training", 1)
 	local bonus = if kind == "Header" or kind == "UcanKafa" or kind == "Rovesata" or kind == "Vole" then R.HeaderBonus else 0
@@ -569,6 +580,14 @@ local function onMatchEnd(player: Player, r)
 	local season = data.club.season
 	season.played += 1
 	season.points += MC.Points[outcome]
+	-- puan tablosunda kendi kulübünün G/B/M sayıları (eski kayıtlarda alan yoksa sıfırdan başlar)
+	if outcome == "Win" then
+		season.won = (season.won or 0) + 1
+	elseif outcome == "Draw" then
+		season.drawn = (season.drawn or 0) + 1
+	else
+		season.lost = (season.lost or 0) + 1
+	end
 	local promoted, seasonOver = false, false
 	if season.played >= Config.Season.Matches then
 		seasonOver = true
@@ -586,6 +605,7 @@ local function onMatchEnd(player: Player, r)
 		season.number += 1
 		season.played = 0
 		season.points = 0
+		season.won, season.drawn, season.lost = 0, 0, 0
 	end
 	-- Fenerbahçe teklifi: seviye ve güç yeterliyse (bir kez gelir, kabul edilene kadar açık kalır)
 	local O = Config.FenerbahceOffer
@@ -700,6 +720,7 @@ function PlayerService.Init()
 	Players.PlayerRemoving:Connect(function(player)
 		lastCall[player.UserId] = nil
 		lastTrainingGoal[player.UserId] = nil
+		trainingWindow[player.UserId] = nil
 		matchStart[player.UserId] = nil
 		DataService.Save(player, true)
 	end)

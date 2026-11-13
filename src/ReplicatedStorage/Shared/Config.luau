@@ -569,7 +569,7 @@ Config.TestPitch = {
 	GoalZ = 194,
 	GoalHalfWidth = 12,
 	GoalHeight = 8,
-	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5 },
+	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5, PerMinute = 10 },
 }
 
 -- Maç sahası (iki kaleli). Oyuncunun takımı +Z yönüne hücum eder.

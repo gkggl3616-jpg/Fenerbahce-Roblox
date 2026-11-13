@@ -63,7 +63,7 @@ function DataService.Default()
 			tier = 1,
 			funds = Config.Economy.StartClubFunds,
 			facilities = { Cim = 0, TribunEki = 0, Aydinlatma = 0, Soyunma = 0, Antrenman = 0, Saglik = 0 },
-			season = { number = 1, played = 0, points = 0 },
+			season = { number = 1, played = 0, points = 0, won = 0, drawn = 0, lost = 0 },
 		},
 		career = { goals = 0, matches = 0, wins = 0, headerGoals = 0, atFenerbahce = false },
 		claimedRewards = {},

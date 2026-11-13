@@ -262,6 +262,12 @@ local function surface(part: BasePart, pps: number, bright: number?): SurfaceGui
 	return g
 end
 
+-- Yazı yüzünü arka yüze (+Z) çevirir: parçayı döndürmeden sahaya bakan tabelalar için
+local function backFace(g: SurfaceGui): SurfaceGui
+	g.Face = Enum.NormalId.Back
+	return g
+end
+
 local function label(parent: Instance, text: string, color: Color3, size: UDim2?, pos: UDim2?): TextLabel
 	local t = Instance.new("TextLabel")
 	t.BackgroundTransparency = 1
@@ -1201,8 +1207,8 @@ function Stadium.Lobby()
 		part(Vector3.new(16, 9, 10), CFrame.new(kx, 4.5, kz - 2), rgb(236, 230, 214), Enum.Material.Concrete, true)
 		part(Vector3.new(18, 0.6, 13), CFrame.new(kx, 9.3, kz - 0.5), rgb(178, 34, 34), Enum.Material.SmoothPlastic, true)
 		part(Vector3.new(14, 3.4, 2), CFrame.new(kx, 1.7, kz + 4), rgb(120, 84, 52), Enum.Material.Wood, true)
-		local sign = part(Vector3.new(14, 2.6, 0.3), CFrame.new(kx, 11, kz + 4.6) * CFrame.Angles(0, math.pi, 0), C.Navy)
-		label(surface(sign, 12), "ÇAY OCAĞI", C.Yellow, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+		local sign = part(Vector3.new(14, 2.6, 0.3), CFrame.new(kx, 11, kz + 4.6), C.Navy)
+		label(backFace(surface(sign, 12)), "ÇAY OCAĞI", C.Yellow, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
 		-- semaver
 		local body = part(
 			Vector3.new(2.2, 1.4, 1.4),
@@ -1255,8 +1261,8 @@ function Stadium.Lobby()
 		part(Vector3.new(3, 6.6, 0.3), CFrame.new(cx - 5, 3.3, cz + 4.1), rgb(70, 76, 84))
 		local win = part(Vector3.new(6, 2.6, 0.3), CFrame.new(cx + 4, 5.6, cz + 4.1), rgb(150, 190, 220), Enum.Material.Glass)
 		win.Transparency = 0.3
-		local sign = part(Vector3.new(12, 1.8, 0.3), CFrame.new(cx, 8, cz + 4.2) * CFrame.Angles(0, math.pi, 0), C.Navy)
-		label(surface(sign, 12), "SOYUNMA ODASI", C.White, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+		local sign = part(Vector3.new(12, 1.8, 0.3), CFrame.new(cx, 8, cz + 4.2), C.Navy)
+		label(backFace(surface(sign, 12)), "SOYUNMA ODASI", C.White, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
 	end
 	-- turuncu koniler (giriş önünde sıra)
 	for i = 0, 7 do

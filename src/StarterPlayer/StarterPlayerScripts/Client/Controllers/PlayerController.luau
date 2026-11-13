@@ -69,6 +69,7 @@ local ui: { [string]: any } = {}
 --------------------------------------------------------------------------------
 local fxPart: Part? = nil
 local dust: ParticleEmitter? = nil
+local granule: ParticleEmitter? = nil
 local function ensureFx()
 	if fxPart and fxPart.Parent then
 		return
@@ -94,7 +95,21 @@ local function ensureFx()
 	e.Rotation = NumberRange.new(0, 360)
 	e.EmissionDirection = Enum.NormalId.Top
 	e.Parent = p
-	fxPart, dust = p, e
+	-- halı saha: suni çimden sıçrayan siyah kauçuk granül (kısa ömürlü, yerçekimiyle düşer)
+	local g = Instance.new("ParticleEmitter")
+	g.Name = "Granul"
+	g.Enabled = false
+	g.Color = ColorSequence.new(Color3.fromRGB(24, 24, 24))
+	g.Size = NumberSequence.new(0.09)
+	g.Lifetime = NumberRange.new(0.35, 0.6)
+	g.Speed = NumberRange.new(5, 11)
+	g.SpreadAngle = Vector2.new(35, 35)
+	g.Acceleration = Vector3.new(0, -60, 0)
+	g.Drag = 1
+	g.EmissionDirection = Enum.NormalId.Top
+	g.LightInfluence = 1
+	g.Parent = p
+	fxPart, dust, granule = p, e, g
 end
 
 local updateWind: (BasePart, boolean, number, number) -> ()
@@ -104,6 +119,10 @@ local function puff(pos: Vector3, count: number)
 	if fxPart and dust then
 		fxPart.CFrame = CFrame.new(pos)
 		dust:Emit(count)
+		-- granül yalnız halı sahada (maç sahası doğal çim)
+		if granule and not matchApi then
+			granule:Emit(math.max(2, math.floor(count * 0.7)))
+		end
 	end
 end
 
@@ -1518,6 +1537,12 @@ local function bindBall()
 	Ball.On("kick", function(_, v)
 		-- vuruş sesi: sert vuruş daha tok
 		UIMotion.Sound("KickSound", math.clamp(1.25 - v.Magnitude / 260, 0.75, 1.25))
+	end)
+	Ball.On("wall", function(speed)
+		-- top halı saha kafesine çarptı: tok file sesi, sertliğe göre
+		if not matchApi then
+			UIMotion.Sound("KickSound", math.clamp(0.55 + speed / 400, 0.55, 0.8))
+		end
 	end)
 	Ball.On("post", function()
 		UIMotion.Sound("PostSound")

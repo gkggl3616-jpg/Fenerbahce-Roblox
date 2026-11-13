@@ -281,6 +281,16 @@ Ball.Reset(Vector3.new(0, 0, 90))
 Ball.Pass(Vector3.new(0, 0, 89), Vector3.new(0.15, 0, 1).Unit, 0, 10, { Vector3.new(0, 0, 130) })
 sim(2)
 check("pas mankene ulaşır", math.abs(Ball.Position().X) < 5 and Ball.Position().Z > 118, Ball.Position().X .. "," .. Ball.Position().Z)
+do
+	local walls = 0
+	Ball.On("wall", function()
+		walls += 1
+	end)
+	Ball.Reset(Vector3.new(T.MaxX - 3, 0, 120))
+	Ball.Pass(Vector3.new(T.MaxX - 3, 0, 120), Vector3.new(1, 0, 0), 0, 40, {})
+	sim(1)
+	check("halı saha kafesine çarpan top file sesi olayı verir", walls >= 1, walls)
+end
 
 ------------------------------------------------------------------ Drill botları
 section("Çalışma botları (savunmacı, kaleci, hücumcu)")
@@ -1320,6 +1330,28 @@ do
 	}
 	local fx = Squads.Fixture(d)
 	check("iki takımda 11'er oyuncu", #fx.home.players == 11 and #fx.away.players == 11)
+	do
+		-- puan tablosunda kendi kulübünün G/B/M'si boş kalmaz (eski kayıtta puandan çıkarılır)
+		local old = { club = { name = "X", abbr = "X", tier = 1, season = { number = 1, played = 4, points = 7 } }, career = {} }
+		local mine
+		for _, row in ipairs((Squads.Table(old))) do
+			if row.mine then
+				mine = row
+			end
+		end
+		check(
+			"puan tablosunda kendi G/B/M (eski kayıt)",
+			mine and mine.won == 2 and mine.drawn == 1 and mine.lost == 1,
+			mine and (mine.won .. "/" .. mine.drawn .. "/" .. mine.lost)
+		)
+		old.club.season = { number = 1, played = 3, points = 4, won = 1, drawn = 1, lost = 1 }
+		for _, row in ipairs((Squads.Table(old))) do
+			if row.mine then
+				mine = row
+			end
+		end
+		check("puan tablosunda kendi G/B/M (kayıttan)", mine.won == 1 and mine.drawn == 1 and mine.lost == 1)
+	end
 	check("oyuncu kendi kadrosunda", fx.home.players[11].human == true and fx.home.players[11].name == "Deneme")
 	check("rakibin teknik direktörü var", #fx.away.club.Coach > 3)
 	local numbers, distinct = {}, true

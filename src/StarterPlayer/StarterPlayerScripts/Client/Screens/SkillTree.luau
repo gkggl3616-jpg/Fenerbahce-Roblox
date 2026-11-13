@@ -401,7 +401,7 @@ local function draw()
 	text(body, "ÖZELLİKLER", 20, C.Yellow, UDim2.fromOffset(sx, 252), UDim2.fromOffset(sw, 26), Theme.Font.Display)
 	text(
 		body,
-		"Bakiye ile yükselt (en çok " .. Config.StatMax .. ")",
+		"En çok " .. Config.StatMax,
 		11,
 		C.Muted,
 		UDim2.fromOffset(sx + 150, 258),

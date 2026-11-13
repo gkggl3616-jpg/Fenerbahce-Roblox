@@ -570,7 +570,7 @@ Config.TestPitch = {
 	GoalZ = 194,
 	GoalHalfWidth = 12,
 	GoalHeight = 8,
-	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5 },
+	Reward = { Coins = 10, Xp = 6, Cooldown = 3, HeaderBonus = 5, PerMinute = 10 },
 }
 
 -- Maç sahası (iki kaleli). Oyuncunun takımı +Z yönüne hücum eder.
@@ -1507,6 +1507,14 @@ function Squads.Table(data)
 		end
 		table.insert(rows, { club = club, played = season.played, won = won, drawn = drawn, lost = lost, points = won * 3 + drawn })
 	end
+	-- kendi kulübünün G/B/M'si: kayıtta varsa o, yoksa (eski kayıt) puan ve oynanan maçtan çıkarılır
+	local myWon, myDrawn, myLost = season.won, season.drawn, season.lost
+	if myWon == nil or myDrawn == nil or myLost == nil then
+		local pts, played = season.points or 0, season.played or 0
+		myWon = math.min(played, math.floor(pts / 3))
+		myDrawn = math.min(played - myWon, pts - myWon * 3)
+		myLost = math.max(0, played - myWon - myDrawn)
+	end
 	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
 	table.insert(rows, {
 		club = {
@@ -1518,6 +1526,9 @@ function Squads.Table(data)
 			CrestSpec = if tierId == 6 then nil else data.club.crest,
 		},
 		played = season.played,
+		won = myWon,
+		drawn = myDrawn,
+		lost = myLost,
 		points = season.points or 0,
 		mine = true,
 	})
@@ -1540,6 +1551,14 @@ function Squads.Fixture(data)
 	local avg = (tier.BotPower[1] + tier.BotPower[2]) / 2
 	local season = data.club.season or { number = 1, played = 0 }
 	local oppDef = Squads.Opponent(tierId, season.number, season.played)
+	-- kendi kulübünün G/B/M'si: kayıtta varsa o, yoksa (eski kayıt) puan ve oynanan maçtan çıkarılır
+	local myWon, myDrawn, myLost = season.won, season.drawn, season.lost
+	if myWon == nil or myDrawn == nil or myLost == nil then
+		local pts, played = season.points or 0, season.played or 0
+		myWon = math.min(played, math.floor(pts / 3))
+		myDrawn = math.min(played - myWon, pts - myWon * 3)
+		myLost = math.max(0, played - myWon - myDrawn)
+	end
 	local homeName = if tierId == 6 then "Fenerbahçe" elseif data.club.name ~= "" then data.club.name else "Kulübüm"
 	local homeDef = {
 		Name = homeName,
@@ -1847,6 +1866,12 @@ local function surface(part: BasePart, pps: number, bright: number?): SurfaceGui
 	g.Brightness = bright or 1
 	g.ResetOnSpawn = false
 	g.Parent = part
+	return g
+end
+
+-- Yazı yüzünü arka yüze (+Z) çevirir: parçayı döndürmeden sahaya bakan tabelalar için
+local function backFace(g: SurfaceGui): SurfaceGui
+	g.Face = Enum.NormalId.Back
 	return g
 end
 
@@ -2789,8 +2814,8 @@ function Stadium.Lobby()
 		part(Vector3.new(16, 9, 10), CFrame.new(kx, 4.5, kz - 2), rgb(236, 230, 214), Enum.Material.Concrete, true)
 		part(Vector3.new(18, 0.6, 13), CFrame.new(kx, 9.3, kz - 0.5), rgb(178, 34, 34), Enum.Material.SmoothPlastic, true)
 		part(Vector3.new(14, 3.4, 2), CFrame.new(kx, 1.7, kz + 4), rgb(120, 84, 52), Enum.Material.Wood, true)
-		local sign = part(Vector3.new(14, 2.6, 0.3), CFrame.new(kx, 11, kz + 4.6) * CFrame.Angles(0, math.pi, 0), C.Navy)
-		label(surface(sign, 12), "ÇAY OCAĞI", C.Yellow, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+		local sign = part(Vector3.new(14, 2.6, 0.3), CFrame.new(kx, 11, kz + 4.6), C.Navy)
+		label(backFace(surface(sign, 12)), "ÇAY OCAĞI", C.Yellow, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
 		-- semaver
 		local body = part(
 			Vector3.new(2.2, 1.4, 1.4),
@@ -2843,8 +2868,8 @@ function Stadium.Lobby()
 		part(Vector3.new(3, 6.6, 0.3), CFrame.new(cx - 5, 3.3, cz + 4.1), rgb(70, 76, 84))
 		local win = part(Vector3.new(6, 2.6, 0.3), CFrame.new(cx + 4, 5.6, cz + 4.1), rgb(150, 190, 220), Enum.Material.Glass)
 		win.Transparency = 0.3
-		local sign = part(Vector3.new(12, 1.8, 0.3), CFrame.new(cx, 8, cz + 4.2) * CFrame.Angles(0, math.pi, 0), C.Navy)
-		label(surface(sign, 12), "SOYUNMA ODASI", C.White, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
+		local sign = part(Vector3.new(12, 1.8, 0.3), CFrame.new(cx, 8, cz + 4.2), C.Navy)
+		label(backFace(surface(sign, 12)), "SOYUNMA ODASI", C.White, UDim2.fromScale(0.9, 0.8), UDim2.fromScale(0.05, 0.1))
 	end
 	-- turuncu koniler (giriş önünde sıra)
 	for i = 0, 7 do
@@ -5718,7 +5743,7 @@ function DataService.Default()
 			tier = 1,
 			funds = Config.Economy.StartClubFunds,
 			facilities = { Cim = 0, TribunEki = 0, Aydinlatma = 0, Soyunma = 0, Antrenman = 0, Saglik = 0 },
-			season = { number = 1, played = 0, points = 0 },
+			season = { number = 1, played = 0, points = 0, won = 0, drawn = 0, lost = 0 },
 		},
 		career = { goals = 0, matches = 0, wins = 0, headerGoals = 0, atFenerbahce = false },
 		claimedRewards = {},
@@ -6694,6 +6719,7 @@ end
 
 -- Deneme sahasında atılan gol: küçük ödül. Bekleme süresi sunucuda tutulur.
 local lastTrainingGoal: { [number]: number } = {}
+local trainingWindow: { [number]: { t0: number, n: number } } = {}
 local function onTrainingGoal(player: Player, kind)
 	local data = DataService.Get(player)
 	local R = Config.TestPitch.Reward
@@ -6704,6 +6730,16 @@ local function onTrainingGoal(player: Player, kind)
 	if now - (lastTrainingGoal[player.UserId] or 0) < R.Cooldown then
 		return
 	end
+	-- dakikalık tavan: otomatik tıklayıcıyla ödül kasılmasın
+	local win = trainingWindow[player.UserId]
+	if not win or now - win.t0 > 60 then
+		win = { t0 = now, n = 0 }
+		trainingWindow[player.UserId] = win
+	end
+	if win.n >= R.PerMinute then
+		return
+	end
+	win.n += 1
 	lastTrainingGoal[player.UserId] = now
 	progress(player, "training", 1)
 	local bonus = if kind == "Header" or kind == "UcanKafa" or kind == "Rovesata" or kind == "Vole" then R.HeaderBonus else 0
@@ -6773,6 +6809,14 @@ local function onMatchEnd(player: Player, r)
 	local season = data.club.season
 	season.played += 1
 	season.points += MC.Points[outcome]
+	-- puan tablosunda kendi kulübünün G/B/M sayıları (eski kayıtlarda alan yoksa sıfırdan başlar)
+	if outcome == "Win" then
+		season.won = (season.won or 0) + 1
+	elseif outcome == "Draw" then
+		season.drawn = (season.drawn or 0) + 1
+	else
+		season.lost = (season.lost or 0) + 1
+	end
 	local promoted, seasonOver = false, false
 	if season.played >= Config.Season.Matches then
 		seasonOver = true
@@ -6790,6 +6834,7 @@ local function onMatchEnd(player: Player, r)
 		season.number += 1
 		season.played = 0
 		season.points = 0
+		season.won, season.drawn, season.lost = 0, 0, 0
 	end
 	-- Fenerbahçe teklifi: seviye ve güç yeterliyse (bir kez gelir, kabul edilene kadar açık kalır)
 	local O = Config.FenerbahceOffer
@@ -6904,6 +6949,7 @@ function PlayerService.Init()
 	Players.PlayerRemoving:Connect(function(player)
 		lastCall[player.UserId] = nil
 		lastTrainingGoal[player.UserId] = nil
+		trainingWindow[player.UserId] = nil
 		matchStart[player.UserId] = nil
 		DataService.Save(player, true)
 	end)
@@ -8722,6 +8768,7 @@ local ui: { [string]: any } = {}
 --------------------------------------------------------------------------------
 local fxPart: Part? = nil
 local dust: ParticleEmitter? = nil
+local granule: ParticleEmitter? = nil
 local function ensureFx()
 	if fxPart and fxPart.Parent then
 		return
@@ -8747,7 +8794,21 @@ local function ensureFx()
 	e.Rotation = NumberRange.new(0, 360)
 	e.EmissionDirection = Enum.NormalId.Top
 	e.Parent = p
-	fxPart, dust = p, e
+	-- halı saha: suni çimden sıçrayan siyah kauçuk granül (kısa ömürlü, yerçekimiyle düşer)
+	local g = Instance.new("ParticleEmitter")
+	g.Name = "Granul"
+	g.Enabled = false
+	g.Color = ColorSequence.new(Color3.fromRGB(24, 24, 24))
+	g.Size = NumberSequence.new(0.09)
+	g.Lifetime = NumberRange.new(0.35, 0.6)
+	g.Speed = NumberRange.new(5, 11)
+	g.SpreadAngle = Vector2.new(35, 35)
+	g.Acceleration = Vector3.new(0, -60, 0)
+	g.Drag = 1
+	g.EmissionDirection = Enum.NormalId.Top
+	g.LightInfluence = 1
+	g.Parent = p
+	fxPart, dust, granule = p, e, g
 end
 
 local updateWind: (BasePart, boolean, number, number) -> ()
@@ -8757,6 +8818,10 @@ local function puff(pos: Vector3, count: number)
 	if fxPart and dust then
 		fxPart.CFrame = CFrame.new(pos)
 		dust:Emit(count)
+		-- granül yalnız halı sahada (maç sahası doğal çim)
+		if granule and not matchApi then
+			granule:Emit(math.max(2, math.floor(count * 0.7)))
+		end
 	end
 end
 
@@ -10172,6 +10237,12 @@ local function bindBall()
 		-- vuruş sesi: sert vuruş daha tok
 		UIMotion.Sound("KickSound", math.clamp(1.25 - v.Magnitude / 260, 0.75, 1.25))
 	end)
+	Ball.On("wall", function(speed)
+		-- top halı saha kafesine çarptı: tok file sesi, sertliğe göre
+		if not matchApi then
+			UIMotion.Sound("KickSound", math.clamp(0.55 + speed / 400, 0.55, 0.8))
+		end
+	end)
 	Ball.On("post", function()
 		UIMotion.Sound("PostSound")
 		banner("Direk!", C.White)
@@ -10978,7 +11049,7 @@ local inNet = false
 local lastKick = -10
 local lastKind = "Shoot"
 local clock = 0
-local listeners = { goal = {}, post = {}, out = {}, kick = {}, dead = {} }
+local listeners = { goal = {}, post = {}, out = {}, kick = {}, dead = {}, wall = {} }
 
 -- Topa en son dokunan takım: "home" (oyuncunun takımı) ya da "away"
 Ball.LastTeam = "home"
@@ -11270,10 +11341,16 @@ local function integrate(p: Vector3, v: Vector3, cv: number, h: number, events: 
 	end
 	if np.X < T.MinX or np.X > T.MaxX then
 		np = Vector3.new(math.clamp(np.X, T.MinX, T.MaxX), np.Y, np.Z)
+		if events and math.abs(v.X) > 8 then
+			fire("wall", math.abs(v.X), np) -- halı saha kafesi: file sesi
+		end
 		v = Vector3.new(-v.X * B.WallBounce, v.Y, v.Z)
 	end
 	if np.Z < T.MinZ then
 		np = Vector3.new(np.X, np.Y, T.MinZ)
+		if events and math.abs(v.Z) > 8 then
+			fire("wall", math.abs(v.Z), np)
+		end
 		v = Vector3.new(v.X, v.Y, math.abs(v.Z) * B.WallBounce)
 	elseif np.Z > T.MaxZ then
 		np = Vector3.new(np.X, np.Y, T.MaxZ)
@@ -18561,7 +18638,7 @@ local function draw()
 	text(body, "ÖZELLİKLER", 20, C.Yellow, UDim2.fromOffset(sx, 252), UDim2.fromOffset(sw, 26), Theme.Font.Display)
 	text(
 		body,
-		"Bakiye ile yükselt (en çok " .. Config.StatMax .. ")",
+		"En çok " .. Config.StatMax,
 		11,
 		C.Muted,
 		UDim2.fromOffset(sx + 150, 258),

@@ -39,7 +39,7 @@ local inNet = false
 local lastKick = -10
 local lastKind = "Shoot"
 local clock = 0
-local listeners = { goal = {}, post = {}, out = {}, kick = {}, dead = {} }
+local listeners = { goal = {}, post = {}, out = {}, kick = {}, dead = {}, wall = {} }
 
 -- Topa en son dokunan takım: "home" (oyuncunun takımı) ya da "away"
 Ball.LastTeam = "home"
@@ -331,10 +331,16 @@ local function integrate(p: Vector3, v: Vector3, cv: number, h: number, events: 
 	end
 	if np.X < T.MinX or np.X > T.MaxX then
 		np = Vector3.new(math.clamp(np.X, T.MinX, T.MaxX), np.Y, np.Z)
+		if events and math.abs(v.X) > 8 then
+			fire("wall", math.abs(v.X), np) -- halı saha kafesi: file sesi
+		end
 		v = Vector3.new(-v.X * B.WallBounce, v.Y, v.Z)
 	end
 	if np.Z < T.MinZ then
 		np = Vector3.new(np.X, np.Y, T.MinZ)
+		if events and math.abs(v.Z) > 8 then
+			fire("wall", math.abs(v.Z), np)
+		end
 		v = Vector3.new(v.X, v.Y, math.abs(v.Z) * B.WallBounce)
 	elseif np.Z > T.MaxZ then
 		np = Vector3.new(np.X, np.Y, T.MaxZ)
