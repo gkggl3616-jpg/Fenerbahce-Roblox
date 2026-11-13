@@ -180,6 +180,7 @@ Config.DailyCount = 3
 Config.Shop = {
 	{
 		Id = "TopKlasik",
+		Pattern = "Klasik",
 		Kind = "Ball",
 		Name = "Klasik top",
 		Price = 0,
@@ -189,6 +190,7 @@ Config.Shop = {
 	},
 	{
 		Id = "TopSari",
+		Pattern = "Kusak",
 		Kind = "Ball",
 		Name = "Sarı lacivert top",
 		Price = 300,
@@ -198,6 +200,7 @@ Config.Shop = {
 	},
 	{
 		Id = "TopGece",
+		Pattern = "Yildiz",
 		Kind = "Ball",
 		Name = "Gece topu",
 		Price = 600,
@@ -207,6 +210,7 @@ Config.Shop = {
 	},
 	{
 		Id = "TopTuruncu",
+		Pattern = "Dikis",
 		Kind = "Ball",
 		Name = "Kış topu",
 		Price = 900,
@@ -216,6 +220,7 @@ Config.Shop = {
 	},
 	{
 		Id = "TopAltin",
+		Pattern = "Altin",
 		Kind = "Ball",
 		Name = "Altın top",
 		Price = 2500,

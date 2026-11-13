@@ -130,25 +130,94 @@ local function preview(parent: Instance, item)
 	corner(box, 8)
 	box.Parent = parent
 	if item.Kind == "Ball" then
-		local ball = Instance.new("Frame")
+		-- top: desen gerçek topla aynı mantıkla çizilir (kuşak, yıldız, dikiş, yaldız)
+		local ball = Instance.new("CanvasGroup")
 		ball.AnchorPoint = Vector2.new(0.5, 0.5)
 		ball.Position = UDim2.fromScale(0.5, 0.5)
-		ball.Size = UDim2.fromOffset(68, 68)
+		ball.Size = UDim2.fromOffset(74, 74)
 		ball.BackgroundColor3 = item.A
 		ball.BorderSizePixel = 0
-		corner(ball, 34)
+		corner(ball, 37)
 		ball.Parent = box
-		for _, d in ipairs({ { 0.5, 0.5 }, { 0.2, 0.3 }, { 0.8, 0.3 }, { 0.3, 0.84 }, { 0.72, 0.82 } }) do
-			local patch = Instance.new("Frame")
-			patch.AnchorPoint = Vector2.new(0.5, 0.5)
-			patch.Position = UDim2.fromScale(d[1], d[2])
-			patch.Size = UDim2.fromScale(0.26, 0.26)
-			patch.BackgroundColor3 = item.B
-			patch.BorderSizePixel = 0
-			patch.Rotation = 18
-			corner(patch, 5)
-			patch.Parent = ball
+		local function dot(x: number, y: number, s: number, c: Color3, rot: number?, round: number?): Frame
+			local f = Instance.new("Frame")
+			f.AnchorPoint = Vector2.new(0.5, 0.5)
+			f.Position = UDim2.fromScale(x, y)
+			f.Size = UDim2.fromScale(s, s)
+			f.BackgroundColor3 = c
+			f.BorderSizePixel = 0
+			f.Rotation = rot or 0
+			local u = Instance.new("UICorner")
+			u.CornerRadius = UDim.new(round or 0.25, 0)
+			u.Parent = f
+			f.Parent = ball
+			return f
 		end
+		local function band(y: number, h: number, c: Color3, rot: number?): Frame
+			local f = Instance.new("Frame")
+			f.AnchorPoint = Vector2.new(0.5, 0.5)
+			f.Position = UDim2.fromScale(0.5, y)
+			f.Size = UDim2.fromScale(1.4, h)
+			f.BackgroundColor3 = c
+			f.BorderSizePixel = 0
+			f.Rotation = rot or 0
+			f.Parent = ball
+			return f
+		end
+		local p = item.Pattern or "Klasik"
+		if p == "Kusak" then
+			band(0.5, 0.26, item.B)
+			band(0.24, 0.06, item.B)
+			band(0.76, 0.06, item.B)
+		elseif p == "Yildiz" then
+			for _, d in ipairs({ { 0.3, 0.3 }, { 0.68, 0.24 }, { 0.5, 0.55 }, { 0.24, 0.72 }, { 0.78, 0.7 }, { 0.5, 0.86 } }) do
+				dot(d[1], d[2], 0.13, item.B, 45, 0.1)
+				dot(d[1], d[2], 0.13, item.B, 0, 0.1)
+			end
+			local glow = Instance.new("UIStroke")
+			glow.Color = item.B
+			glow.Thickness = 3
+			glow.Transparency = 0.3
+			glow.Parent = box
+		elseif p == "Dikis" then
+			-- eğri dikişler: büyük halkaların ince kenarları
+			for _, d in ipairs({ { -0.1, 0.5, 1.1 }, { 1.1, 0.5, 1.1 }, { 0.5, -0.15, 1.0 } }) do
+				local ring = dot(d[1], d[2], d[3], item.A, 0, 0.5)
+				ring.BackgroundTransparency = 1
+				local st = Instance.new("UIStroke")
+				st.Color = item.B
+				st.Thickness = 3
+				st.Parent = ring
+			end
+		elseif p == "Altin" then
+			local g = Instance.new("UIGradient")
+			g.Rotation = 35
+			g.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 244, 170)),
+				ColorSequenceKeypoint.new(0.45, Color3.fromRGB(255, 196, 40)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(176, 112, 10)),
+			})
+			g.Parent = ball
+			for _, d in ipairs({ { 0.32, 0.34 }, { 0.7, 0.42 }, { 0.45, 0.74 } }) do
+				dot(d[1], d[2], 0.14, item.B, 45, 0.1)
+				dot(d[1], d[2], 0.14, item.B, 0, 0.1)
+			end
+			band(0.3, 0.08, Color3.fromRGB(255, 255, 255), -35).BackgroundTransparency = 0.45 -- parıltı
+			UIMotion.ShineLoop(box, 2.2)
+		else
+			for _, d in ipairs({ { 0.5, 0.5 }, { 0.16, 0.3 }, { 0.84, 0.3 }, { 0.28, 0.88 }, { 0.72, 0.88 }, { 0.5, 0.06 } }) do
+				dot(d[1], d[2], 0.27, item.B, 18)
+			end
+		end
+		-- gölge ve parlama (küre hissi)
+		local shade = Instance.new("UIGradient")
+		shade.Rotation = 90
+		shade.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0.25) })
+		if p ~= "Altin" then
+			shade.Parent = ball
+		end
+		local hi = dot(0.32, 0.26, 0.2, Color3.new(1, 1, 1), 0, 0.5)
+		hi.BackgroundTransparency = 0.55
 	elseif item.Kind == "Trail" then
 		for i = 1, 5 do
 			local seg = Instance.new("Frame")
@@ -367,6 +436,78 @@ end
 --------------------------------------------------------------------------------
 -- Dünya sıralaması
 --------------------------------------------------------------------------------
+local MEDALS = {
+	{ Color3.fromRGB(255, 205, 60), Color3.fromRGB(196, 140, 20), Color3.fromRGB(200, 30, 40) }, -- altın
+	{ Color3.fromRGB(226, 232, 240), Color3.fromRGB(150, 160, 175), Color3.fromRGB(30, 80, 190) }, -- gümüş
+	{ Color3.fromRGB(226, 146, 84), Color3.fromRGB(150, 84, 40), Color3.fromRGB(20, 130, 80) }, -- bronz
+}
+-- Madalya: iki kurdele + parlak disk + iç halka + sıra numarası
+function Hub.Medal(rank: number, size: number): Frame
+	local m = MEDALS[rank]
+	local holder = Instance.new("Frame")
+	holder.Name = "Medal"
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromOffset(size, size)
+	for i, x in ipairs({ 0.36, 0.64 }) do
+		local ribbon = Instance.new("Frame")
+		ribbon.AnchorPoint = Vector2.new(0.5, 0)
+		ribbon.Position = UDim2.fromScale(x, -0.02)
+		ribbon.Size = UDim2.fromScale(0.22, 0.5)
+		ribbon.Rotation = if i == 1 then 18 else -18
+		ribbon.BackgroundColor3 = m[3]
+		ribbon.BorderSizePixel = 0
+		ribbon.Parent = holder
+		local edge = Instance.new("Frame")
+		edge.Size = UDim2.fromScale(0.3, 1)
+		edge.Position = UDim2.fromScale(0.35, 0)
+		edge.BackgroundColor3 = Color3.new(1, 1, 1)
+		edge.BackgroundTransparency = 0.4
+		edge.BorderSizePixel = 0
+		edge.Parent = ribbon
+	end
+	local disc = Instance.new("Frame")
+	disc.AnchorPoint = Vector2.new(0.5, 1)
+	disc.Position = UDim2.fromScale(0.5, 1)
+	disc.Size = UDim2.fromScale(0.72, 0.72)
+	disc.BackgroundColor3 = m[1]
+	disc.BorderSizePixel = 0
+	corner(disc, size)
+	local g = Instance.new("UIGradient")
+	g.Rotation = 40
+	g.Color = ColorSequence.new(m[1]:Lerp(Color3.new(1, 1, 1), 0.35), m[2])
+	g.Parent = disc
+	local st = Instance.new("UIStroke")
+	st.Color = m[2]
+	st.Thickness = math.max(2, size * 0.05)
+	st.Parent = disc
+	disc.Parent = holder
+	local inner = Instance.new("Frame")
+	inner.AnchorPoint = Vector2.new(0.5, 0.5)
+	inner.Position = UDim2.fromScale(0.5, 0.5)
+	inner.Size = UDim2.fromScale(0.7, 0.7)
+	inner.BackgroundTransparency = 1
+	corner(inner, size)
+	local ist = Instance.new("UIStroke")
+	ist.Color = m[2]
+	ist.Thickness = math.max(1, size * 0.025)
+	ist.Transparency = 0.2
+	ist.Parent = inner
+	inner.Parent = disc
+	local n = Components.Label({
+		Text = tostring(rank),
+		Size = math.floor(size * 0.36),
+		Font = Theme.Font.Display,
+		Color = Color3.fromRGB(255, 255, 255),
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.fromScale(1, 1),
+	})
+	local ns = Instance.new("UIStroke")
+	ns.Color = m[2]:Lerp(Color3.new(0, 0, 0), 0.4)
+	ns.Thickness = 2
+	ns.Parent = n
+	n.Parent = disc
+	return holder
+end
 function Hub.OpenRanking(gui: ScreenGui, getData: () -> any)
 	local result: any = nil
 	window(gui, "Ranking", "Dünya Sıralaması", 760, 660, function(body)
@@ -394,7 +535,16 @@ function Hub.OpenRanking(gui: ScreenGui, getData: () -> any)
 			corner(row, 8)
 			row.Parent = body
 			local ink = if mine then C.Navy else C.Text
-			text(row, tostring(r.rank), 18, if mine then C.Navy elseif i <= 3 then C.Gold else C.Muted, 10, 0, 40, 40, Theme.Font.Number)
+			if r.rank <= 3 then
+				local medal = Hub.Medal(r.rank, 40)
+				medal.Position = UDim2.fromOffset(6, 0)
+				medal.Parent = row
+				if r.rank == 1 then
+					UIMotion.ShineLoop(row, 3)
+				end
+			else
+				text(row, tostring(r.rank), 18, if mine then C.Navy else C.Muted, 10, 0, 40, 40, Theme.Font.Number)
+			end
 			text(row, r.name, 16, ink, 60, 0, 400, 40)
 			text(
 				row,

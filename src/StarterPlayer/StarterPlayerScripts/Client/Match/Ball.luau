@@ -22,6 +22,7 @@ local C = Config.Colors
 local Ball = {}
 
 local part: Part? = nil
+local applySkin: () -> () -- aşağıda tanımlanır (mağaza deseni)
 local trail: Trail? = nil
 local pos = Vector3.new(0, 1, 80)
 local vel = Vector3.zero
@@ -68,46 +69,8 @@ function Ball.Init()
 	p.Material = Enum.Material.SmoothPlastic
 	p.CastShadow = true
 	p.Parent = Workspace
-	-- top deseni: klasik futbol topundaki 12 koyu beşgenin yerine, yüzeye yapışık 12 koyu yama
-	-- (yirmi yüzlünün köşelerine dizilir; düz çıkartma gibi havada durmaz, topla birlikte döner)
-	local phi = (1 + math.sqrt(5)) / 2
-	local patch = B.Radius * 0.78
-	for _, v in ipairs({
-		Vector3.new(0, 1, phi),
-		Vector3.new(0, 1, -phi),
-		Vector3.new(0, -1, phi),
-		Vector3.new(0, -1, -phi),
-		Vector3.new(1, phi, 0),
-		Vector3.new(1, -phi, 0),
-		Vector3.new(-1, phi, 0),
-		Vector3.new(-1, -phi, 0),
-		Vector3.new(phi, 0, 1),
-		Vector3.new(phi, 0, -1),
-		Vector3.new(-phi, 0, 1),
-		Vector3.new(-phi, 0, -1),
-	}) do
-		local n = v.Unit
-		local d = Instance.new("Part")
-		d.Name = "Patch"
-		d.Size = Vector3.new(patch, B.Radius * 0.16, patch)
-		d.Color = skinB
-		d.Material = Enum.Material.SmoothPlastic
-		d.CanCollide = false
-		d.CanQuery = false
-		d.CanTouch = false
-		d.Massless = true
-		d.CastShadow = false
-		local mesh = Instance.new("SpecialMesh")
-		mesh.MeshType = Enum.MeshType.Sphere
-		mesh.Parent = d
-		local at = p.Position + n * (B.Radius * 0.94)
-		d.CFrame = CFrame.lookAt(at, at + n) * CFrame.Angles(-math.pi / 2, 0, 0)
-		local w = Instance.new("WeldConstraint")
-		w.Part0 = p
-		w.Part1 = d
-		w.Parent = d
-		d.Parent = p
-	end
+	part = p
+	applySkin()
 	local a0 = Instance.new("Attachment")
 	a0.Position = Vector3.new(0, B.Radius * 0.8, 0)
 	a0.Parent = p
@@ -161,18 +124,109 @@ local TRAIL_COLORS = {
 }
 
 -- Mağazadan kuşanılan görünüm: top gövdesi / yamalar ve olağan şut izi
-local skinA, skinB = Color3.fromRGB(250, 250, 250), C.Navy
+local skinA, skinB, skinPattern = Color3.fromRGB(250, 250, 250), C.Navy, "Klasik"
 local trailBase = ColorSequence.new(C.White)
-function Ball.SetSkin(a: Color3, b: Color3)
-	skinA, skinB = a, b
-	if part then
-		part.Color = a
-		for _, d in ipairs(part:GetChildren()) do
-			if d.Name == "Patch" and d:IsA("BasePart") then
-				d.Color = b
-			end
+
+-- Topa yapışık süs parçası (topla birlikte döner)
+local function deco(size: Vector3, cf: CFrame, color: Color3, mesh: Enum.MeshType?, material: Enum.Material?): BasePart
+	local d = Instance.new("Part")
+	d.Name = "Deco"
+	d.Size = size
+	d.Color = color
+	d.Material = material or Enum.Material.SmoothPlastic
+	d.CanCollide = false
+	d.CanQuery = false
+	d.CanTouch = false
+	d.Massless = true
+	d.CastShadow = false
+	if mesh == Enum.MeshType.Cylinder then
+		d.Shape = Enum.PartType.Cylinder
+	elseif mesh then
+		local m = Instance.new("SpecialMesh")
+		m.MeshType = mesh
+		m.Parent = d
+	end
+	d.CFrame = part.CFrame * cf
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = part
+	w.Part1 = d
+	w.Parent = d
+	d.Parent = part
+	return d
+end
+
+-- Yirmi yüzlünün 12 köşesi: klasik topun beşgenleri bu yönlerdedir
+local PHI = (1 + math.sqrt(5)) / 2
+local ICO = {
+	Vector3.new(0, 1, PHI),
+	Vector3.new(0, 1, -PHI),
+	Vector3.new(0, -1, PHI),
+	Vector3.new(0, -1, -PHI),
+	Vector3.new(1, PHI, 0),
+	Vector3.new(1, -PHI, 0),
+	Vector3.new(-1, PHI, 0),
+	Vector3.new(-1, -PHI, 0),
+	Vector3.new(PHI, 0, 1),
+	Vector3.new(PHI, 0, -1),
+	Vector3.new(-PHI, 0, 1),
+	Vector3.new(-PHI, 0, -1),
+}
+
+-- Desen: Klasik (12 yama), Kusak (orta kuşak + ince şeritler), Yildiz (parlayan küçük yıldızlar),
+-- Dikis (üç eğri dikiş halkası), Altin (yaldızlı gövde, beyaz yıldızlar)
+applySkin = function()
+	if not part then
+		return
+	end
+	for _, d in ipairs(part:GetChildren()) do
+		if d.Name == "Deco" or d.Name == "Patch" then
+			d:Destroy()
 		end
 	end
+	local r = B.Radius
+	part.Color = skinA
+	part.Material = if skinPattern == "Altin" then Enum.Material.Foil else Enum.Material.SmoothPlastic
+	local function onSurface(n: Vector3, size: Vector3, color: Color3, material: Enum.Material?)
+		local at = n.Unit * (r * 0.94)
+		deco(size, CFrame.lookAt(at, at + n) * CFrame.Angles(-math.pi / 2, 0, 0), color, Enum.MeshType.Sphere, material)
+	end
+	if skinPattern == "Kusak" then
+		-- ekvator kuşağı ve iki ince şerit (topun çevresinde bant)
+		deco(Vector3.new(r * 0.5, r * 2.04, r * 2.04), CFrame.Angles(0, 0, 0), skinB, Enum.MeshType.Cylinder)
+		for _, x in ipairs({ -0.62, 0.62 }) do
+			local k = math.sqrt(1 - x * x)
+			deco(Vector3.new(r * 0.12, r * 2 * k + r * 0.04, r * 2 * k + r * 0.04), CFrame.new(x * r, 0, 0), skinB, Enum.MeshType.Cylinder)
+		end
+	elseif skinPattern == "Yildiz" then
+		for _, v in ipairs(ICO) do
+			onSurface(v, Vector3.new(r * 0.34, r * 0.12, r * 0.34), skinB, Enum.Material.Neon)
+		end
+		for _, v in ipairs({ Vector3.new(1, 1, 1), Vector3.new(-1, -1, 1), Vector3.new(1, -1, -1), Vector3.new(-1, 1, -1) }) do
+			onSurface(v, Vector3.new(r * 0.2, r * 0.1, r * 0.2), C.White, Enum.Material.Neon)
+		end
+	elseif skinPattern == "Dikis" then
+		for i, rot in ipairs({ CFrame.Angles(0, 0, 0), CFrame.Angles(0, math.pi / 2, math.rad(35)), CFrame.Angles(0, 0, math.rad(90)) }) do
+			deco(Vector3.new(r * 0.07, r * 2.03, r * 2.03), rot, skinB, Enum.MeshType.Cylinder)
+			if i == 1 then
+				onSurface(Vector3.new(0, 1, 0), Vector3.new(r * 0.5, r * 0.12, r * 0.5), skinB)
+			end
+		end
+	elseif skinPattern == "Altin" then
+		for i, v in ipairs(ICO) do
+			if i % 2 == 0 then
+				onSurface(v, Vector3.new(r * 0.36, r * 0.12, r * 0.36), skinB, Enum.Material.Neon)
+			end
+		end
+	else
+		for _, v in ipairs(ICO) do
+			onSurface(v, Vector3.new(r * 0.78, r * 0.16, r * 0.78), skinB)
+		end
+	end
+end
+
+function Ball.SetSkin(a: Color3, b: Color3, pattern: string?)
+	skinA, skinB, skinPattern = a, b, pattern or "Klasik"
+	applySkin()
 end
 function Ball.SetTrail(a: Color3, b: Color3)
 	trailBase = ColorSequence.new(a, b)

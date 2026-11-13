@@ -252,6 +252,16 @@ local function buildLobby()
 	add("Maça çık", "Primary", nil, function()
 		enterMatch()
 	end, "Lig maçı · 11'e 11")
+	add("Puan durumu", "Secondary", nil, function()
+		League.Open(gui, function()
+			return state.data
+		end)
+	end, "Lig tablosu ve lig atlama çizgisi")
+	add("Sıralama", "Ghost", nil, function()
+		Hub.OpenRanking(gui, function()
+			return state.data
+		end)
+	end, "Dünya genelinde yerin")
 	add("Deneme sahası", "Secondary", nil, function()
 		enterPitch()
 	end, "Şut, çalım ve savunma çalış")
@@ -260,31 +270,21 @@ local function buildLobby()
 			return state.data
 		end)
 	end, "Hareket aç, özellik yükselt")
-	add("Kulüp arması", "Secondary", nil, function()
+	add("Tesisler", "Secondary", nil, function()
+		Hub.OpenClub(gui, function()
+			return state.data
+		end)
+	end, "Kulüp kasasıyla stadı geliştir")
+	add("Kulüp arması", "Ghost", nil, function()
 		CrestDesigner.Open(gui, function()
 			return state.data
 		end)
 	end, "Biçim, desen, renk, simge")
-	add("Puan durumu", "Ghost", nil, function()
-		League.Open(gui, function()
-			return state.data
-		end)
-	end, "Lig tablosu ve lig atlama çizgisi")
 	add("Mağaza", "Secondary", nil, function()
 		Hub.OpenShop(gui, function()
 			return state.data
 		end)
 	end, "Top, şut izi, gol sevinci")
-	add("Tesisler", "Ghost", nil, function()
-		Hub.OpenClub(gui, function()
-			return state.data
-		end)
-	end, "Kulüp kasasıyla stadı geliştir")
-	add("Sıralama", "Secondary", nil, function()
-		Hub.OpenRanking(gui, function()
-			return state.data
-		end)
-	end, "Dünya genelinde yerin")
 
 	-- Günlük görevler (sağ): ilerleme çubuğu ve tamamlanınca "Al" düğmesi
 	local tasks, tc = Components.Panel({
@@ -398,8 +398,9 @@ local function render(data)
 	renderTasks(data)
 	-- kuşanılan top ve şut izi
 	local ballItem, trailItem = Config.Equipped(data, "Ball"), Config.Equipped(data, "Trail")
-	if ballItem and trailItem then
-		BallSkin.SetSkin(ballItem.A, ballItem.B)
+	if ballItem and trailItem and state.skinKey ~= ballItem.Id .. trailItem.Id then
+		state.skinKey = ballItem.Id .. trailItem.Id -- yalnız değişince yeniden kur
+		BallSkin.SetSkin(ballItem.A, ballItem.B, ballItem.Pattern)
 		BallSkin.SetTrail(trailItem.A, trailItem.B)
 	end
 	if not refs.name then

@@ -24,7 +24,7 @@ local function backdrop(gui: ScreenGui, name: string): Frame
 	root.Name = name
 	root.Size = UDim2.fromScale(1, 1)
 	root.BackgroundColor3 = Color3.fromRGB(5, 9, 32)
-	root.BackgroundTransparency = 0.04
+	root.BackgroundTransparency = 0
 	root.BorderSizePixel = 0
 	root.ZIndex = 180
 	root.ClipsDescendants = true
