@@ -24,6 +24,7 @@ local Ball = require(script.Parent.Parent.Match.Ball)
 local TimeScale = require(script.Parent.Parent.Match.TimeScale)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Bots = require(script.Parent.Parent.Match.Bots)
+local Training = require(script.Parent.Parent.Match.Training)
 local Forms = require(ReplicatedStorage.UI.Forms)
 
 local C = Theme.Color
@@ -802,6 +803,18 @@ local function step(dt: number)
 			matchApi.Update(sdt, ctx)
 		else
 			Bots.Update(sdt, ctx)
+			Training.Update(sdt)
+			if ui.trainTimer then
+				local active = Training.Active()
+				ui.trainTimer.Text = if active
+					then string.format(
+						"%s  ·  %d sn  ·  %d isabet",
+						if active == "Kose" then "KÖŞE AVI" else "PAS USTASI",
+						math.ceil(Training.Remaining()),
+						Training.Score()
+					)
+					else ""
+			end
 		end
 		Ball.Carry(sdt, {
 			pos = hrp.Position - Vector3.new(0, 3, 0),
@@ -1219,11 +1232,49 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 
 	-- Çalışma modu (gol sayacının altında)
 	local modes = Forms.Chips({
-		Options = { { Id = "Hucum", Text = "Hücum çalışması" }, { Id = "Savunma", Text = "Savunma çalışması" } },
+		Options = {
+			{ Id = "Hucum", Text = "Hücum" },
+			{ Id = "Savunma", Text = "Savunma" },
+			{ Id = "Kose", Text = "Köşe avı" },
+			{ Id = "Pas", Text = "Pas ustası" },
+		},
 		Value = "Hucum",
 		OnChange = function(id)
 			state.yellow = false
 			setCombo(0)
+			if id == "Kose" or id == "Pas" then
+				-- süreli antrenman: savunmacı ve kaleci yok
+				Bots.Clear()
+				Bots.Start("Bos")
+				if state.hrp then
+					Ball.Reset(state.hrp.Position + state.hrp.CFrame.LookVector * 6)
+				end
+				Training.Start(id, function(score)
+					banner("İsabet! " .. score, C.Good)
+					UIMotion.Sound("ConfirmSound", 1 + math.min(score, 10) * 0.04)
+					if ui.trainScore then
+						ui.trainScore.Text = tostring(score)
+						UIMotion.Pop(ui.trainScore, 1.6)
+					end
+					if id == "Pas" then
+						task.delay(0.6, function()
+							local hrp = state.hrp
+							if hrp and state.hud and Training.Active() then
+								Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 5)
+							end
+						end)
+					end
+				end, function(score, record)
+					banner(if record then "Yeni rekor: " .. score else "Süre bitti: " .. score, if record then C.Gold else C.White)
+					UIMotion.Sound(if record then "RewardSound" else "ConfirmSound")
+					if record and ui.root then
+						UIMotion.Burst(ui.root, "REKOR", tostring(score) .. " isabet", C.Gold)
+					end
+				end)
+				banner(if id == "Kose" then "Parlayan köşeye gol at · 45 sn" else "Yanan mankene pas ver · 45 sn")
+				return
+			end
+			Training.Stop()
 			Bots.Start(id)
 			if id == "Hucum" and state.hrp then
 				Ball.Reset(state.hrp.Position + state.hrp.CFrame.LookVector * 6)
@@ -1233,7 +1284,22 @@ local function buildHud(gui: ScreenGui, onExit: () -> ())
 	})
 	modes.Frame.AnchorPoint = Vector2.new(0.5, 0)
 	modes.Frame.Position = UDim2.new(0.5, 0, 0, 88)
-	modes.Frame.Size = UDim2.fromOffset(400, 34)
+	modes.Frame.Size = UDim2.fromOffset(560, 34)
+	-- antrenman sayacı: kalan süre ve isabet (yalnız süreli antrenmanda görünür)
+	local timer = Components.Label3D({
+		Text = "",
+		Size = 22,
+		Color = C.Yellow,
+		Align = Enum.TextXAlignment.Center,
+		Frame = UDim2.fromOffset(320, 30),
+	})
+	timer.AnchorPoint = Vector2.new(0.5, 0)
+	timer.Position = UDim2.new(0.5, 0, 0, 128)
+	timer.Parent = root
+	ui.trainTimer = timer:FindFirstChild("Face")
+	ui.trainScore = Components.Label({ Text = "", Size = 1, Frame = UDim2.fromOffset(1, 1) })
+	ui.trainScore.Visible = false
+	ui.trainScore.Parent = root
 	modes.Frame.Parent = root
 	ui.modesFrame = modes.Frame
 	local ml = modes.Frame:FindFirstChildOfClass("UIListLayout")
@@ -1264,6 +1330,13 @@ local function bindBall()
 	Ball.On("goal", function(kind)
 		if matchApi then
 			return -- maçta golü MatchController yönetir
+		end
+		if Training.Active() == "Kose" then
+			if not Training.Goal() then
+				banner("Hedefi ıskaladın", C.Muted)
+			end
+			back(1.0)
+			return
 		end
 		state.goals += 1
 		if ui.goals then
@@ -1397,7 +1470,7 @@ function Controller.SetHud(visible: boolean)
 				Ball.Reset(hrp.Position + hrp.CFrame.LookVector * 6)
 			end
 			-- yalnızca deneme sahasına ait parçalar maçta gizlenir
-			for _, key in ipairs({ "goalsPanel", "modesFrame", "keysPanel" }) do
+			for _, key in ipairs({ "goalsPanel", "modesFrame", "keysPanel", "trainTimer" }) do
 				if ui[key] then
 					ui[key].Visible = matchApi == nil
 				end
@@ -1405,6 +1478,7 @@ function Controller.SetHud(visible: boolean)
 		end
 		if not visible then
 			Bots.Clear()
+			Training.Stop()
 		end
 		for _, key in ipairs({ "aim", "landRing" }) do
 			if ui[key] and not visible then

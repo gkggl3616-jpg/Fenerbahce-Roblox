@@ -140,6 +140,7 @@ function Bots.Mode(): string
 end
 
 -- "Hucum": iki savunmacı ve kaleciye karşı gol at. "Savunma": top süren hücumcuyu durdur.
+-- Başka bir ad (ör. "Bos"): saha boş kalır (süreli antrenmanlar).
 function Bots.Start(newMode: string)
 	Bots.Clear()
 	mode = newMode
@@ -147,7 +148,7 @@ function Bots.Start(newMode: string)
 		spawn("Rival", "defender", Vector3.new(-14, 0, T.GoalZ - 58), Vector3.new(0, 0, -1))
 		spawn("Rival2", "defender", Vector3.new(16, 0, T.GoalZ - 40), Vector3.new(0, 0, -1))
 		spawn("RivalKeeper", "keeper", Vector3.new(0, 0, T.GoalZ - 1.6), Vector3.new(0, 0, -1))
-	else
+	elseif mode == "Savunma" then
 		local a = spawn("RivalAttacker", "attacker", Vector3.new(math.random(-30, 30), 0, T.GoalZ - 40), Vector3.new(0, 0, -1))
 		if a then
 			Ball.Reset(a.pos + Vector3.new(0, 0, -3))

@@ -784,7 +784,7 @@ local anim = folder("Anim", client)
 moduleNode("Poses", CL .. "Anim/Poses.luau", anim)
 moduleNode("Animator", CL .. "Anim/Animator.luau", anim)
 local match = folder("Match", client)
-for _, n in ipairs({ "Ball", "Bots", "MatchAI", "Referee", "TimeScale" }) do
+for _, n in ipairs({ "Ball", "Bots", "MatchAI", "Referee", "Training", "TimeScale" }) do
 	moduleNode(n, CL .. "Match/" .. n .. ".luau", match)
 end
 moduleNode("MatchController", CL .. "Match/MatchController.luau", match)

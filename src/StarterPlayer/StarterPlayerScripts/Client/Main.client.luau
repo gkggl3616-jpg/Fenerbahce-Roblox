@@ -356,7 +356,7 @@ local function renderTasks(data)
 			})
 			l.Parent = row
 			local reward = Components.Label({
-				Text = string.format("%d / %d   ·   +%d bakiye, +%d XP", t.progress, def.Goal, def.Coins, def.Xp),
+				Text = string.format("%d / %d   ·   +%d bakiye, +%d XP", math.min(t.progress, def.Goal), def.Goal, def.Coins, def.Xp),
 				Size = 11,
 				Color = C.Muted,
 				Frame = UDim2.new(1, -96, 0, 14),
@@ -368,7 +368,7 @@ local function renderTasks(data)
 			bar.Frame.Parent = row
 			bar.Set(math.clamp(t.progress / def.Goal, 0, 1))
 			local b = Components.Button({
-				Text = if t.claimed then "Alındı" elseif done then "Al" else "Sürüyor",
+				Text = if t.claimed then "Alındı" elseif done then "Al" else "Devam",
 				Style = if t.claimed then "Ghost" elseif done then "Primary" else "Secondary",
 				TextSize = 13,
 				Size = UDim2.fromOffset(86, 40),

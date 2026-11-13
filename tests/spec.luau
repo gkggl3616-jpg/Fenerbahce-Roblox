@@ -1002,6 +1002,71 @@ frames(4)
 mouse(Enum.UserInputType.MouseButton2, 3)
 check("sağ tık (top sende): pas", PC.Debug().action == "Pass", PC.Debug().action)
 frames(90)
+-- süreli antrenman: köşe avı ve pas ustası
+local Training = require(__tree.Match.Training)
+-- mankenler deneme sahasındaki stüdyoda: sunucu kodu kurar
+__isServer = true
+require(__tree.Server.CharacterService).BuildStudio()
+__isServer = false
+local chips
+for _, d in ipairs(gui2:GetDescendants()) do
+	if d.Name == "Chips" then
+		chips = d
+	end
+end
+local function chip(text)
+	for _, d in ipairs(gui2:GetDescendants()) do
+		if d.ClassName == "TextButton" and d:FindFirstChild("Label") and (d.Label.Text == text or d.Label.Text == string.upper(text)) then
+			return d
+		end
+	end
+	return nil
+end
+check("antrenman seçenekleri çizilir", chips ~= nil and chip("KÖŞE AVI") ~= nil and chip("PAS USTASI") ~= nil)
+chip("KÖŞE AVI").Activated:Fire()
+frames(10)
+check("köşe avı başlar", Training.Active() == "Kose")
+check("köşe avında savunmacı yok", require(__tree.Match.Bots).Mode() == "Bos")
+local target = workspace:FindFirstChild("FK_TrainingTarget")
+check("köşede parlayan hedef var", target ~= nil)
+-- hedefe şut: topu hedefin önüne koyup kaleye doğru it
+local hits = 0
+for _ = 1, 3 do
+	target = workspace:FindFirstChild("FK_TrainingTarget")
+	local tp = target.Position
+	Ball2.Reset(Vector3.new(tp.X, 0, tp.Z - 12))
+	Ball2.Kick(Vector3.new(0, (tp.Y + 0.5 * 85 * 0.25 ^ 2) / 0.25 - 0.5 * 85 * 0.25 + 0.5, 48))
+	frames(40)
+	hits = Training.Score()
+end
+check("hedefe giren şut isabet sayılır", hits >= 2, hits)
+Ball2.Reset(Vector3.new(0, 0, Config.TestPitch.GoalZ - 12))
+Ball2.Kick(Vector3.new(0, 0, 60))
+local beforeMiss = Training.Score()
+frames(40)
+check("hedef dışındaki gol isabet sayılmaz", Training.Score() == beforeMiss, Training.Score())
+frames(60 * 46)
+check("45 saniye sonunda antrenman biter", Training.Active() == nil)
+check("rekor tutulur", Training.Best.Kose >= hits, Training.Best.Kose)
+chip("PAS USTASI").Activated:Fire()
+frames(10)
+check("pas ustası başlar", Training.Active() == "Pas")
+local lit
+for _, d in ipairs(workspace.FK_Studio:GetChildren()) do
+	if d.Name == "PassTarget" and d.Material == Enum.Material.Neon then
+		lit = d
+	end
+end
+check("bir manken yanar", lit ~= nil)
+if lit then
+	Ball2.Reset(Vector3.new(lit.Position.X, 0, lit.Position.Z - 14))
+	Ball2.Kick(Vector3.new(0, 0, 40))
+	frames(40)
+end
+check("yanan mankene pas isabet sayılır", Training.Score() == 1, Training.Score())
+chip("HÜCUM").Activated:Fire()
+frames(10)
+check("hücum çalışmasına dönünce antrenman durur", Training.Active() == nil and require(__tree.Match.Bots).Mode() == "Hucum")
 PC.SetHud(false)
 frames(30)
 
