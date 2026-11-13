@@ -466,9 +466,9 @@ Poses.Actions = {
 			{
 				0.44,
 				{
-					Root = V(-14, 0, 0),
-					Waist = V(-28, 0, 0),
-					Neck = V(-26, 0, 0),
+					Root = V(-10, 0, 0),
+					Waist = V(-18, 0, 0),
+					Neck = V(-16, 0, 0),
 					LeftHip = V(25, 0, 0),
 					RightHip = V(25, 0, 0),
 					LeftKnee = V(-25, 0, 0),
@@ -722,7 +722,7 @@ Poses.Actions = {
 				{
 					RootPos = V(0, -1.75, 0.3),
 					Root = V(62, 0, -8),
-					RightHip = V(82, 0, 0),
+					RightHip = V(28, 0, 0),
 					RightKnee = V(-6, 0, 0),
 					RightAnkle = V(20, 0, 0),
 					LeftHip = V(40, 0, -20),
@@ -737,7 +737,7 @@ Poses.Actions = {
 				{
 					RootPos = V(0, -1.75, 0.3),
 					Root = V(66, 0, -8),
-					RightHip = V(84, 0, 0),
+					RightHip = V(26, 0, 0),
 					RightKnee = V(-4, 0, 0),
 					LeftHip = V(40, 0, -20),
 					LeftKnee = V(-105, 0, 0),
@@ -1015,9 +1015,9 @@ Poses.Actions = {
 			{
 				0.5,
 				{
-					Root = V(-22, 0, 0),
-					Waist = V(-40, 0, 0),
-					Neck = V(-34, 0, 0),
+					Root = V(-14, 0, 0),
+					Waist = V(-24, 0, 0),
+					Neck = V(-20, 0, 0),
 					LeftHip = V(36, 0, 0),
 					RightHip = V(36, 0, 0),
 					LeftKnee = V(-20, 0, 0),

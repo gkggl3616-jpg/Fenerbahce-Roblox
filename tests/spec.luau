@@ -284,12 +284,40 @@ check("pas mankene ulaşır", math.abs(Ball.Position().X) < 5 and Ball.Position(
 
 ------------------------------------------------------------------ Drill botları
 section("Çalışma botları (savunmacı, kaleci, hücumcu)")
-local templates = Instance.new("Folder")
-templates.Name = "FK_BotTemplates"
-for _, n in ipairs({ "Rival", "Rival2", "RivalAttacker", "RivalKeeper", "Mate", "Mate2", "MateKeeper" }) do
-	__makeRig(n).Parent = templates
+-- şablonları gerçek sunucu kodu kurar: gövde, forma, yüz ve saç bu yoldan sınanır
+__isServer = true
+require(__tree.Server.CharacterService).BuildBotTemplates()
+__isServer = false
+local templates = RS:FindFirstChild("FK_BotTemplates")
+check(
+	"sunucu 8 şablon kurar (7 oyuncu + hakem)",
+	templates ~= nil and #templates:GetChildren() == 8,
+	templates and #templates:GetChildren()
+)
+do
+	local mate = templates:FindFirstChild("Mate")
+	local extras, roles, kit, faceDecal, visibleBody = 0, {}, 0, false, 0
+	for _, d in ipairs(mate:GetDescendants()) do
+		if d.Name == "FK_Extra" then
+			extras += 1
+			local role = d:GetAttribute("FK")
+			if role then
+				roles[role] = true
+			end
+		elseif d.ClassName == "SurfaceGui" then
+			kit += 1
+		elseif d.ClassName == "Decal" then
+			faceDecal = true
+		elseif d.ClassName == "MeshPart" and d.Transparency < 1 then
+			visibleBody += 1
+		end
+	end
+	check("gövde temel şekillerden kurulur (40+ parça)", extras >= 40, extras)
+	check("hazır gövde parçaları gizlenir", visibleBody == 0, visibleBody)
+	check("forma, kol, şort, çorap ve şerit etiketli", roles.Shirt and roles.Sleeve and roles.Shorts and roles.Sock and roles.Trim)
+	check("forma önü, arkası ve yüz çizilir", kit == 3, kit)
+	check("hazır yüz çıkartması kaldırılır", not faceDecal)
 end
-templates.Parent = RS
 local Bots = require(__tree.Match.Bots)
 local ev = { steal = 0, save = 0, escape = 0, telegraph = 0 }
 for k in pairs(ev) do

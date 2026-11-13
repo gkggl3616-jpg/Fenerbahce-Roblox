@@ -264,9 +264,9 @@ Config.Body = {
 	ProportionScale = 0.25,
 	HeadScale = 1,
 	Width = { Ince = 0.82, Atletik = 0.92, Guclu = 1.03 },
-	-- Gövde paketi: Roblox'un kendi "Man" gövdesi (köşeli kutu yerine omuzlu, belli insan gövdesi).
-	-- Yüklenemezse oyun kendiliğinden standart köşeli gövdeye döner. 0 = standart gövde.
-	Parts = { Head = 0, Torso = 86500008, RightArm = 86500036, LeftArm = 86500054, LeftLeg = 86500064, RightLeg = 86500078 },
+	-- İskelet: standart R15. Görünen gövde (baş, kollar, bacaklar, forma) kodla kurulur ve
+	-- hazır parçalar gizlenir; buraya gövde paketi kimliği yazmak yalnızca oranları değiştirir.
+	Parts = { Head = 0, Torso = 0, RightArm = 0, LeftArm = 0, LeftLeg = 0, RightLeg = 0 },
 }
 
 Config.Name = { Min = 3, Max = 16 }

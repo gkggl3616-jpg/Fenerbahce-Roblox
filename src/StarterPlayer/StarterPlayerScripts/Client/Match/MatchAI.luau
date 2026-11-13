@@ -119,21 +119,17 @@ local function spawn(kind: string, team: string, slot: number, info: any?, club:
 			d.Text = number
 		end
 	end
-	-- rakip kulübün renkleri (kaleci kendi formasında kalır)
+	-- rakip kulübün renkleri (kaleci kendi formasında kalır). Gövde parçaları görevlerine göre
+	-- etiketlidir: forma ve kol ana renk, şort ve şeritler ikinci renk, çorap ana renk.
 	if club and team == "away" and slot ~= 1 then
-		local function paint(names: { string }, c: Color3)
-			for _, n in ipairs(names) do
-				local p = model:FindFirstChild(n)
-				if p and p:IsA("BasePart") then
-					p.Color = c
-				end
-			end
-		end
-		paint({ "UpperTorso", "LeftUpperArm", "RightUpperArm" }, club.A)
-		paint({ "LowerTorso", "LeftUpperLeg", "RightUpperLeg" }, club.B)
-		paint({ "LeftLowerLeg", "RightLowerLeg" }, club.A)
+		local byRole = { Shirt = club.A, Sleeve = club.A, Shorts = club.B, Sock = club.A, Trim = club.B }
 		for _, d in ipairs(model:GetDescendants()) do
-			if d:IsA("Frame") and d.Name == "Stripe" then
+			if d:IsA("BasePart") then
+				local c = byRole[d:GetAttribute("FK") or ""]
+				if c then
+					d.Color = c
+				end
+			elseif d:IsA("Frame") and d.Name == "Stripe" then
 				d.BackgroundColor3 = club.B
 			end
 		end

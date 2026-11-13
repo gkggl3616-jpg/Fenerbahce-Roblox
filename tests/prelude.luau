@@ -520,6 +520,9 @@ function Inst:Clone()
 			rawset(c, k, v)
 		end
 	end
+	for k, v in pairs(self.__attrs) do
+		c.__attrs[k] = v
+	end
 	for _, ch in ipairs(self.__children) do
 		ch:Clone().Parent = c
 	end
@@ -534,11 +537,24 @@ end
 function Inst:GetPropertyChangedSignal()
 	return Signal()
 end
+-- Modeli kökünden taşır: bütün parçalar birlikte gider (gerçekteki gibi)
 function Inst:PivotTo(cf)
 	local hrp = self:FindFirstChild("HumanoidRootPart")
 	if hrp then
-		hrp.CFrame = cf
+		local delta = cf * hrp.CFrame:Inverse()
+		for _, d in ipairs(self:GetDescendants()) do
+			if PARTS[d.ClassName] and rawget(d, "CFrame") then
+				d.CFrame = delta * d.CFrame
+			end
+		end
 	end
+end
+-- Görünüm tanımı: sahte ortamda gövde değişmez, yalnızca çağrı kabul edilir
+function Inst:ApplyDescription(desc)
+	rawset(self, "__description", desc)
+end
+function Inst:GetAppliedDescription()
+	return rawget(self, "__description") or newInstance("HumanoidDescription")
 end
 function Inst:Emit() end
 function Inst:Play()
@@ -622,6 +638,9 @@ __localPlayer.Name = "Tester"
 __localPlayer.UserId = 4242
 __localPlayer.Parent = players
 players.LocalPlayer = __localPlayer
+function players:CreateHumanoidModelFromDescription()
+	return __makeRig("Rig")
+end
 function players:GetPlayers()
 	return self:GetChildren()
 end
@@ -773,26 +792,79 @@ moduleNode("League", CL .. "Screens/League.luau", screens)
 moduleNode("Halftime", CL .. "Screens/Halftime.luau", screens)
 __tree = { Shared = shared, UI = uiF, Server = server, Anim = anim, Match = match, Controllers = controllers, Screens = screens }
 
--- R15 iskeletli sahte karakter (animasyon ve bot sınamaları için)
+-- Gerçek ölçülü R15 karakter: 15 gövde parçası + kök, Motor6D eklemleri (C0/C1), yüz çıkartması.
+-- Ölçüler Roblox'un standart köşeli R15 gövdesine yakındır; forma giydirme ve animasyon bu iskelette sınanır.
+local R15_PARTS = {
+	HumanoidRootPart = { 2, 2, 1 },
+	LowerTorso = { 2, 0.4, 1 },
+	UpperTorso = { 2, 1.6, 1 },
+	Head = { 1.2, 1.2, 1.2 },
+	LeftUpperArm = { 1, 1.169, 1 },
+	LeftLowerArm = { 1, 1.052, 1 },
+	LeftHand = { 1, 0.3, 1 },
+	RightUpperArm = { 1, 1.169, 1 },
+	RightLowerArm = { 1, 1.052, 1 },
+	RightHand = { 1, 0.3, 1 },
+	LeftUpperLeg = { 1, 1.217, 1 },
+	LeftLowerLeg = { 1, 1.193, 1 },
+	LeftFoot = { 1, 0.3, 1 },
+	RightUpperLeg = { 1, 1.217, 1 },
+	RightLowerLeg = { 1, 1.193, 1 },
+	RightFoot = { 1, 0.3, 1 },
+}
+-- { eklem, Part0, Part1, C0, C1 }  (Part1 = Part0 * C0 * Transform * C1^-1)
+local R15_JOINTS = {
+	{ "Root", "HumanoidRootPart", "LowerTorso", { 0, -1, 0 }, { 0, -0.2, 0 } },
+	{ "Waist", "LowerTorso", "UpperTorso", { 0, 0.2, 0 }, { 0, -0.8, 0 } },
+	{ "Neck", "UpperTorso", "Head", { 0, 0.8, 0 }, { 0, -0.5, 0 } },
+	{ "LeftShoulder", "UpperTorso", "LeftUpperArm", { -1, 0.563, 0 }, { 0.5, 0.394, 0 } },
+	{ "LeftElbow", "LeftUpperArm", "LeftLowerArm", { 0, -0.334, 0 }, { 0, 0.259, 0 } },
+	{ "LeftWrist", "LeftLowerArm", "LeftHand", { 0, -0.501, 0 }, { 0, 0.125, 0 } },
+	{ "RightShoulder", "UpperTorso", "RightUpperArm", { 1, 0.563, 0 }, { -0.5, 0.394, 0 } },
+	{ "RightElbow", "RightUpperArm", "RightLowerArm", { 0, -0.334, 0 }, { 0, 0.259, 0 } },
+	{ "RightWrist", "RightLowerArm", "RightHand", { 0, -0.501, 0 }, { 0, 0.125, 0 } },
+	{ "LeftHip", "LowerTorso", "LeftUpperLeg", { -0.5, -0.2, 0 }, { 0, 0.421, 0 } },
+	{ "LeftKnee", "LeftUpperLeg", "LeftLowerLeg", { 0, -0.401, 0 }, { 0, 0.379, 0 } },
+	{ "LeftAnkle", "LeftLowerLeg", "LeftFoot", { 0, -0.547, 0 }, { 0, 0.102, 0 } },
+	{ "RightHip", "LowerTorso", "RightUpperLeg", { 0.5, -0.2, 0 }, { 0, 0.421, 0 } },
+	{ "RightKnee", "RightUpperLeg", "RightLowerLeg", { 0, -0.401, 0 }, { 0, 0.379, 0 } },
+	{ "RightAnkle", "RightLowerLeg", "RightFoot", { 0, -0.547, 0 }, { 0, 0.102, 0 } },
+}
+__R15_JOINTS = R15_JOINTS
 function __makeRig(name)
 	local m = newInstance("Model")
 	m.Name = name
-	local hrp = newInstance("Part")
-	hrp.Name = "HumanoidRootPart"
-	hrp.Size = V3.new(2, 2, 1)
-	hrp.Parent = m
-	newInstance("Humanoid").Parent = m
-	local Poses = require(anim.Poses)
-	for _, j in ipairs(Poses.Joints) do
+	local parts = {}
+	for partName, size in pairs(R15_PARTS) do
+		local part = newInstance(if partName == "HumanoidRootPart" then "Part" else "MeshPart")
+		part.Name = partName
+		part.Size = V3.new(size[1], size[2], size[3])
+		part.Color = Color3.fromRGB(163, 162, 165)
+		parts[partName] = part
+	end
+	parts.HumanoidRootPart.CFrame = CFrame.new(0, 3, 0) -- kalça yüksekliği 2 + kök yarı boyu 1
+	parts.HumanoidRootPart.Transparency = 1
+	for _, j in ipairs(R15_JOINTS) do
 		local motor = newInstance("Motor6D")
-		motor.Name = j
-		motor.Parent = hrp
+		motor.Name = j[1]
+		motor.Part0 = parts[j[2]]
+		motor.Part1 = parts[j[3]]
+		motor.C0 = CFrame.new(j[4][1], j[4][2], j[4][3])
+		motor.C1 = CFrame.new(j[5][1], j[5][2], j[5][3])
+		parts[j[3]].CFrame = parts[j[2]].CFrame * motor.C0 * motor.C1:Inverse()
+		motor.Parent = parts[j[3]]
 	end
-	for _, n in ipairs({ "LeftFoot", "RightFoot" }) do
-		local f = newInstance("Part")
-		f.Name = n
-		f.Size = V3.new(1, 0.4, 1)
-		f.Parent = m
+	local face = newInstance("Decal")
+	face.Name = "face"
+	face.Parent = parts.Head
+	-- parçalar sabit sırayla eklenir (sınamalar kararlı olsun)
+	parts.HumanoidRootPart.Parent = m
+	for _, j in ipairs(R15_JOINTS) do
+		parts[j[3]].Parent = m
 	end
+	local hum = newInstance("Humanoid")
+	hum.Parent = m
+	local animator = newInstance("Animator")
+	animator.Parent = hum
 	return m
 end
