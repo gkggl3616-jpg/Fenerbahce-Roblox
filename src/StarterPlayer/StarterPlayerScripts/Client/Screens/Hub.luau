@@ -356,11 +356,14 @@ local function facilityInfo(id: string, level: number, max: number): string
 		end
 		return tostring(math.floor(v * 100 + 0.5))
 	end
-	local now = string.format(e.Info, value(level))
+	local line = e.Info .. ":  şimdi " .. string.format(e.Fmt, value(level))
 	if level < max then
-		now ..= "  ›  sonraki: " .. string.format(e.Info, value(level + 1)):match("^[^·]+")
+		line ..= "   ›   sonraki seviye " .. string.format(e.Fmt, value(level + 1))
 	end
-	return now
+	if e.Note ~= "" then
+		line ..= "\n" .. e.Note
+	end
+	return line
 end
 
 function Hub.OpenClub(gui: ScreenGui, getData: () -> any)
@@ -532,7 +535,7 @@ function Hub.OpenRanking(gui: ScreenGui, getData: () -> any)
 		local rows = result.rows or {}
 		text(body, "#", 11, C.Muted, 10, 0, 30, 18)
 		text(body, "OYUNCU", 11, C.Muted, 60, 0, 300, 18)
-		text(body, "GENEL GÜÇ", 11, C.Muted, 560, 0, 140, 18, nil, Enum.TextXAlignment.Right)
+		text(body, "GENEL GÜÇ", 11, C.Muted, 480, 0, 140, 18, nil, Enum.TextXAlignment.Right)
 		local shown = 0
 		for i, r in ipairs(rows) do
 			if i > 10 then
@@ -565,7 +568,7 @@ function Hub.OpenRanking(gui: ScreenGui, getData: () -> any)
 				tostring(r.power),
 				20,
 				if mine then C.Navy else C.Yellow,
-				560,
+				480,
 				0,
 				140,
 				40,

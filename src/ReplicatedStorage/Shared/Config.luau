@@ -215,8 +215,8 @@ Config.Shop = {
 		Name = "Kış topu",
 		Price = 900,
 		Level = 8,
-		A = Color3.fromRGB(255, 120, 30),
-		B = Color3.fromRGB(20, 20, 24),
+		A = Color3.fromRGB(236, 244, 255),
+		B = Color3.fromRGB(40, 110, 200),
 	},
 	{
 		Id = "TopAltin",
@@ -346,12 +346,12 @@ Config.Facilities = {
 }
 -- Tesislerin gerçek etkileri (seviye başına). Açıklamalar tesis ekranında bu sayılardan yazılır.
 Config.FacilityEffects = {
-	Cim = { Control = 0.6, Info = "Top kontrolü +%s (seviye başına 0,6) · yıpranmış toprak kalkar, biçme desenleri belirginleşir" },
-	TribunEki = { Income = 0.2, Info = "Maç başı kulüp kasası geliri +%%%s · statta ek tribün" },
-	Aydinlatma = { Light = 0.12, Info = "Projektörler yanar, maç ışığı %%%s daha parlak" },
-	Soyunma = { Xp = 0.1, Info = "Maç XP'si +%%%s" },
-	Antrenman = { Training = 0.5, Info = "Antrenman ödülleri +%%%s (bakiye ve XP)" },
-	Saglik = { Regen = 0.15, Info = "Dayanıklılık yenilenmesi +%%%s" },
+	Cim = { Control = 0.6, Info = "Maçta top kontrolü", Fmt = "+%s", Note = "Toprak lekeleri kalkar, biçme desenleri belirginleşir" },
+	TribunEki = { Income = 0.2, Info = "Maç başı kasa geliri", Fmt = "+%%%s", Note = "Küçük statlara ek tribün" },
+	Aydinlatma = { Light = 0.12, Info = "Maç ışığı", Fmt = "+%%%s", Note = "Projektörler yanar" },
+	Soyunma = { Xp = 0.1, Info = "Maç XP'si", Fmt = "+%%%s", Note = "" },
+	Antrenman = { Training = 0.5, Info = "Antrenman ödülleri", Fmt = "+%%%s", Note = "Bakiye ve XP" },
+	Saglik = { Regen = 0.15, Info = "Dayanıklılık yenilenmesi", Fmt = "+%%%s", Note = "" },
 }
 -- Bir tesisin seviyesi (veri yoksa 0)
 function Config.FacilityLevel(data, id: string): number
