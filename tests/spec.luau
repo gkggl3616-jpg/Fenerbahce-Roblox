@@ -1598,6 +1598,26 @@ do
 		end
 		check("tesisler ekranında 6 tesis", facilities == 6, facilities)
 		__snapIf("tesisler", lobby)
+		local medal = HubS.Medal(1, 40)
+		check("madalya çizilir", medal ~= nil and #medal:GetChildren() >= 3)
+		if __snap then
+			-- önizleme için örnek sıralama verisi (sınamada çalışmaz)
+			Remotes.Get("GetLeaderboard").OnServerInvoke = function()
+				local rows = {}
+				for k, n in ipairs({
+					"Örnek Oyuncu A",
+					"Örnek Oyuncu B",
+					"Örnek Oyuncu C",
+					"Örnek Oyuncu D",
+					"Emre Kadikoy",
+					"Örnek Oyuncu E",
+					"Örnek Oyuncu F",
+				}) do
+					table.insert(rows, { rank = k, name = n, power = 92 - k * 4, userId = if n == "Emre Kadikoy" then plr.UserId else k })
+				end
+				return { rows = rows, offline = false, me = { name = "Emre Kadikoy", power = 72, userId = plr.UserId } }
+			end
+		end
 		HubS.OpenRanking(lobby, getData)
 		frames(40)
 		check("sıralama ekranı açılır", lobby:FindFirstChild("Ranking") ~= nil)

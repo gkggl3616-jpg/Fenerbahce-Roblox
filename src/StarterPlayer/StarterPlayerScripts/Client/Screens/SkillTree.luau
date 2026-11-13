@@ -15,11 +15,13 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Components = require(ReplicatedStorage.UI.Components)
 local Theme = require(ReplicatedStorage.UI.Theme)
 local UIMotion = require(ReplicatedStorage.UI.UIMotion)
+local Icons = require(ReplicatedStorage.UI.Icons)
+local TweenService = game:GetService("TweenService")
 
 local SkillTree = {}
 
 local C = Theme.Color
-local open: { root: Frame, body: Frame, getData: () -> any, coins: TextLabel, level: TextLabel }? = nil
+local open: any = nil
 
 local function corner(o: Instance, r: number)
 	local u = Instance.new("UICorner")
@@ -54,6 +56,22 @@ local function text(
 end
 
 local DARK = Color3.fromRGB(16, 24, 70)
+local CHAIN_ICON = { Sut = "Ball", Calim = "Star", Hava = "Trophy", Defans = "Shield", Kaleci = "Shield" }
+
+-- Bağlantı çizgisinde akan ışık: sarı dolgunun üstünde aşağı kayan parlak bölge
+local function flow(fill: Frame)
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 40)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 220)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 40)),
+	})
+	g.Offset = Vector2.new(0, -1)
+	g.Parent = fill
+	TweenService:Create(g, TweenInfo.new(1.4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Offset = Vector2.new(0, 1) })
+		:Play()
+end
 local STAT_INFO = {
 	Hiz = "Koşu ve sprint hızı",
 	TopKontrolu = "Top sürme, ilk dokunuş",
@@ -72,6 +90,7 @@ local function draw()
 		return
 	end
 	local body = open.body
+	local prevStats = open.prevStats
 	for _, child in ipairs(body:GetChildren()) do
 		child:Destroy()
 	end
@@ -93,7 +112,10 @@ local function draw()
 		local chain = Config.SkillChains[id]
 		local level = Config.SkillLevel(data.skills, id)
 		local x = (ci - 1) * (colW + 12)
-		text(body, Theme.Upper(chain.Name), 20, C.Yellow, UDim2.fromOffset(x, 0), UDim2.fromOffset(colW, 26), Theme.Font.Display)
+		local icon = Icons.Build(CHAIN_ICON[id] or "Star", 24, C.Yellow)
+		icon.Position = UDim2.fromOffset(x, 1)
+		icon.Parent = body
+		text(body, Theme.Upper(chain.Name), 20, C.Yellow, UDim2.fromOffset(x + 30, 0), UDim2.fromOffset(colW - 30, 26), Theme.Font.Display)
 		text(body, chain.Hint or "", 11, C.Muted, UDim2.fromOffset(x, 26), UDim2.fromOffset(colW, 16))
 		text(
 			body,
@@ -115,8 +137,14 @@ local function draw()
 		local fill = Instance.new("Frame")
 		fill.BorderSizePixel = 0
 		fill.BackgroundColor3 = C.Yellow
-		fill.Size = UDim2.fromOffset(4, math.max(0, level - 1) * (nodeH + gap))
+		local prevLevel = (open.prev and open.prev[id]) or level
+		local target = UDim2.fromOffset(4, math.max(0, level - 1) * (nodeH + gap))
+		fill.Size = if prevLevel < level then UDim2.fromOffset(4, math.max(0, prevLevel - 1) * (nodeH + gap)) else target
 		fill.Parent = line
+		flow(fill)
+		if prevLevel < level then
+			UIMotion.Tween(fill, 0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, { Size = target })
+		end
 		for i, sk in ipairs(chain.Skills) do
 			local unlocked = i <= level
 			local isNext = i == level + 1
@@ -136,6 +164,22 @@ local function draw()
 				if unlocked or isNext then 0 else 0.5
 			)
 			node.Parent = body
+			if unlocked then
+				local g = Instance.new("UIGradient")
+				g.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 165, 230))
+				g.Parent = node
+			end
+			if unlocked and i > prevLevel then
+				-- az önce açıldı: parlama, büyüme ve ekranda kutlama
+				task.defer(function()
+					UIMotion.Flash(node)
+					UIMotion.Pop(node, 1.25)
+					UIMotion.Sound("RewardSound")
+					if open then
+						UIMotion.Burst(open.root, "AÇILDI", sk.Name, C.Gold)
+					end
+				end)
+			end
 			-- sıra rozeti
 			local badge = Instance.new("Frame")
 			badge.Size = UDim2.fromOffset(34, 34)
@@ -184,6 +228,8 @@ local function draw()
 			if isNext then
 				if canBuy then
 					UIMotion.Glow(st, 0, 0.6, 0.9)
+					UIMotion.Pulse(node, 0.03, 1.1) -- açılabilir: nabız gibi atar
+					UIMotion.ShineLoop(node, 2.6)
 				end
 				node.Activated:Connect(function()
 					if (data.level or 1) < sk.Level then
@@ -249,6 +295,12 @@ local function draw()
 			seg.Size = UDim2.fromOffset((sw - 124 - (Config.StatMax - 1) * 3) / Config.StatMax, 10)
 			seg.Position = UDim2.fromOffset(12 + (k - 1) * ((sw - 124) / Config.StatMax), 56)
 			seg.BackgroundColor3 = if k <= v then C.Yellow else C.Ground
+			if prevStats and k <= v and k > (prevStats[key] or v) then
+				task.defer(function()
+					UIMotion.Pop(seg, 2.2)
+					UIMotion.Flash(card)
+				end)
+			end
 			seg.BorderSizePixel = 0
 			corner(seg, 3)
 			seg.Parent = card
@@ -274,6 +326,12 @@ local function draw()
 		b.Position = UDim2.fromOffset(sw - 106, 18)
 		b.Parent = card
 	end
+	-- bir sonraki çizimde neyin yeni açıldığını bilmek için şimdiki seviyeler saklanır
+	open.prev = {}
+	for _, cid in ipairs(Config.SkillChainOrder) do
+		open.prev[cid] = Config.SkillLevel(data.skills, cid)
+	end
+	open.prevStats = table.clone(data.stats or {})
 end
 
 function SkillTree.Refresh()
