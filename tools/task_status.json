@@ -15,12 +15,12 @@
   },
   "T004": {
     "status": "IN_PROGRESS",
-    "evidence": "Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). Temiz projeden build ALINMADI.",
+    "evidence": "Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). GitHub Actions'ta lisanssız iş (verify/Core CI) geçti; Unity derlemesi lisans sırları olmadığı için ÇALIŞMADI (run 43858524662). Temiz projeden build ALINMADI.",
     "next": "Actions'ta Unity lisansıyla ilk APK koşusu"
   },
   "T006": {
     "status": "IN_PROGRESS",
-    "evidence": "GitHub MCP gerçek araç denemesi yapıldı (list_branches, actions_list). Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md."
+    "evidence": "GitHub MCP gerçek araç denemeleri geçti: list_branches, actions_list, actions_run_trigger(run_workflow), get_job_logs. Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md."
   },
   "T005": {
     "status": "DONE",

@@ -3,7 +3,7 @@
 `.github/workflows/android-apk.yml`, Unity projesini (`unity/`) GameCI ile derleyip **APK** üretir, `Actions → koşu → Artifacts` altına yükler ve (main/etiket/elle) **GitHub Release** olarak yayınlar (telefondan doğrudan indirilebilir).
 
 ## Durum (dürüst özet)
-- İş akışı dosyası yazıldı ve YAML olarak geçerli; lisanssız iş (`verify`, `ci.yml`) Actions'ta koşar.
+- İş akışı GitHub'da gerçekten koştu (2026-11-16): `ci.yml` ve `verify` işi **geçti**; elle tetiklenen koşu (#2, run 43858524662) sırlar olmadığı için **bilerek kırmızı** bitti (`APK üretilemedi (lisans yok)`).
 - **Unity derlemesi, ancak Unity lisans sırları eklenirse çalışır.** Bu geliştirme ortamında Unity ve lisans yok; bu nedenle `BuildScript` ve GameCI adımı **henüz hiç çalıştırılmadı/doğrulanmadı**. İlk gerçek koşuda ortaya çıkacak hatalar (kod, ayar, GameCI parametresi) beklenen bir sonraki adımdır.
 - Sırlar yoksa APK üretilemez; iş akışı bunu açıkça bildirir (elle başlatılırsa kırmızı biter). Sahte/boş APK yüklenmez; APK < 1 MB ise koşu başarısız olur.
 
@@ -23,7 +23,9 @@ Sırlar: **`UNITY_SERIAL`** (`XX-XXXX-…`), `UNITY_EMAIL`, `UNITY_PASSWORD`. Hu
 > Kaynak: GameCI "Activation" belgesi. Hesap bilgisi yalnız Actions sırlarında durur; loglara yazılmaz, depoya konmaz. **Şifreyi sohbete veya dosyaya yazma.** Unity hesabında 2 adımlı doğrulama/lisans arayüzü değişirse GameCI belgesine bak; Kişisel `.ulf` yolu Unity'nin güncel sürümlerinde farklılık gösterebilir (doğrulanamadı).
 
 ## APK'yı üretme
-1. Sırlar ekli olduğunda: **Actions → Android APK → Run workflow** (dal: geliştirme dalı). Not: `workflow_dispatch` düğmesi iş akışı dosyası **varsayılan dalda** olduğunda görünür; o zamana kadar dalda `git push` yapmak koşuyu tetikler (`main` ve `ccr-**` dalları + `v*` etiketleri).
+1. Sırlar eklendikten sonra en kolay yol: **Actions → "Android APK" → son koşu (#2, elle başlatılan) → Re-run all jobs**. Bu koşu `publish_release=true` ile başlatıldığı için APK ayrıca **Releases**'e de konur.
+   Alternatif: dala yeni bir `git push` (tetikleyen dallar: `main`, `ccr-**`, `v*` etiketleri) — dal `main` değilse yalnızca artifact yüklenir.
+   *Run workflow* düğmesi, iş akışı dosyası **varsayılan dalda** olduğunda görünür (bu depoda şu an dosya yalnız `ccr-fd287559-z1tq0d` dalında); düğme için dalı varsayılan dala birleştirmek gerekir.
 2. Koşu bitince: **Summary** sayfası APK boyutu, SHA-256 ve sürümü yazar. APK şurada: **Artifacts → `KanaryaFutbol-APK-<n>`** (zip içinde). Release açıksa **Releases** sayfasında `apk-<n>` (ön sürüm) olarak da bulunur.
 3. Telefonda: APK'yı indir → "bilinmeyen kaynaklardan yükle" iznini ver → kur. APK **Unity varsayılan DEBUG anahtarıyla** imzalıdır (test içindir; mağaza yayını değil — T097/T102).
 

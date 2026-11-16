@@ -15,10 +15,10 @@
     <!-- UNITY_ANDROID bilinçli tanımlı DEĞİL: Handheld (AndroidJNIModule) bu NuGet paketinde yok; Android bloğu gerçek Unity derlemesinde doğrulanır. -->
     <DefineConstants>$(DefineConstants);UNITY_2022_3</DefineConstants>
     <OutputType>Library</OutputType>
+    <AssemblyName>Fenerbahce.Runtime</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../../unity/Assets/_Game/Core/**/*.cs" />
     <Compile Include="../../unity/Assets/_Game/Runtime/**/*.cs" />
   </ItemGroup>
 
@@ -28,6 +28,10 @@
     <!-- uGUI başvuru derlemesi (2018.3): kullandığımız Image/Text/Button/EventSystem API'leri 2022.3 ile aynıdır. -->
     <PackageReference Include="Unity3D.UnityEngine.UI" Version="2018.3.5.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="core/CoreLib.csproj" />
   </ItemGroup>
 
 </Project>

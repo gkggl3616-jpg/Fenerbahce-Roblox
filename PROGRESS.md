@@ -21,7 +21,7 @@ Unity'de: `unity/` klasörünü 2022.3.62f1 ile aç → *Kanarya → Sahneyi ve 
 ### Doğrulama kanıtı (bu oturumda gerçekten çalıştı)
 - `dotnet test` (net8.0, NUnit): **93/93 geçti** (katalog, kadro, ekonomi/kalıcılık, durum makinesi, HUD, sim, tasarım, arama, portre kırpımı).
 - `tools/validate_catalog.py`: 100 futbolcu, 110 kart, geçerli.
-- `dotnet build tools/compile-check`: Runtime katmanı UnityEngine referanslarıyla **derlendi** (yaklaşık kontrol).
+- `dotnet build tools/compile-check`: Core ve Runtime ayrı derlemeler olarak UnityEngine referanslarıyla **derlendi** (yaklaşık kontrol; GitHub'da da geçti).
 - Ölçülebilir oynanış farkları (kontrollü denemeler, testte): kaleci 25 → 300 şutta 179 gol; kaleci 95 → 38 gol. Şutçu 95 → 90 gol; şutçu 35 → 42 gol. Kayarak top kazanma 29/40.
 - Bulunan ve düzeltilen gerçek hatalar: Newtonsoft koleksiyon ikilenmesi (kayıt yüklenince kartlar 7→14), keşfedilen kaleci aşırı güçlülüğü, test senaryosu hataları.
 
@@ -40,5 +40,8 @@ Unity'de: `unity/` klasörünü 2022.3.62f1 ile aç → *Kanarya → Sahneyi ve 
 Hemen: **T004** (ilk Unity derlemesi/APK koşusu), **T033** (cihazda his + kare süresi), **T022/T027–T029** (Unity'de HUD/kamera doğrulaması), **T030–T031** (rig + çalımlar).
 Sonra F3: **T041–T048** (11v11 AI, kurallar, penaltı/serbest vuruş, tekrar, sonuç), **T049–T052** (sunucu iskeleti, tam döngü).
 
-### Actions durumu
-(İlk koşudan sonra güncellenir.)
+### Actions durumu (gerçek koşular, 2026-11-16)
+- **Core CI #1: success** — veri doğrulama, görev kontrolü, `dotnet test` (93 test), Runtime compile-check GitHub runner'ında geçti.
+- **Android APK #1 (push):** `verify` ✓; Unity işleri sır olmadığı için atlandı.
+- **Android APK #2 (workflow_dispatch):** **failure — bilerek**: `UNITY_LICENSE`/`UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD` sırları tanımlı değil. **APK üretilmedi.** Sırlar eklenince koşuyu yeniden çalıştırmak yeterli (`docs/ANDROID_APK_WORKFLOW.md`).
+- Unity derlemesi/BuildScript/GameCI akışı henüz **hiç çalışmadı**; ilk gerçek koşuda hata çıkabilir.

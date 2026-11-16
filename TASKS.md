@@ -32,7 +32,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T004 · P0 · Teknik** — Unity sürümü ve paket uyumluluğunu sabitle
   - Kabul: Temiz projeden cihaz buildi alınır
   - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). Temiz projeden build ALINMADI.
+  - Doğrulama/Not: Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). GitHub Actions'ta lisanssız iş (verify/Core CI) geçti; Unity derlemesi lisans sırları olmadığı için ÇALIŞMADI (run 43858524662). Temiz projeden build ALINMADI.
   - Sıradaki: Actions'ta Unity lisansıyla ilk APK koşusu
 - [x] **T005 · P0 · Teknik** — Repo ve geliştirme kurallarını kur
   - Kabul: CLAUDE.md; DECISIONS; TASKS; gitignore var
@@ -41,7 +41,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T006 · P0 · Teknik** — MCP bağlantılarını doğrula
   - Kabul: Amaçlanan araçla küçük okuma denemesi kaydedildi
   - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: GitHub MCP gerçek araç denemesi yapıldı (list_branches, actions_list). Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md.
+  - Doğrulama/Not: GitHub MCP gerçek araç denemeleri geçti: list_branches, actions_list, actions_run_trigger(run_workflow), get_job_logs. Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md.
 - [~] **T007 · P0 · QA** — Minimum cihaz ve performans bütçesini seç
   - Kabul: En az düşük/orta sınıf gerçek cihaz listesi var
   - Kanıt kodu: TEKNIK · Bağımlılık: T004 · Durum: **IN_PROGRESS**
