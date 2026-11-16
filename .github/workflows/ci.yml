@@ -1,0 +1,52 @@
+name: Core CI (Unity gerektirmez)
+
+# Unity lisansı OLMADAN koşar: veri doğrulama, saf C# çekirdek birim testleri, Runtime derleme kontrolü.
+# Bu iş akışı oyunun Unity'de derlendiğini KANITLAMAZ; onu android-apk.yml yapar.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Katalog + çekirdek testleri + derleme kontrolü
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v5
+
+      - name: İçerik doğrulama (Python, C#'tan bağımsız)
+        run: |
+          python3 tools/validate_catalog.py
+          python3 tools/gen_tasks.py --check
+
+      - name: Katalog üretimi güncel mi
+        run: |
+          python3 tools/generate_catalog.py
+          git diff --exit-code -- unity/Assets/_Game/Resources/Content
+
+      - name: .NET 8 kur
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Çekirdek birim testleri (NUnit)
+        run: dotnet test tests/Core.Tests/Core.Tests.csproj --logger "trx;LogFileName=core.trx" --results-directory TestResults
+
+      - name: Unity Runtime derleme kontrolü (yaklaşık, UnityEngine referanslarıyla)
+        run: dotnet build tools/compile-check/UnityCompileCheck.csproj -c Release
+
+      - name: Test sonuçlarını yükle
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: core-test-results
+          path: TestResults
+          if-no-files-found: ignore

@@ -1,0 +1,234 @@
+name: Android APK
+
+# Unity (GameCI) ile Android APK üretir ve yükler.
+#
+# ÖN KOŞUL — depo sırları (Settings → Secrets and variables → Actions):
+#   Kişisel (ücretsiz) lisans : UNITY_LICENSE (.ulf içeriği) + UNITY_EMAIL + UNITY_PASSWORD
+#   Plus/Pro lisans           : UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD
+# Ayrıntı ve adımlar: docs/ANDROID_APK_WORKFLOW.md
+#
+# Sırlar yoksa: APK ÜRETİLEMEZ. Elle başlatılan (workflow_dispatch) veya etiketli (v*) koşu bu durumda KIRMIZI biter;
+# normal push'ta uyarı verip Unity adımını atlar. Hiçbir koşulda sahte/boş APK yüklenmez.
+on:
+  push:
+    branches: [ main, 'ccr-**' ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'APK GitHub Release olarak da yayınlansın mı?'
+        type: boolean
+        default: true
+      development_build:
+        description: 'Development build (daha çok log)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # Release oluşturmak için
+  checks: write     # unity-test-runner raporu için
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNITY_PROJECT: unity
+  BUILD_NAME: KanaryaFutbol
+
+jobs:
+  verify:
+    name: Mantık ve veri doğrulaması (Unity gerektirmez)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: İçerik doğrulama
+        run: |
+          python3 tools/validate_catalog.py
+          python3 tools/gen_tasks.py --check
+      - name: Çekirdek birim testleri
+        run: dotnet test tests/Core.Tests/Core.Tests.csproj
+      - name: Unity Runtime derleme kontrolü (yaklaşık)
+        run: dotnet build tools/compile-check/UnityCompileCheck.csproj -c Release
+
+  license:
+    name: Unity lisans sırları var mı?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.chk.outputs.ready }}
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    steps:
+      - id: chk
+        name: Sırları denetle (değerler loga yazılmaz)
+        shell: bash
+        run: |
+          ready=false
+          if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && { [ -n "$UNITY_LICENSE" ] || [ -n "$UNITY_SERIAL" ]; }; then ready=true; fi
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Unity lisans durumu"
+            if [ "$ready" = "true" ]; then
+              echo "Sırlar tanımlı: Unity derlemesi çalışacak."
+            else
+              echo "### ⚠️ APK üretilemedi: Unity lisans sırları eksik"
+              echo ""
+              echo "Gereken sırlar: **UNITY_LICENSE** (kişisel .ulf içeriği) **veya** **UNITY_SERIAL** (Plus/Pro) ile birlikte **UNITY_EMAIL** ve **UNITY_PASSWORD**."
+              echo ""
+              echo "Adımlar: \`docs/ANDROID_APK_WORKFLOW.md\`. Sırlar eklendikten sonra Actions → *Android APK* → *Run workflow*."
+              echo ""
+              echo "Eksik olanlar:"
+              [ -z "$UNITY_EMAIL" ] && echo "- UNITY_EMAIL"
+              [ -z "$UNITY_PASSWORD" ] && echo "- UNITY_PASSWORD"
+              { [ -z "$UNITY_LICENSE" ] && [ -z "$UNITY_SERIAL" ]; } && echo "- UNITY_LICENSE veya UNITY_SERIAL"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$ready" != "true" ]; then
+            echo "::warning title=Unity lisans sırları eksik::APK üretilemez. docs/ANDROID_APK_WORKFLOW.md dosyasındaki adımları izleyin."
+          fi
+
+  unity-editmode:
+    name: Unity EditMode testleri
+    needs: [license]
+    if: needs.license.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.UNITY_PROJECT }}/Library
+          key: Library-Test-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: Library-Test-
+      - name: EditMode testleri (gerçek Unity)
+        uses: game-ci/unity-test-runner@v4.4.0
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.UNITY_PROJECT }}
+          testMode: editmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: unity-editmode-results
+          path: artifacts
+          if-no-files-found: ignore
+
+  build:
+    name: Android APK derle
+    needs: [verify, license]
+    if: needs.license.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Unity Library önbelleği
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UNITY_PROJECT }}/Library
+          key: Library-Android-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+
+      - name: Unity ile APK derle (GameCI)
+        id: unity
+        uses: game-ci/unity-builder@v4.8.2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FB_DEV_BUILD: ${{ inputs.development_build == true && '1' || '0' }}
+        with:
+          projectPath: ${{ env.UNITY_PROJECT }}
+          targetPlatform: Android
+          androidExportType: androidPackage
+          buildMethod: Fenerbahce.EditorTools.BuildScript.BuildAndroid
+          buildName: ${{ env.BUILD_NAME }}
+          versioning: Custom
+          version: 0.1.${{ github.run_number }}
+          androidVersionCode: ${{ github.run_number }}
+          allowDirtyBuild: true
+
+      - name: APK dosyasını bul ve doğrula
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find build -type f -name '*.apk' | head -n 1 || true)"
+          if [ -z "$apk" ]; then
+            echo "::error title=APK bulunamadı::Unity derlemesi bitti ama build/ altında .apk yok."
+            find build -maxdepth 3 -print || true
+            exit 1
+          fi
+          size=$(stat -c %s "$apk")
+          if [ "$size" -lt 1000000 ]; then
+            echo "::error title=APK şüpheli küçük::$apk yalnızca $size bayt."
+            exit 1
+          fi
+          echo "path=$apk" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          sha256sum "$apk" | tee apk.sha256
+          {
+            echo "## ✅ APK hazır"
+            echo "- Dosya: \`$apk\`"
+            echo "- Boyut: $size bayt"
+            echo "- SHA-256: \`$(sha256sum "$apk" | cut -d' ' -f1)\`"
+            echo "- Sürüm: 0.1.${{ github.run_number }} (versionCode ${{ github.run_number }})"
+            echo "- İmza: Unity varsayılan DEBUG anahtarı (mağaza yayını için uygun değildir; yükleme/test içindir)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: APK'yı artifact olarak yükle
+        uses: actions/upload-artifact@v5
+        with:
+          name: KanaryaFutbol-APK-${{ github.run_number }}
+          path: |
+            ${{ steps.apk.outputs.path }}
+            apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: GitHub Release olarak yayınla (telefondan indirilebilir)
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('apk-{0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
+          name: Kanarya Futbol APK ${{ github.run_number }}
+          prerelease: true
+          body: |
+            Otomatik üretilmiş **debug imzalı** Android APK (sürüm 0.1.${{ github.run_number }}).
+            Kaynak: `${{ github.sha }}`. Kurulum için telefonda "bilinmeyen kaynaklardan yükleme"ye izin gerekir.
+            Bu bir prototiptir: tam maç (11v11) henüz yoktur; bkz. `PROGRESS.md`.
+          files: |
+            ${{ steps.apk.outputs.path }}
+            apk.sha256
+
+  no-license:
+    name: APK üretilemedi (lisans yok)
+    needs: [license]
+    if: needs.license.outputs.ready != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Açık bildirim
+        shell: bash
+        run: |
+          echo "Unity lisans sırları tanımlı değil; APK üretilmedi."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "::error title=APK üretilemedi::APK özellikle istendi ama UNITY_LICENSE/UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD sırları yok. docs/ANDROID_APK_WORKFLOW.md"
+            exit 1
+          fi
+          echo "::notice::Normal push: Unity adımı atlandı (sır yok). Doğrulama işi ayrıca koştu."

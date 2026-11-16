@@ -1,0 +1,48 @@
+# --- Unity (unity/ alt klasörü) ---
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild/
+unity/[Bb]uilds/
+unity/[Ll]ogs/
+unity/[Uu]ser[Ss]ettings/
+unity/[Mm]emoryCaptures/
+unity/*.csproj
+unity/*.sln
+unity/*.user
+unity/*.pidb
+unity/*.suo
+unity/*.tmp
+unity/*.apk
+unity/*.aab
+unity/*.unitypackage
+unity/crashlytics-build.properties
+
+# --- derleme çıktıları ---
+/build/
+/Builds/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# --- .NET ---
+bin/
+obj/
+TestResults/
+tools/compile-check/.cache/
+
+# --- ortam / sır ---
+.env
+.env.*
+*.pem
+secrets/
+*.ulf
+*.alf
+
+# --- editör / OS ---
+.vs/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

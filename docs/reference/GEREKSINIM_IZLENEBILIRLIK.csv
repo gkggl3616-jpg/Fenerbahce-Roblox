@@ -1,0 +1,76 @@
+﻿id,module,observed,evidence,requirement,task_ids
+G01,Ana ekran,"Büyük futbolcu görseli, etkinlik vitrini, kulüp ve oyna kutuları",V01 00:20; V03 00:10,"Sarı-lacivert merkez, futbolcu vitrini, kulüp/oyna erişimi","T008,T011,T052"
+G02,Üst bar,"Profil, seviye/XP, para birimleri ve kısayollar",V02 01:57,"Profil, coin, premium token ve bildirim barı",T009
+G03,Navigasyon,"Görevler, ligler, pazar/transferler, takas, mağaza",V03 00:30; V02 10:20,Tutarlı alt navigasyon ve geri dönüş geçmişi,T010
+G04,Kampanya,"Dönen tanıtım kutuları, nokta göstergeleri, git çağrısı",V02 00:00–00:50,Veriyle değişen Fenerbahçe kampanya vitrini,T011
+G05,Bildirim,Kırmızı nokta/sayaç rozetleri,V04 01:08,Gerçek alınabilir ödül/okunmamış durumuna bağlı rozet,T012
+G06,Kulüp,"Takımım, oyuncular, pazar, soyunma odası, arma girişleri",V02 02:00; V04 07:18,Kulüp merkezi ve kişiselleştirme bağlantıları,T013
+G07,Kadro,Sahaya yerleşen portreli 11 kart,V01 02:41,"Kadro slotları, kart seçme ve değiştirme","T034,T052"
+G08,Takım özeti,"GEN, diziliş ve toplam takım değeri",V01 02:41; V02 02:17,Sunucu hesaplı takım gücü ve değer,T037
+G09,Diziliş,Birden fazla dizilişin saha önizlemeleri,V01 03:00; V03 05:50,"4-4-2, 4-3-3, 4-2-3-1 başlangıç; diğerleri genişleme",T035
+G10,Otomatik takım,Otomatik kur butonu,V01 02:41; V04 07:30,"Pozisyon, kilitler ve kadro çakışmasını gözeten otomatik kurulum",T036
+G11,Yedekler,Kart listesi ve yedek alanı,V04 07:30,İlk 11/yedek değişimi ve kayıt,T034
+G12,Çoklu plan,Oyun planları/ilk 11 seçimi,V02 02:17; V01 03:00,Birden çok kayıtlı kadro planı,T038
+G13,Roller,Takım düzenlemede roller sekmesi,V01 03:00,"Kaptan, duran top görevlileri; alt kurallar tasarım kararı",T038
+G14,Koleksiyon,"Kart ızgarası, GEN sıralama ve filtre",V02 02:20; V04 07:30,"Pozisyon, kalite, program, sahiplik ve sıralama",T039
+G15,Oyuncu kartı,"Fotoğraf, GEN, pozisyon, ülke/arma, özel çerçeve",V03 06:43; V02 02:23,"Fotoğraflı, özgün sarı-lacivert kart ailesi","T018,T019,T020,T091"
+G16,Nitelikler,"Hız, şut, pas, dribbling, defans, fizik özetleri",V03 06:43,Mevkiye uygun alt nitelikler ve oyun içi etkileri,T039
+G17,Oyuncu meta,"Kullanılan ayak, dayanıklılık, beceri yıldızı, değer",V03 06:43,"Ayak tercihi, zayıf ayak, stamina ve skill uygunluğu",T039
+G18,Kilitleme,Oyuncu öğesini kilitleme anahtarı,V03 06:43,Kilitli kartın takas/antrenmanda harcanmasını engelle,T040
+G19,Karşılaştır,Oyuncu detayında karşılaştır butonu,V02 08:38,İki kartın nitelik farklarını göster,T040
+G20,Antrenman,"Kart tüketme seçimi, XP, seviye, önizleme",V03 11:00,"Kaynak tüketme, kazanım ve maliyeti onaydan önce göster",T053
+G21,Aktarım,Antrenman seviyesi aktarımı alanı,V03 11:33,Aktarım kuralları ve uygun değil durumu,T054
+G22,Derece,Derece yükseltme menüsü ve başarı animasyonu,V04 07:44–07:52,Rank sistemi; olasılık formülü videodan belirlenemedi,T055
+G23,Skill hareketi,"Yön değiştirme, topuk hareketi, topu kaldırma, rahat feyk şut",V03 06:12,Ayrı animasyon/komut/uygunluk tanımı olan dört başlangıç çalımı,"T031,T057"
+G24,Skill donatımı,"Yıldız gereği, slot, etkinleştirme ve dene",V03 06:12–06:20,"Çalım slotları, kilit koşulu ve antrenman sahası","T057,T058"
+G25,Skill geliştirici,"Ortak beceri geliştirici, seviye, ilerleme, coin maliyeti",V03 08:09–08:30,Kalıcı kart güçlendirme; çalım sistemiyle ayrı tut,T056
+G26,Etkilenen kartlar,Geliştiriciden yararlanan ilk 11/yedek kartları,V03 08:09,Etki listesi ve nitelik farkları,T056
+G27,Yeni sürüm beceri,Beceri puanları ve fizik gücü açıklaması,V02 08:40,Eski boost ile yeni skill-tree yaklaşımından tek tutarlı model seç,T056
+G28,Mod seçimi,"Karşı Atak, Teke Tek, T. Direktör, Arkadaşlara Karşı",V03 03:00,Dört modun planı; ilk oynanabilir sürüm PvE maç,"T085,T087,T088"
+G29,Rekabet,"Kupa/taraftar, lig kademesi, sezon, liderlik tablosu",V03 03:10; 04:00,Ayrı mod dereceleri ve sezon ödülleri,T089
+G30,Taktikler,"Hız, pas mesafesi, mantalite, pozisyon alma ayarları",V03 04:20,Taktik değerlerini takım AI davranışına bağla,T088
+G31,Maç hazırlığı,"Ev/deplasman, arma, kadro ve güç karşılaştırması",V01 10:52–11:03,"Eşleşme, yükleme ve kadro sunumu","T046,T084"
+G32,Sunum,"Stadyum, oyuncu girişi ve başlangıç seremonisi",V01 05:50; V04 08:55,Özgün stadyum sunumu ve atlama,"T046,T092"
+G33,Kamera,"Yayın açılı 3B saha, topu takip eden kamera",V01 06:30,Kamerayı saha/atak yönüne göre takip ettir,T028
+G34,Joystick,Sol altta sanal yön kontrolü,V01 06:30,"Dead-zone, çoklu dokunma ve hassasiyet",T022
+G35,Hücum HUD,"Pas, ara, şut, sprint ve beceri",V01 06:45,Topa sahipken hücum komutları,"T024,T025,T027"
+G36,Savunma HUD,"Değiştir, 2. defans, kay, sprint ve müdahale",V01 06:30,Top rakipteyken savunma komutları,"T026,T027"
+G37,Bağlamsal HUD,"Uzaklaştır, topu alan, at ve santra etiketleri",V01 06:40; 13:00; V04 09:20,Maç/pozisyon durumuna göre komut değişimi,T027
+G38,Maç bilgisi,"Skor, süre, bağlantı simgesi, duraklatma/menü",V04 09:30,Skor ve saat; çevrimiçi durumda bağlantı kalitesi,"T043,T084"
+G39,Oyuncu işareti,Kontrol edilen futbolcuda işaret ve isim,V01 06:30,"Aktif futbolcu, hedef ve takım ayrımı",T029
+G40,Mini harita,Alt ortada iki takımın saha noktaları,V01 06:45,Gerçek oyuncu konumlarından mini harita,T029
+G41,Oynanış,"Pas, koşu, top kapma ve şut akışları",V01 06:10–10:48; V04 09:20–13:10,"Top fiziği, sahiplik, kaleci ve takım AI","T021,T023,T025,T030,T041,T042"
+G42,Gol sunumu,"Golcü kartı, isim/dakika, sevinç",V01 07:58; V04 11:50,Gol olayıyla tek kez tetiklenen sunum,T047
+G43,Tekrar,Gol sonrası başka kamera açısı,V01 08:10; V04 10:10,Kısa olay kaydı ve tekrar atlama,T047
+G44,Duran top,Serbest vuruş ve penaltı kamerası,V04 09:50; 10:57,Serbest vuruş/penaltı kontrolü ve kaleci davranışı,T045
+G45,Hakem,"Sarı kart bildirimi, oyuncu değişikliği sunumu",V04 09:42; V01 13:20,"Faul, disiplin ve değişiklik olayları",T044
+G46,Sonuç,"Skor, golcüler, şut, sahiplik, pas, faul ve ofsayt",V01 14:38,Maç olaylarından hesaplanan istatistikler,"T044,T048,T052"
+G47,Arkadaşlar,Çevrimiçi/maçta/çevrimdışı ve maç düğmesi,V01 14:55,Arkadaşlık ve maç daveti; protokol videoda görülmüyor,"T081,T082"
+G48,Etkinlik listesi,"Yatay kartlar, farklı programlar, kalan süre",V03 00:50–01:00,Veriyle açılıp kapanan özgün etkinlikler,"T059,T090"
+G49,Etkinlik haritası,"Düğümler, çizgiler, tamamlandı/kilitli durumları",V03 01:30–02:00,"Önkoşul grafiği, skill drill ve maç düğümü","T060,T061"
+G50,Reklam ödülü,"Reklam izle düğümü, limit ve yenilenme",V03 01:36,İsteğe bağlı ödüllü reklam; doğrulanmış ödül verme,T099
+G51,Günlük görev,İlerleme ve günlük/haftalık yenilenme,V03 02:10–02:30,Sunucu saatine bağlı görev döngüsü,"T062,T063"
+G52,Görev alt grubu,Etkinliğe özel görevler ve tikli tamamlanma,V03 02:43; 02:50,Olaylarla ilerleyen görevler ve ödül alımı,T062
+G53,Futbol Merkezi,"Müsabaka, Ödüller, TOTW, POTM sekmeleri",V02 03:02; 09:20,Taraftar Merkezi; haftanın/ayın yıldızları,T064
+G54,Etkinlik dönüşümü,Kart/puan takası ve harcanan etkinlik puanı,V02 03:02–03:27,Puan kazanma/harcama ve ödül maliyeti,T064
+G55,Sezon bileti,Ücretsiz/premium paralel ödül yolu,V03 05:00–05:15; V01 01:20,"Kanarya Sezon Bileti, XP eşikleri, toplu al","T070,T071"
+G56,Bilet ilerleme,"Seviye/XP, bitiş süresi, alınmış tikler",V03 05:00,Zamanı dolan sezonu ve talep durumunu sunucu yönetir,T070
+G57,Mağaza liste,"Üst/yan kategoriler, kart ızgarası",V04 01:08,"Önerilen, günlük, etkinlik, bilet, para birimi sekmeleri",T065
+G58,Teklif detayı,"Garanti ödül, olası ödül, fiyat ve adet seçimi",V01 01:34; V04 03:09,Açık ödül tabloları ve para birimi bazlı fiyat,"T065,T066"
+G59,Limit/kapı,"Günlük/haftalık limit, geri sayım ve kilitli teklif",V04 02:06; 03:09,Limit/önkoşul/yetersiz bakiye durumları,T065
+G60,Ücretsiz teklif,Ücretsiz paket veya hediye,V01 03:19; V03 10:14,İlk giriş/günlük hediye; çift alma engeli,T051
+G61,Açılış başlangıcı,"Pakete dokun, tümünü aç, kalan öğe sayısı",V01 02:00–02:20; V04 04:50,"Paket oturumu, atla/toplu sonuç",T067
+G62,Walkout,Ülke → mevki → kulüp → kart gösterimi,V02 01:39–01:44; V04 01:40–01:50,Özgün sarı-lacivert walkout ve nadirlik ışıkları,T068
+G63,Açılış çeşidi,Farklı programlara farklı sahne/ışık/konfeti,V02 04:40; 07:50; V04 06:50,Veriyle seçilen birkaç özgün açılış şablonu,T068
+G64,Sonuç özeti,"Coin ve oyuncu kartları, değer, devam/tekrar izle",V04 03:20; V02 08:10,Kazanılan envanteri göster; tekrar izle yeni ödül vermesin,T069
+G65,Takas listesi,Programlara göre takas kutuları,V03 10:43,Kart/coin → ödül tarifleri,T072
+G66,Takas koşulu,"Reyting eşikleri, adet, hızlı ekle/uzaklaştır",V04 04:00,Kriter doğrulama ve tüketim önizlemesi,T072
+G67,Takas sonucu,Süre/limit ve iki kartlık ödül açılışı,V04 04:25–05:10,Atomik tüketim ve ödül oluşturma,T073
+G68,Satılamaz,Bazı ödüllerde satılamaz etiketi,V04 04:34,Kart örneğine bağlı transfer edilebilirlik,T072
+G69,Transfer pazarı,"Öneri, oyuncularım, takip listem, emirlerim, arama",V03 10:30,"Katalog, izleme, emir yönetimi",T077
+G70,Arama,"İsim, GEN aralığı, program seçimi",V02 03:50–03:53,Arama/filtre modalı; boş sonuç durumu,T077
+G71,Pazar fiyatı,Güncel/en düşük/en yüksek fiyat ve satın al,V03 10:30,Sunucu fiyat kuralları ve emir yürütme,T078
+G72,Satış,"Fiyat grafiği, fiyat alanı ve %10 komisyon yazısı",V04 14:09,Komisyonu yapılandır; %10 bizim oyun için zorunlu değil,"T079,T080"
+G73,Yıldız transferi,Farklı para birimiyle oyuncu kataloğu ve izleme listesi,V02 10:08,Genel pazardan ayrıysa net isimlendirme ve cüzdan,T080
+G74,Yükleme,"Logo/spinner, kararan ekran ve kaynak yükleme",V02 02:10; V01 10:52,"Yükleme, yeniden dene ve bağlantı kaybı durumları",T014
+G75,Kişiselleştirme,Arma/soyunma odası/forma girişleri,V02 02:00; V04 07:18,Forma/arma seçim ekranı; içerik ayrıntısı öneri,"T092,T096"

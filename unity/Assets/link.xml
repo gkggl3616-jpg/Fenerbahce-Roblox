@@ -1,0 +1,5 @@
+<!-- IL2CPP kod kırpmasında Newtonsoft.Json'ın yansıma ile eriştiği türlerin silinmesini önler (kayıt/içerik JSON'u). -->
+<linker>
+  <assembly fullname="Fenerbahce.Core" preserve="all"/>
+  <assembly fullname="Newtonsoft.Json" preserve="all"/>
+</linker>

@@ -1,0 +1,41 @@
+{
+  "contentVersion": "campaigns.v1",
+  "campaigns": [
+    {
+      "id": "camp_control_field",
+      "title": "KONTROL SAHASI",
+      "subtitle": "Pas, şut, çalım ve kayma: 2 dakikada kontrol hissini dene.",
+      "targetScreen": "play",
+      "accentHex": "#FFD600",
+      "implemented": true,
+      "taskIds": "T021-T031"
+    },
+    {
+      "id": "camp_build_squad",
+      "title": "KADRONU KUR",
+      "subtitle": "Dizilişi seç, otomatik kur, ilk 11'i ve yedekleri düzenle.",
+      "targetScreen": "club",
+      "accentHex": "#F5F7FA",
+      "implemented": true,
+      "taskIds": "T034-T037"
+    },
+    {
+      "id": "camp_kadikoy_nights",
+      "title": "KADIKÖY GECELERİ",
+      "subtitle": "Yakında: maç rotası etkinliği (öneri adı, T090).",
+      "targetScreen": "events",
+      "accentHex": "#FF9F1C",
+      "implemented": false,
+      "taskIds": "T059,T060,T090"
+    },
+    {
+      "id": "camp_academy",
+      "title": "KANARYA AKADEMİSİ",
+      "subtitle": "Yakında: pas, şut ve çalım eğitimleri (öneri adı, T061).",
+      "targetScreen": "events",
+      "accentHex": "#2FBF71",
+      "implemented": false,
+      "taskIds": "T061"
+    }
+  ]
+}

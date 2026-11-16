@@ -1,0 +1,404 @@
+# TASKS — 104 görevlik çalışma sırası
+
+> Bu dosya **üretilmiştir**: `python3 tools/gen_tasks.py` (kaynak: `docs/reference/YAPILACAKLAR.json` + `tools/task_status.json`). Elle düzenleme; durumu `task_status.json`'da güncelle.
+
+Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçütü tam karşılanmadı) · `[x]` DONE (uygulandı **ve** doğrulandı; kanıt zorunlu) · `[!]` BLOCKED.
+
+**Önemli:** Unity bu geliştirme ortamında yoktur. Unity/cihaz doğrulaması gerektiren hiçbir görev DONE değildir. Kanıt sütunundaki *G kodları* video gözlemidir (`docs/reference/GEREKSINIM_IZLENEBILIRLIK.csv`); TEKNIK/TASARIM/KULLANICI etiketleri öneri/gereksinimdir.
+
+| Durum | Adet |
+|---|---|
+| [ ] TODO | 60 |
+| [~] IN_PROGRESS | 30 |
+| [x] DONE | 14 |
+| [!] BLOCKED | 0 |
+| **Toplam** | **104** |
+
+
+## F0 — Kapsam, cihaz, içerik ve teknik kararlar (1. hafta)
+
+- [x] **T001 · P0 · Ürün** — Platform ve tam kapsam kararını yaz
+  - Kabul: Mobil/PC/web kararı ve varsayımlar DECISIONS içinde
+  - Kanıt kodu: TASARIM · Bağımlılık: - · Durum: **DONE**
+  - Doğrulama/Not: DECISIONS.md D-001..D-003: Android öncelikli, Unity+C#, yatay, varsayımlar yazılı.
+- [x] **T002 · P0 · Ürün** — 100 benzersiz futbolcu ile kart varyantını ayır
+  - Kabul: 100 playerId; kart varyantı sayımı değiştirmez
+  - Kanıt kodu: KULLANICI · Bağımlılık: - · Durum: **DONE**
+  - Doğrulama/Not: players.v1.json=100 playerId, cards.v1.json=110 kart (10 varyant). CatalogTests (varyant sayımı değiştirmez) + tools/validate_catalog.py geçti.
+- [x] **T003 · P0 · İçerik** — Oyuncu/portre/marka kaynak matrisi hazırla
+  - Kabul: Her varlığın kaynak ve izin alanı var
+  - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **DONE**
+  - Doğrulama/Not: docs/ASSET_PERMISSIONS_MATRIX.md + PortraitAsset alanları (kaynak/izin/checksum/focal). Kabul = kaynak ve izin ALANLARI var; izinlerin kendisi DOGRULANACAK (T091 açık).
+- [~] **T004 · P0 · Teknik** — Unity sürümü ve paket uyumluluğunu sabitle
+  - Kabul: Temiz projeden cihaz buildi alınır
+  - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). Temiz projeden build ALINMADI.
+  - Sıradaki: Actions'ta Unity lisansıyla ilk APK koşusu
+- [x] **T005 · P0 · Teknik** — Repo ve geliştirme kurallarını kur
+  - Kabul: CLAUDE.md; DECISIONS; TASKS; gitignore var
+  - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **DONE**
+  - Doğrulama/Not: CLAUDE.md, DECISIONS.md, TASKS.md, MCP_STATUS.md, PROGRESS.md, .gitignore, .gitattributes, CI iş akışları var.
+- [~] **T006 · P0 · Teknik** — MCP bağlantılarını doğrula
+  - Kabul: Amaçlanan araçla küçük okuma denemesi kaydedildi
+  - Kanıt kodu: TEKNIK · Bağımlılık: - · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: GitHub MCP gerçek araç denemesi yapıldı (list_branches, actions_list). Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md.
+- [~] **T007 · P0 · QA** — Minimum cihaz ve performans bütçesini seç
+  - Kabul: En az düşük/orta sınıf gerçek cihaz listesi var
+  - Kanıt kodu: TEKNIK · Bağımlılık: T004 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Taslak cihaz sınıfı ve bütçe DECISIONS.md D-007'de; gerçek cihaz listesi/ölçüm yok.
+  - Sıradaki: Kullanıcıdan hedef cihaz modelleri
+
+## F1 — Tasarım sistemi ve çalışan menü iskeleti (2–3. haftalar)
+
+- [~] **T008 · P0 · UI** — Sarı-lacivert tasarım tokenlarını kur
+  - Kabul: Renk/font/boşluk tek kaynaktan değişir
+  - Kanıt kodu: G01 · Bağımlılık: T001 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Core/Design/DesignTokens.cs tek kaynak; hex ve kontrast testleri geçti. Unity'de görsel doğrulama yok.
+- [~] **T009 · P0 · UI** — Buton/modal/kart/üst bar bileşenleri
+  - Kabul: Normal/pasif/yükleme/hata durumları var
+  - Kanıt kodu: G02 · Bağımlılık: T008 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Runtime/Ui.cs, CardView.cs (ModalHost), TopBar kodlandı; derleme kontrolü geçti, Unity'de çalıştırılmadı. Yükleme/hata durumları kısmi.
+- [~] **T010 · P0 · UI** — Navigasyon ve ekran geçmişi
+  - Kabul: Ana merkezden her modüle gidiş ve geri çalışır
+  - Kanıt kodu: G03 · Bağımlılık: T009 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: ScreenManager: geçmiş yığını, GoRoot/Push/Back, Android geri tuşu. Çalıştırılmadı.
+- [~] **T011 · P0 · UI** — Ana merkez ve kampanya vitrini
+  - Kabul: Veri değişince afiş ve hedef ekran değişir
+  - Kanıt kodu: G01,G04 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: HomeScreen + campaigns.v1.json (veri→afiş/hedef). CampaignTests geçti; UI çalıştırılmadı.
+- [~] **T012 · P1 · UI** — Bildirim rozeti hesaplama
+  - Kabul: Alınmış ödül rozeti kaldırır
+  - Kanıt kodu: G05 · Bağımlılık: T011 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Kulüp rozeti kadro doğrulama hatasına bağlı (GameApp.SquadErrorCount). Alınabilir ödül rozeti yok (ödül sistemi yok).
+- [~] **T013 · P0 · UI** — Kulüp merkezi
+  - Kabul: Kadro/koleksiyon/forma/arma girişleri açılır
+  - Kanıt kodu: G06 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: ClubScreen kadro/koleksiyon girişleri var; forma/arma girişleri yok (T096).
+- [~] **T014 · P0 · UI** — Yükleniyor/boş/hata/yeniden dene durumları
+  - Kabul: Bağlantı hatası beyaz/ölü ekran bırakmaz
+  - Kanıt kodu: G74 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: GameApp.ShowBootError: hata + TEKRAR DENE + yedekle-sıfırla; boş koleksiyon durumu var. Ağ hatası durumu yok (ağ yok).
+- [~] **T015 · P1 · UI** — Profil/ayarlar ve kontrol tercihleri
+  - Kabul: Tercihler yeniden başlatınca korunur
+  - Kanıt kodu: TEKNIK · Bağımlılık: T010 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: ProfileSettings JSON'a kaydolur (EconomyTests kayıt/yükleme); SettingsScreen kodlandı, çalıştırılmadı.
+- [~] **T016 · P1 · UI** — Türkçe metin ve safe area
+  - Kabul: Uzun isimler ve 16:9/uzun ekran taşmaz
+  - Kanıt kodu: TEKNIK · Bağımlılık: T009 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: SafeAreaFitter + FitLabel (taşmayan isim) kodlandı; Türkçe karakter arama testli. Cihazda/oranlarda doğrulanmadı.
+- [x] **T017 · P0 · İçerik** — 100 aday oyuncuyu içe aktar
+  - Kabul: 100 benzersiz kimlik; null değerler gerçek veri sayılmaz
+  - Kanıt kodu: KULLANICI · Bağımlılık: T002 · Durum: **DONE**
+  - Doğrulama/Not: 100 aday içe aktarıldı (tools/generate_catalog.py); baseOverall=null yerine PROTOTIP_DENGE_V0 etiketli değerler; CatalogTests + validate_catalog.py geçti.
+- [x] **T018 · P0 · İçerik** — Kart tanımı ve kart örneği şeması
+  - Kabul: İki kopyanın sahiplik ve kilidi bağımsız
+  - Kanıt kodu: G15 · Bağımlılık: T017 · Durum: **DONE**
+  - Doğrulama/Not: CardDefinition/CardInstance ayrı tipler; EconomyTests.Two_Copies_Of_Same_Card_Have_Independent_Lock geçti.
+- [~] **T019 · P0 · İçerik** — Portre pipeline ve fallback
+  - Kabul: Eksik görselde siluet; yanlış crop yok
+  - Kanıt kodu: G15 · Bağımlılık: T003,T018 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: PortraitCrop (testli), PortraitLibrary, siluet fallback; doğrulayıcı sahte teslimi reddeder. Gerçek portre yok.
+  - Sıradaki: T091 portre içeriği + izin
+- [~] **T020 · P1 · İçerik** — Temel/özel/efsane kart sanat sistemi
+  - Kabul: Portre ve çerçeve bağımsız değişir
+  - Kanıt kodu: G15 · Bağımlılık: T019 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Çerçeve (Base/Special/Legend) portreden bağımsız (CardView.FrameHex). Sanat varlıkları yok.
+
+## F2 — Oyuncu, top, kaleci, kontrol ve erken ağ denemesi (4–7. haftalar)
+
+- [x] **T021 · P0 · Oynanış** — Top fiziği ve sahiplik durumları
+  - Kabul: Serbest/kontrol/uçuş durumları ayrıdır
+  - Kanıt kodu: G41 · Bağımlılık: T004 · Durum: **DONE**
+  - Doğrulama/Not: BallBody: Free/Controlled/InFlight + sahiplik; SimTests (mod geçişleri, sekme, yuvarlanma mesafesi 30/60 FPS) geçti.
+- [~] **T022 · P0 · Oynanış** — Joystick ve çoklu dokunma
+  - Kabul: Koşarken pas/şut aynı anda algılanır
+  - Kanıt kodu: G34 · Bağımlılık: T021 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: VirtualJoystick/HoldButton pointerId ile çoklu dokunma kodlandı; sim'de hareket+pas+sprint eşzamanlı testli. Cihazda doğrulanmadı.
+- [x] **T023 · P0 · Oynanış** — Futbolcu hareketi/stamina
+  - Kabul: Dönüş/hızlanma ve stamina gözlenebilir
+  - Kanıt kodu: G41 · Bağımlılık: T022 · Durum: **DONE**
+  - Doğrulama/Not: PlayerBody: ivme, dönüş cezası, stamina; SimTests (kademeli ivme, pace farkı, stamina, keskin dönüş, 30/60 FPS eşdeğerliği) geçti.
+- [x] **T024 · P0 · Oynanış** — Pas/ara pası/hedef seçimi
+  - Kabul: Yön ve güç girdisi top hareketini etkiler
+  - Kanıt kodu: G35 · Bağımlılık: T023 · Durum: **DONE**
+  - Doğrulama/Not: Pas/ara pası/hedef seçimi (PassTargeting); SimTests: yön+güç top hareketini etkiler, hedefli pas 36/40+ isabet.
+- [x] **T025 · P0 · Oynanış** — Şut/güç/yön/kaleci ilk sürüm
+  - Kabul: Gol ve kurtarış denemeleri çalışır
+  - Kanıt kodu: G35,G41 · Bağımlılık: T024 · Durum: **DONE**
+  - Doğrulama/Not: Şut güç/yön + GoalkeeperAI; SimTests: gol bir kez, kaleci/şut niteliği farkı ölçülebilir (kaleci25: 179/300 gol, kaleci95: 38/300).
+- [~] **T026 · P0 · Oynanış** — Top kapma/kayma/oyuncu değiştirme
+  - Kabul: Top sahipliği değişince kontrol geçer
+  - Kanıt kodu: G36 · Bağımlılık: T023 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). Oyuncu değiştirme yok (tek oyunculu saha).
+- [~] **T027 · P0 · Oynanış** — Sahipliğe göre HUD
+  - Kabul: Top bizde/rakipte/boşta doğru düğmeler var
+  - Kanıt kodu: G35,G36,G37 · Bağımlılık: T024,T026 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı.
+- [~] **T028 · P0 · Oynanış** — Takip kamerası ve sınırları
+  - Kabul: Top/kale aksiyonu ekran dışında kalmaz
+  - Kanıt kodu: G33 · Bağımlılık: T025 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: FieldWorld yayın açılı takip kamerası kodlandı; çalıştırılmadı.
+- [~] **T029 · P0 · Oynanış** — İsim/aktif oyuncu ve mini harita
+  - Kabul: Gerçek pozisyonlarla eşleşir
+  - Kanıt kodu: G39,G40 · Bağımlılık: T028 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Aktif oyuncu işareti, isim etiketi, mini harita sim konumlarından beslenir; çalıştırılmadı.
+- [ ] **T030 · P0 · Animasyon** — Koşu/top kontrol/pas/şut rig denemesi
+  - Kabul: Ayak-top temas zamanı okunaklı
+  - Kanıt kodu: G41 · Bağımlılık: T025 · Durum: **TODO**
+  - Doğrulama/Not: Rig/animasyon yok; kapsül gövde + prosedürel eğilme.
+  - Sıradaki: Ortak rigli model + klipler
+- [~] **T031 · P0 · Skill** — İlk çalım ve girdi jesti
+  - Kabul: Dene sahasında aynı girdide aynı hareket
+  - Kanıt kodu: G23 · Bağımlılık: T030 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Yön Değiştirme sim'de testli (yıldız/cooldown). Diğer 3 çalım tanımlı ama Implemented=false; animasyon yok.
+- [ ] **T032 · P0 · Ağ** — Erken iki istemci netcode denemesi
+  - Kabul: Gecikme/otorite/kütüphane karar raporu
+  - Kanıt kodu: TEKNIK · Bağımlılık: T021 · Durum: **TODO**
+  - Doğrulama/Not: Ağ denemesi yapılmadı (Core sim saf C# olduğundan sunucuda yeniden kullanılabilir).
+- [ ] **T033 · P0 · QA** — Cihazda kontrol hissi ve kare süresi ölçümü
+  - Kabul: Gerçek build ve ölçüm kaydı var
+  - Kanıt kodu: TEKNIK · Bağımlılık: T027,T028,T031 · Durum: **TODO**
+  - Doğrulama/Not: Gerçek cihaz build'i/ölçümü yok.
+
+## F3 — 11v11 PvE, 100 oyuncu kataloğu ve kalıcı ödül döngüsü (8–12. haftalar)
+
+- [x] **T034 · P0 · Kadro** — 11 slotlu kadro ve yedekler
+  - Kabul: Bir kart aynı kadroda iki slotta yok
+  - Kanıt kodu: G07,G11 · Bağımlılık: T018 · Durum: **DONE**
+  - Doğrulama/Not: SquadPlan 11 slot + 7 yedek; SquadTests (kart iki slotta olamaz, Place taşır, bench swap) geçti.
+- [x] **T035 · P0 · Kadro** — Diziliş ve mevki uygunluğu
+  - Kabul: 4-4-2/4-3-3/4-2-3-1 ile slotlar doğru
+  - Kanıt kodu: G09 · Bağımlılık: T034 · Durum: **DONE**
+  - Doğrulama/Not: Formations 4-4-2/4-3-3/4-2-3-1 + PositionFit; SquadTests geçti.
+- [x] **T036 · P0 · Kadro** — Otomatik kur ve kilitli seçimler
+  - Kabul: Geçerli kadro üretir; tercihi ihlal etmez
+  - Kanıt kodu: G10 · Bağımlılık: T035 · Durum: **DONE**
+  - Doğrulama/Not: AutoPicker: 3 dizilişte başlangıç envanteriyle geçerli kadro; sabitlenen kart korunur, satıştaki seçilmez (testli).
+- [x] **T037 · P0 · Kadro** — Takım gücü ve kadro kaydı
+  - Kabul: Yeniden açınca aynı kadro/GEN döner
+  - Kanıt kodu: G08 · Bağımlılık: T035 · Durum: **DONE**
+  - Doğrulama/Not: TeamSummary (GEN/değer, pozisyon cezası) + kayıt/yükleme EconomyTests.Save_And_Reload_* geçti.
+- [~] **T038 · P1 · Kadro** — Çoklu plan ve duran top rolleri
+  - Kabul: Plan değişimi kalıcı; görevli sahada
+  - Kanıt kodu: G12,G13 · Bağımlılık: T037 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Kaptan/penaltı/serbest vuruş/korner rol ataması AutoPicker'da var; çoklu plan ve rol UI'ı yok.
+- [~] **T039 · P0 · Koleksiyon** — Arama/filtre/sıralama/detay
+  - Kabul: Doğru kartlar döner ve boş sonuç görünür
+  - Kanıt kodu: G14,G16,G17 · Bağımlılık: T018 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: CollectionScreen: arama (TextFold testli), grup filtresi, GEN sıralama, detay, 100'lük katalog sekmesi. Çalıştırılmadı.
+- [~] **T040 · P1 · Koleksiyon** — Kilitleme ve karşılaştır
+  - Kabul: Kilit tüketimi engeller; farklar doğru
+  - Kanıt kodu: G18,G19 · Bağımlılık: T039 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Kilitleme: kilitli kart harcanamaz (testli). Karşılaştırma yok.
+- [ ] **T041 · P0 · AI** — Destek koşusu ve savunma yerleşimi
+  - Kabul: 5v5 denemede takımlar pozisyon alır
+  - Kanıt kodu: G41 · Bağımlılık: T024,T026 · Durum: **TODO**
+- [ ] **T042 · P0 · AI** — Kaleci ve 11v11 takım AI
+  - Kabul: Kaleci/savunma/hücum birlikte çalışır
+  - Kanıt kodu: G41 · Bağımlılık: T041 · Durum: **TODO**
+- [~] **T043 · P0 · Maç** — Durum makinesi ve maç saati
+  - Kabul: Santra/devre/bitiş sırası bozulmaz
+  - Kanıt kodu: G38 · Bağımlılık: T042 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor.
+- [ ] **T044 · P0 · Maç** — Faul/ofsayt/taç/korner/gol kuralları
+  - Kabul: Olaylar tek kez ve doğru takıma yazılır
+  - Kanıt kodu: G45,G46 · Bağımlılık: T043 · Durum: **TODO**
+- [ ] **T045 · P0 · Maç** — Penaltı/serbest vuruş
+  - Kabul: Duran top ve canlı kontrol arasında geçer
+  - Kanıt kodu: G44 · Bağımlılık: T044 · Durum: **TODO**
+- [ ] **T046 · P1 · Sunum** — Maç girişi ve kadro karşılaştırma
+  - Kabul: Atlanabilir sunum maçı başlatır
+  - Kanıt kodu: G31,G32 · Bağımlılık: T043 · Durum: **TODO**
+- [~] **T047 · P0 · Maç** — Gol/kutlama/tekrar
+  - Kabul: Tekrar skoru veya ödülü artırmaz
+  - Kanıt kodu: G42,G43 · Bağımlılık: T044 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Gol → kutlama durumu, kontrol kilidi, tek gol testli. Tekrar sistemi YOK (Replay durumu atlanıyor).
+- [~] **T048 · P0 · Maç** — Sonuç istatistikleri ve ödül
+  - Kabul: İstatistikler olay kaydından türetilir
+  - Kanıt kodu: G46 · Bağımlılık: T044 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Kontrol sahası istatistikleri/ödülü olaylardan türetilir (RewardCalculator, testli). Tam maç istatistiği yok.
+- [ ] **T049 · P0 · Backend** — Auth/profil/envanter API iskeleti
+  - Kabul: İki hesap birbirinin kartını okuyamaz
+  - Kanıt kodu: TEKNIK · Bağımlılık: T018 · Durum: **TODO**
+- [~] **T050 · P0 · Backend** — Cüzdan/ledger/idempotency
+  - Kabul: Çifte istek tek ekonomik sonuç üretir
+  - Kanıt kodu: TEKNIK · Bağımlılık: T049 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Yerel EconomyService: ledger, idempotency, atomik tüketim, negatif bakiye yok (EconomyTests). Sunucu (TypeScript) karşılığı yok.
+  - Sıradaki: T049 sunucu
+- [~] **T051 · P0 · Backend** — Başlangıç kadrosu/ilk giriş ödülü
+  - Kabul: 11 geçerli oyuncu bir kez verilir
+  - Kanıt kodu: G60 · Bağımlılık: T034,T050 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: ClaimStarterPackage: 18 kart + coin tek atomik işlem, ikinci çağrı aynı sonuç (testli). Yerel geliştirme cüzdanı; sunucu yok.
+- [~] **T052 · P0 · Build** — Menü-kadro-maç-sonuç-ödül dikey dilimi
+  - Kabul: Telefonda tamamlanır ve kayıt korunur
+  - Kanıt kodu: G01,G07,G46 · Bağımlılık: T037,T048,T051 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Menü→kadro→kontrol sahası→sonuç→ödül→kayıt zinciri kodlandı. Unity/telefonda çalıştırılmadı; GERÇEK MAÇ değil (11v11 yok).
+
+## F4 — Gelişim, etkinlik, görev, bilet, mağaza, takas, yönetim (13–17. haftalar)
+
+- [ ] **T053 · P0 · Gelişim** — Antrenman XP/kaynak önizleme
+  - Kabul: Kilitli/kadroda kart sessizce tüketilmez
+  - Kanıt kodu: G20 · Bağımlılık: T040,T050 · Durum: **TODO**
+- [ ] **T054 · P1 · Gelişim** — Antrenman aktarımı
+  - Kabul: Kaynak/hedef ve maliyet doğrulanır
+  - Kanıt kodu: G21 · Bağımlılık: T053 · Durum: **TODO**
+- [ ] **T055 · P0 · Gelişim** — Derece yükseltme kuralları
+  - Kabul: Başarı/başarısızlık tasarımı açık ve kayıtlı
+  - Kanıt kodu: G22 · Bağımlılık: T053 · Durum: **TODO**
+- [ ] **T056 · P0 · Gelişim** — Kalıcı skill puanı sistemi
+  - Kabul: Nitelik değişimi kaydedilir; çalımdan ayrıdır
+  - Kanıt kodu: G25,G26,G27 · Bağımlılık: T055 · Durum: **TODO**
+- [~] **T057 · P0 · Skill** — Dört çalım ve slot uygunluğu
+  - Kabul: Yıldız/pozisyon şartı ve cooldown çalışır
+  - Kanıt kodu: G23,G24 · Bağımlılık: T031,T039 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: 4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok.
+- [ ] **T058 · P1 · Skill** — Önizleme ve dene sahası
+  - Kabul: Her çalım için açıklama ve deneme var
+  - Kanıt kodu: G24 · Bağımlılık: T057 · Durum: **TODO**
+- [ ] **T059 · P0 · İçerik** — Etkinlik tanımı ve zaman takvimi
+  - Kabul: Sunucu saatine göre açılır/kapanır
+  - Kanıt kodu: G48 · Bağımlılık: T050 · Durum: **TODO**
+- [ ] **T060 · P0 · Etkinlik** — Düğüm/önkoşul/ödül haritası
+  - Kabul: Kilitli düğüme girilmez; ilerleme korunur
+  - Kanıt kodu: G49 · Bağımlılık: T059 · Durum: **TODO**
+- [ ] **T061 · P0 · Etkinlik** — Pas/şut/skill mini eğitimleri
+  - Kabul: Hedef ve skor koşulu tamamlanabilir
+  - Kanıt kodu: G49 · Bağımlılık: T057,T060 · Durum: **TODO**
+- [ ] **T062 · P0 · Görev** — Günlük/haftalık olay tabanlı görev
+  - Kabul: Aynı maç olayı iki kez ilerletmez
+  - Kanıt kodu: G51,G52 · Bağımlılık: T048,T059 · Durum: **TODO**
+- [ ] **T063 · P0 · Görev** — Ödül alma ve reset
+  - Kabul: Tek claim; cihaz saatiyle reset olmaz
+  - Kanıt kodu: G51 · Bağımlılık: T050,T062 · Durum: **TODO**
+- [ ] **T064 · P1 · Etkinlik** — Taraftar Merkezi/TOTW/POTM
+  - Kabul: Sekmeler ve puan harcama tutarlı
+  - Kanıt kodu: G53,G54 · Bağımlılık: T060 · Durum: **TODO**
+- [ ] **T065 · P0 · Mağaza** — Teklif katalog/kategori/fiyat/limit
+  - Kabul: Yetersiz bakiye ve limit doğru
+  - Kanıt kodu: G57,G58,G59 · Bağımlılık: T050 · Durum: **TODO**
+- [ ] **T066 · P0 · Paket** — Drop table ve garanti sayaç sözleşmesi
+  - Kabul: Olasılık toplamı 1; sürüm sabitlenir
+  - Kanıt kodu: G58 · Bağımlılık: T065 · Durum: **TODO**
+- [ ] **T067 · P0 · Paket** — Atomik satın alma/açılış
+  - Kabul: Kopmada aynı sonuç; iki kez kesinti yok
+  - Kanıt kodu: G61 · Bağımlılık: T050,T066 · Durum: **TODO**
+- [ ] **T068 · P0 · Paket** — Özgün walkout/atla/toplu aç
+  - Kabul: Animasyon sonucu değiştirmez
+  - Kanıt kodu: G62,G63 · Bağımlılık: T067 · Durum: **TODO**
+- [ ] **T069 · P0 · Paket** — Sonuç/tekrar izle/devam
+  - Kabul: Envanter ile gösterilen kartlar eşleşir
+  - Kanıt kodu: G64 · Bağımlılık: T068 · Durum: **TODO**
+- [ ] **T070 · P0 · Bilet** — Ücretsiz/premium ödül yolları
+  - Kabul: XP eşiği ve entitlement ayrı doğrulanır
+  - Kanıt kodu: G55,G56 · Bağımlılık: T062,T050 · Durum: **TODO**
+- [ ] **T071 · P0 · Bilet** — Toplu ödül alma/sezon bitişi
+  - Kabul: Tekil claimler tekrar vermez
+  - Kanıt kodu: G55 · Bağımlılık: T070 · Durum: **TODO**
+- [ ] **T072 · P0 · Takas** — Tarif/kriter/hızlı ekle
+  - Kabul: Satılamaz/kilit/kadro kuralları uygulanır
+  - Kanıt kodu: G65,G66,G68 · Bağımlılık: T040,T050 · Durum: **TODO**
+- [ ] **T073 · P0 · Takas** — Atomik tüketim ve ödül
+  - Kabul: Çifte takas envanteri çoğaltmaz
+  - Kanıt kodu: G67 · Bağımlılık: T072,T067 · Durum: **TODO**
+- [ ] **T074 · P0 · Yönetim** — Oyuncu/teklif/drop table editörü
+  - Kabul: Validasyon ve taslak önizlemesi var
+  - Kanıt kodu: TEKNIK · Bağımlılık: T066 · Durum: **TODO**
+- [ ] **T075 · P0 · Yönetim** — Etkinlik/görev/bilet sürümleme
+  - Kabul: Hatalı içerik sürümü geri alınabilir
+  - Kanıt kodu: TEKNIK · Bağımlılık: T071,T074 · Durum: **TODO**
+- [ ] **T076 · P0 · QA** — Ekonomi eşzamanlılık ve hata senaryoları
+  - Kabul: Çift claim/satın alma/takas testleri geçer
+  - Kanıt kodu: TEKNIK · Bağımlılık: T063,T067,T073 · Durum: **TODO**
+
+## F5 — Pazar, arkadaş sistemi ve çevrimiçi maç (18–22. haftalar)
+
+- [ ] **T077 · P0 · Pazar** — Katalog/arama/filtre/takip
+  - Kabul: Oyuncu adına/GEN/programa göre bulur
+  - Kanıt kodu: G69,G70 · Bağımlılık: T039,T050 · Durum: **TODO**
+- [ ] **T078 · P0 · Pazar** — Emir/emanet/fiyat sınırı
+  - Kabul: Satışa konmuş kart maçta/takasta harcanmaz
+  - Kanıt kodu: G71 · Bağımlılık: T077 · Durum: **TODO**
+- [ ] **T079 · P0 · Pazar** — Eşleştirme/komisyon/iptal
+  - Kabul: Coin ve kart tek transactionla devrolur
+  - Kanıt kodu: G72 · Bağımlılık: T078 · Durum: **TODO**
+- [ ] **T080 · P1 · Pazar** — Grafik ve ayrı yıldız kataloğu
+  - Kabul: Gerçek veriden grafik; para birimi açık
+  - Kanıt kodu: G72,G73 · Bağımlılık: T079 · Durum: **TODO**
+- [ ] **T081 · P0 · Sosyal** — Arkadaş ve durum listesi
+  - Kabul: Çevrimiçi/maçta/çevrimdışı ayrılır
+  - Kanıt kodu: G47 · Bağımlılık: T049 · Durum: **TODO**
+- [ ] **T082 · P0 · Sosyal** — Maç daveti/reddetme/zaman aşımı
+  - Kabul: İki kabul aynı maç oturumuna bağlanır
+  - Kanıt kodu: G47 · Bağımlılık: T081 · Durum: **TODO**
+- [ ] **T083 · P0 · Ağ** — Yetkili maç sunucusu
+  - Kabul: İstemci skoru tek başına yazamaz
+  - Kanıt kodu: TEKNIK · Bağımlılık: T032,T044 · Durum: **TODO**
+- [ ] **T084 · P0 · Ağ** — Eşleştirme/oturum/yeniden bağlanma
+  - Kabul: Kopmada durum ve sonuç tutarlı
+  - Kanıt kodu: G31,G38 · Bağımlılık: T083 · Durum: **TODO**
+- [ ] **T085 · P0 · Ağ** — Çevrimiçi teke tek
+  - Kabul: İki cihazda aynı maç sonucu
+  - Kanıt kodu: G28 · Bağımlılık: T082,T084 · Durum: **TODO**
+- [ ] **T086 · P0 · QA** — Gecikme/kayıp/sunucu hata testi
+  - Kabul: 50/100/200ms ve kopma sonuçları kayıtlı
+  - Kanıt kodu: TEKNIK · Bağımlılık: T085 · Durum: **TODO**
+
+## F6 — Diğer modlar, rekabet, sanat ve cihaz optimizasyonu (23–30. haftalar)
+
+- [ ] **T087 · P1 · Mod** — Karşı Atak senaryoları
+  - Kabul: Pozisyon sırası/zaman/skor kuralları ayrı
+  - Kanıt kodu: G28 · Bağımlılık: T085 · Durum: **TODO**
+- [ ] **T088 · P1 · Mod** — T. Direktör AI ve taktikler
+  - Kabul: Ayar değişikliği AI davranışını etkiler
+  - Kanıt kodu: G28,G30 · Bağımlılık: T042,T085 · Durum: **TODO**
+- [ ] **T089 · P1 · Rekabet** — Kupa/derece/sezon/liderlik
+  - Kabul: Mod dereceleri ayrıdır; ödül bir kez
+  - Kanıt kodu: G29 · Bağımlılık: T085,T071 · Durum: **TODO**
+- [ ] **T090 · P1 · İçerik** — Beş Fenerbahçe temalı etkinlik
+  - Kabul: Her etkinlik oynanabilir görev/ödül içerir
+  - Kanıt kodu: G48 · Bağımlılık: T075 · Durum: **TODO**
+- [ ] **T091 · P0 · Sanat** — 100 portre içerik sonlandırma
+  - Kabul: Hak/kaynak/crop/fallback alanları doğrulanır
+  - Kanıt kodu: G15 · Bağımlılık: T019 · Durum: **TODO**
+- [ ] **T092 · P1 · Sanat** — Forma/arma/stadyum sanat paketi
+  - Kabul: Temada tutarlılık ve cihaz bütçesi
+  - Kanıt kodu: G32,G75 · Bağımlılık: T020,T042 · Durum: **TODO**
+- [ ] **T093 · P1 · Ses** — Özgün/lisanslı UI/maç/tribün sesi
+  - Kabul: Mixer ayarı ve sessiz mod çalışır
+  - Kanıt kodu: TASARIM · Bağımlılık: T092 · Durum: **TODO**
+- [ ] **T094 · P0 · Performans** — LOD/animasyon/atlas/bellek optimizasyonu
+  - Kabul: Belirlenen cihazda 30/60FPS hedefi ölçülür
+  - Kanıt kodu: TEKNIK · Bağımlılık: T007,T091,T092 · Durum: **TODO**
+- [ ] **T095 · P0 · QA** — Uzun oturum ve regresyon
+  - Kabul: 20dk cihaz oturumu ve kritik akışlar geçer
+  - Kanıt kodu: TEKNIK · Bağımlılık: T086,T094 · Durum: **TODO**
+- [ ] **T096 · P1 · Kişisel** — Forma/arma ve kulüp görünümü
+  - Kabul: Seçim kayıt olur; UI ile maçta eşleşir
+  - Kanıt kodu: G75 · Bağımlılık: T092 · Durum: **TODO**
+
+## F7 — Ödeme, operasyon ve kademeli yayın (31–36+. haftalar)
+
+- [ ] **T097 · P0 · Ödeme** — Mağaza SDK ve makbuz doğrulama
+  - Kabul: Makbuz tekrarı yeni ödül yaratmaz
+  - Kanıt kodu: TEKNIK · Bağımlılık: T076 · Durum: **TODO**
+- [ ] **T098 · P0 · Ödeme** — Restore/iptal/iadeye uygun durum akışı
+  - Kabul: Entitlement ve ledger tutarlı
+  - Kanıt kodu: TEKNIK · Bağımlılık: T097 · Durum: **TODO**
+- [ ] **T099 · P1 · Reklam** — Ödüllü reklam ve limitler
+  - Kabul: Doğrulanmış gösterim tek ödül verir
+  - Kanıt kodu: G50 · Bağımlılık: T063 · Durum: **TODO**
+- [ ] **T100 · P0 · Hesap** — Bağlama/kurtarma/destek akışları
+  - Kabul: Hesap değişiminde envanter karışmaz
+  - Kanıt kodu: TEKNIK · Bağımlılık: T049,T095 · Durum: **TODO**
+- [ ] **T101 · P0 · Operasyon** — Log/crash/ekonomi alarmı
+  - Kabul: Hata ve şüpheli çoğalma izlenebilir
+  - Kanıt kodu: TEKNIK · Bağımlılık: T095 · Durum: **TODO**
+- [ ] **T102 · P0 · Yayın** — Beta bulguları ve yayın paketleri
+  - Kabul: Kritik açık hata yok; gerçek build hazır
+  - Kanıt kodu: TEKNIK · Bağımlılık: T098,T100,T101 · Durum: **TODO**
+- [ ] **T103 · P0 · Yayın** — Kademeli yayın ve geri alma planı
+  - Kabul: İçerik/servis sürümü geri alınabilir
+  - Kanıt kodu: TEKNIK · Bağımlılık: T102 · Durum: **TODO**
+- [ ] **T104 · P1 · Ürün** — İlk sezon ölçüm ve denge güncellemesi
+  - Kabul: Maç tamamlama/çökme/ekonomi verisi raporlanır
+  - Kanıt kodu: TASARIM · Bağımlılık: T103 · Durum: **TODO**

@@ -1,0 +1,198 @@
+{
+  "_doc": "Görev durumları. DONE yalnız uygulanmış VE doğrulanmış işler içindir; kanıt alanı zorunludur. IN_PROGRESS = kod/doküman var ama kabul ölçütü tam karşılanmadı (özellikle Unity/cihaz doğrulaması yok). Unity bu ortamda yok.",
+  "T001": {
+    "status": "DONE",
+    "evidence": "DECISIONS.md D-001..D-003: Android öncelikli, Unity+C#, yatay, varsayımlar yazılı."
+  },
+  "T002": {
+    "status": "DONE",
+    "evidence": "players.v1.json=100 playerId, cards.v1.json=110 kart (10 varyant). CatalogTests (varyant sayımı değiştirmez) + tools/validate_catalog.py geçti."
+  },
+  "T003": {
+    "status": "DONE",
+    "evidence": "docs/ASSET_PERMISSIONS_MATRIX.md + PortraitAsset alanları (kaynak/izin/checksum/focal). Kabul = kaynak ve izin ALANLARI var; izinlerin kendisi DOGRULANACAK (T091 açık).",
+    "note": "Tüm oyuncu portre/kimlik izinleri doğrulanmadı."
+  },
+  "T004": {
+    "status": "IN_PROGRESS",
+    "evidence": "Unity 2022.3.62f1 + paketler sabit (Packages/manifest.json; GameCI imajı Docker Hub'da doğrulandı). Temiz projeden build ALINMADI.",
+    "next": "Actions'ta Unity lisansıyla ilk APK koşusu"
+  },
+  "T006": {
+    "status": "IN_PROGRESS",
+    "evidence": "GitHub MCP gerçek araç denemesi yapıldı (list_branches, actions_list). Unity MCP/Figma/Supabase/Playwright BAĞLANMADI → MCP_STATUS.md."
+  },
+  "T005": {
+    "status": "DONE",
+    "evidence": "CLAUDE.md, DECISIONS.md, TASKS.md, MCP_STATUS.md, PROGRESS.md, .gitignore, .gitattributes, CI iş akışları var."
+  },
+  "T007": {
+    "status": "IN_PROGRESS",
+    "evidence": "Taslak cihaz sınıfı ve bütçe DECISIONS.md D-007'de; gerçek cihaz listesi/ölçüm yok.",
+    "next": "Kullanıcıdan hedef cihaz modelleri"
+  },
+  "T008": {
+    "status": "IN_PROGRESS",
+    "evidence": "Core/Design/DesignTokens.cs tek kaynak; hex ve kontrast testleri geçti. Unity'de görsel doğrulama yok."
+  },
+  "T009": {
+    "status": "IN_PROGRESS",
+    "evidence": "Runtime/Ui.cs, CardView.cs (ModalHost), TopBar kodlandı; derleme kontrolü geçti, Unity'de çalıştırılmadı. Yükleme/hata durumları kısmi."
+  },
+  "T010": {
+    "status": "IN_PROGRESS",
+    "evidence": "ScreenManager: geçmiş yığını, GoRoot/Push/Back, Android geri tuşu. Çalıştırılmadı."
+  },
+  "T011": {
+    "status": "IN_PROGRESS",
+    "evidence": "HomeScreen + campaigns.v1.json (veri→afiş/hedef). CampaignTests geçti; UI çalıştırılmadı."
+  },
+  "T012": {
+    "status": "IN_PROGRESS",
+    "evidence": "Kulüp rozeti kadro doğrulama hatasına bağlı (GameApp.SquadErrorCount). Alınabilir ödül rozeti yok (ödül sistemi yok)."
+  },
+  "T013": {
+    "status": "IN_PROGRESS",
+    "evidence": "ClubScreen kadro/koleksiyon girişleri var; forma/arma girişleri yok (T096)."
+  },
+  "T014": {
+    "status": "IN_PROGRESS",
+    "evidence": "GameApp.ShowBootError: hata + TEKRAR DENE + yedekle-sıfırla; boş koleksiyon durumu var. Ağ hatası durumu yok (ağ yok)."
+  },
+  "T015": {
+    "status": "IN_PROGRESS",
+    "evidence": "ProfileSettings JSON'a kaydolur (EconomyTests kayıt/yükleme); SettingsScreen kodlandı, çalıştırılmadı."
+  },
+  "T016": {
+    "status": "IN_PROGRESS",
+    "evidence": "SafeAreaFitter + FitLabel (taşmayan isim) kodlandı; Türkçe karakter arama testli. Cihazda/oranlarda doğrulanmadı."
+  },
+  "T017": {
+    "status": "DONE",
+    "evidence": "100 aday içe aktarıldı (tools/generate_catalog.py); baseOverall=null yerine PROTOTIP_DENGE_V0 etiketli değerler; CatalogTests + validate_catalog.py geçti."
+  },
+  "T018": {
+    "status": "DONE",
+    "evidence": "CardDefinition/CardInstance ayrı tipler; EconomyTests.Two_Copies_Of_Same_Card_Have_Independent_Lock geçti."
+  },
+  "T019": {
+    "status": "IN_PROGRESS",
+    "evidence": "PortraitCrop (testli), PortraitLibrary, siluet fallback; doğrulayıcı sahte teslimi reddeder. Gerçek portre yok.",
+    "next": "T091 portre içeriği + izin"
+  },
+  "T020": {
+    "status": "IN_PROGRESS",
+    "evidence": "Çerçeve (Base/Special/Legend) portreden bağımsız (CardView.FrameHex). Sanat varlıkları yok."
+  },
+  "T021": {
+    "status": "DONE",
+    "evidence": "BallBody: Free/Controlled/InFlight + sahiplik; SimTests (mod geçişleri, sekme, yuvarlanma mesafesi 30/60 FPS) geçti."
+  },
+  "T022": {
+    "status": "IN_PROGRESS",
+    "evidence": "VirtualJoystick/HoldButton pointerId ile çoklu dokunma kodlandı; sim'de hareket+pas+sprint eşzamanlı testli. Cihazda doğrulanmadı."
+  },
+  "T023": {
+    "status": "DONE",
+    "evidence": "PlayerBody: ivme, dönüş cezası, stamina; SimTests (kademeli ivme, pace farkı, stamina, keskin dönüş, 30/60 FPS eşdeğerliği) geçti.",
+    "note": "Cihazda his ölçümü T033."
+  },
+  "T024": {
+    "status": "DONE",
+    "evidence": "Pas/ara pası/hedef seçimi (PassTargeting); SimTests: yön+güç top hareketini etkiler, hedefli pas 36/40+ isabet."
+  },
+  "T025": {
+    "status": "DONE",
+    "evidence": "Şut güç/yön + GoalkeeperAI; SimTests: gol bir kez, kaleci/şut niteliği farkı ölçülebilir (kaleci25: 179/300 gol, kaleci95: 38/300)."
+  },
+  "T026": {
+    "status": "IN_PROGRESS",
+    "evidence": "Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). Oyuncu değiştirme yok (tek oyunculu saha)."
+  },
+  "T027": {
+    "status": "IN_PROGRESS",
+    "evidence": "HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı."
+  },
+  "T028": {
+    "status": "IN_PROGRESS",
+    "evidence": "FieldWorld yayın açılı takip kamerası kodlandı; çalıştırılmadı."
+  },
+  "T029": {
+    "status": "IN_PROGRESS",
+    "evidence": "Aktif oyuncu işareti, isim etiketi, mini harita sim konumlarından beslenir; çalıştırılmadı."
+  },
+  "T030": {
+    "status": "TODO",
+    "evidence": "Rig/animasyon yok; kapsül gövde + prosedürel eğilme.",
+    "next": "Ortak rigli model + klipler"
+  },
+  "T031": {
+    "status": "IN_PROGRESS",
+    "evidence": "Yön Değiştirme sim'de testli (yıldız/cooldown). Diğer 3 çalım tanımlı ama Implemented=false; animasyon yok."
+  },
+  "T032": {
+    "status": "TODO",
+    "evidence": "Ağ denemesi yapılmadı (Core sim saf C# olduğundan sunucuda yeniden kullanılabilir)."
+  },
+  "T033": {
+    "status": "TODO",
+    "evidence": "Gerçek cihaz build'i/ölçümü yok."
+  },
+  "T034": {
+    "status": "DONE",
+    "evidence": "SquadPlan 11 slot + 7 yedek; SquadTests (kart iki slotta olamaz, Place taşır, bench swap) geçti."
+  },
+  "T035": {
+    "status": "DONE",
+    "evidence": "Formations 4-4-2/4-3-3/4-2-3-1 + PositionFit; SquadTests geçti."
+  },
+  "T036": {
+    "status": "DONE",
+    "evidence": "AutoPicker: 3 dizilişte başlangıç envanteriyle geçerli kadro; sabitlenen kart korunur, satıştaki seçilmez (testli)."
+  },
+  "T037": {
+    "status": "DONE",
+    "evidence": "TeamSummary (GEN/değer, pozisyon cezası) + kayıt/yükleme EconomyTests.Save_And_Reload_* geçti."
+  },
+  "T038": {
+    "status": "IN_PROGRESS",
+    "evidence": "Kaptan/penaltı/serbest vuruş/korner rol ataması AutoPicker'da var; çoklu plan ve rol UI'ı yok."
+  },
+  "T039": {
+    "status": "IN_PROGRESS",
+    "evidence": "CollectionScreen: arama (TextFold testli), grup filtresi, GEN sıralama, detay, 100'lük katalog sekmesi. Çalıştırılmadı."
+  },
+  "T040": {
+    "status": "IN_PROGRESS",
+    "evidence": "Kilitleme: kilitli kart harcanamaz (testli). Karşılaştırma yok."
+  },
+  "T043": {
+    "status": "IN_PROGRESS",
+    "evidence": "MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor."
+  },
+  "T047": {
+    "status": "IN_PROGRESS",
+    "evidence": "Gol → kutlama durumu, kontrol kilidi, tek gol testli. Tekrar sistemi YOK (Replay durumu atlanıyor)."
+  },
+  "T048": {
+    "status": "IN_PROGRESS",
+    "evidence": "Kontrol sahası istatistikleri/ödülü olaylardan türetilir (RewardCalculator, testli). Tam maç istatistiği yok."
+  },
+  "T050": {
+    "status": "IN_PROGRESS",
+    "evidence": "Yerel EconomyService: ledger, idempotency, atomik tüketim, negatif bakiye yok (EconomyTests). Sunucu (TypeScript) karşılığı yok.",
+    "next": "T049 sunucu"
+  },
+  "T051": {
+    "status": "IN_PROGRESS",
+    "evidence": "ClaimStarterPackage: 18 kart + coin tek atomik işlem, ikinci çağrı aynı sonuç (testli). Yerel geliştirme cüzdanı; sunucu yok."
+  },
+  "T052": {
+    "status": "IN_PROGRESS",
+    "evidence": "Menü→kadro→kontrol sahası→sonuç→ödül→kayıt zinciri kodlandı. Unity/telefonda çalıştırılmadı; GERÇEK MAÇ değil (11v11 yok)."
+  },
+  "T057": {
+    "status": "IN_PROGRESS",
+    "evidence": "4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok."
+  }
+}

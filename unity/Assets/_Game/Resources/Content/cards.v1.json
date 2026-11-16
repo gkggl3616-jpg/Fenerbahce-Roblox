@@ -1,0 +1,1106 @@
+{
+  "contentVersion": "cards.v1",
+  "schemaVersion": 1,
+  "cards": [
+    {
+      "cardDefinitionId": "P001_BASE_V1",
+      "playerId": "P001",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P002_BASE_V1",
+      "playerId": "P002",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P003_BASE_V1",
+      "playerId": "P003",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 84,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P004_BASE_V1",
+      "playerId": "P004",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 75,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P005_BASE_V1",
+      "playerId": "P005",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P006_BASE_V1",
+      "playerId": "P006",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P007_BASE_V1",
+      "playerId": "P007",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P008_BASE_V1",
+      "playerId": "P008",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P009_BASE_V1",
+      "playerId": "P009",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 90,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P010_BASE_V1",
+      "playerId": "P010",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P011_BASE_V1",
+      "playerId": "P011",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 90,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P012_BASE_V1",
+      "playerId": "P012",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 79,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P013_BASE_V1",
+      "playerId": "P013",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P014_BASE_V1",
+      "playerId": "P014",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 78,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P015_BASE_V1",
+      "playerId": "P015",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P016_BASE_V1",
+      "playerId": "P016",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 83,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P017_BASE_V1",
+      "playerId": "P017",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P018_BASE_V1",
+      "playerId": "P018",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P019_BASE_V1",
+      "playerId": "P019",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 79,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P020_BASE_V1",
+      "playerId": "P020",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 75,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P021_BASE_V1",
+      "playerId": "P021",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 78,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P022_BASE_V1",
+      "playerId": "P022",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 79,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P023_BASE_V1",
+      "playerId": "P023",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 76,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P024_BASE_V1",
+      "playerId": "P024",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P025_BASE_V1",
+      "playerId": "P025",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P026_BASE_V1",
+      "playerId": "P026",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 82,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P027_BASE_V1",
+      "playerId": "P027",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 87,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P028_BASE_V1",
+      "playerId": "P028",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 87,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P029_BASE_V1",
+      "playerId": "P029",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 84,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P030_BASE_V1",
+      "playerId": "P030",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P031_BASE_V1",
+      "playerId": "P031",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P032_BASE_V1",
+      "playerId": "P032",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P033_BASE_V1",
+      "playerId": "P033",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 82,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P034_BASE_V1",
+      "playerId": "P034",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 82,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P035_BASE_V1",
+      "playerId": "P035",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 82,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P036_BASE_V1",
+      "playerId": "P036",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 83,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P037_BASE_V1",
+      "playerId": "P037",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 90,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P038_BASE_V1",
+      "playerId": "P038",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P039_BASE_V1",
+      "playerId": "P039",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P040_BASE_V1",
+      "playerId": "P040",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P041_BASE_V1",
+      "playerId": "P041",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P042_BASE_V1",
+      "playerId": "P042",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P043_BASE_V1",
+      "playerId": "P043",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P044_BASE_V1",
+      "playerId": "P044",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P045_BASE_V1",
+      "playerId": "P045",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P046_BASE_V1",
+      "playerId": "P046",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 75,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P047_BASE_V1",
+      "playerId": "P047",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P048_BASE_V1",
+      "playerId": "P048",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 78,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P049_BASE_V1",
+      "playerId": "P049",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P050_BASE_V1",
+      "playerId": "P050",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 76,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P051_BASE_V1",
+      "playerId": "P051",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 78,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P052_BASE_V1",
+      "playerId": "P052",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 75,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P053_BASE_V1",
+      "playerId": "P053",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 87,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P054_BASE_V1",
+      "playerId": "P054",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P055_BASE_V1",
+      "playerId": "P055",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 91,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P056_BASE_V1",
+      "playerId": "P056",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 91,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P057_BASE_V1",
+      "playerId": "P057",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P058_BASE_V1",
+      "playerId": "P058",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 91,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P059_BASE_V1",
+      "playerId": "P059",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 84,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P060_BASE_V1",
+      "playerId": "P060",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P061_BASE_V1",
+      "playerId": "P061",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P062_BASE_V1",
+      "playerId": "P062",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 83,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P063_BASE_V1",
+      "playerId": "P063",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P064_BASE_V1",
+      "playerId": "P064",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P065_BASE_V1",
+      "playerId": "P065",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 90,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P066_BASE_V1",
+      "playerId": "P066",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P067_BASE_V1",
+      "playerId": "P067",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 87,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P068_BASE_V1",
+      "playerId": "P068",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P069_BASE_V1",
+      "playerId": "P069",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P070_BASE_V1",
+      "playerId": "P070",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P071_BASE_V1",
+      "playerId": "P071",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P072_BASE_V1",
+      "playerId": "P072",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P073_BASE_V1",
+      "playerId": "P073",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P074_BASE_V1",
+      "playerId": "P074",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 91,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P075_BASE_V1",
+      "playerId": "P075",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P076_BASE_V1",
+      "playerId": "P076",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P077_BASE_V1",
+      "playerId": "P077",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P078_BASE_V1",
+      "playerId": "P078",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P079_BASE_V1",
+      "playerId": "P079",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 79,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P080_BASE_V1",
+      "playerId": "P080",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P081_BASE_V1",
+      "playerId": "P081",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 79,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P082_BASE_V1",
+      "playerId": "P082",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 74,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P083_BASE_V1",
+      "playerId": "P083",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P084_BASE_V1",
+      "playerId": "P084",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P085_BASE_V1",
+      "playerId": "P085",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 77,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P086_BASE_V1",
+      "playerId": "P086",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P087_BASE_V1",
+      "playerId": "P087",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 83,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P088_BASE_V1",
+      "playerId": "P088",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 76,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P089_BASE_V1",
+      "playerId": "P089",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 87,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P090_BASE_V1",
+      "playerId": "P090",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 86,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P091_BASE_V1",
+      "playerId": "P091",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P092_BASE_V1",
+      "playerId": "P092",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 82,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P093_BASE_V1",
+      "playerId": "P093",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 85,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P094_BASE_V1",
+      "playerId": "P094",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P095_BASE_V1",
+      "playerId": "P095",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 91,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P096_BASE_V1",
+      "playerId": "P096",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 88,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P097_BASE_V1",
+      "playerId": "P097",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P098_BASE_V1",
+      "playerId": "P098",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 90,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P099_BASE_V1",
+      "playerId": "P099",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 92,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P100_BASE_V1",
+      "playerId": "P100",
+      "family": "BASE",
+      "rarity": "Base",
+      "program": "TEMEL",
+      "overall": 89,
+      "frameId": "frame_base",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P004_SPECIAL_V1",
+      "playerId": "P004",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "KADIKOY_GECELERI",
+      "overall": 78,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P044_SPECIAL_V1",
+      "playerId": "P044",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "KADIKOY_GECELERI",
+      "overall": 89,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P050_SPECIAL_V1",
+      "playerId": "P050",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "KANARYA_AKADEMISI",
+      "overall": 79,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P054_SPECIAL_V1",
+      "playerId": "P054",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "KADIKOY_GECELERI",
+      "overall": 88,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P043_LEGEND_V1",
+      "playerId": "P043",
+      "family": "LEGEND",
+      "rarity": "Legend",
+      "program": "EFSANELER_HAFTASI",
+      "overall": 92,
+      "frameId": "frame_legend",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P011_LEGEND_V1",
+      "playerId": "P011",
+      "family": "LEGEND",
+      "rarity": "Legend",
+      "program": "EFSANELER_HAFTASI",
+      "overall": 94,
+      "frameId": "frame_legend",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P069_LEGEND_V1",
+      "playerId": "P069",
+      "family": "LEGEND",
+      "rarity": "Legend",
+      "program": "EFSANELER_HAFTASI",
+      "overall": 92,
+      "frameId": "frame_legend",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P094_SPECIAL_V1",
+      "playerId": "P094",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "DUNYA_YILDIZLARI",
+      "overall": 91,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P097_SPECIAL_V1",
+      "playerId": "P097",
+      "family": "SPECIAL",
+      "rarity": "Special",
+      "program": "DUNYA_YILDIZLARI",
+      "overall": 95,
+      "frameId": "frame_special",
+      "tradable": true
+    },
+    {
+      "cardDefinitionId": "P037_LEGEND_V1",
+      "playerId": "P037",
+      "family": "LEGEND",
+      "rarity": "Legend",
+      "program": "EFSANELER_HAFTASI",
+      "overall": 94,
+      "frameId": "frame_legend",
+      "tradable": true
+    }
+  ]
+}
