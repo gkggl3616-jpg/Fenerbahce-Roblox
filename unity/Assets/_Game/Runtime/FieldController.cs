@@ -30,6 +30,8 @@ namespace Fenerbahce.Runtime
             public FieldStats Stats;
             public bool Completed;
             public float PlayedSeconds;
+            /// <summary>Olay kaydından türetilen sonuç (skor, golcüler, istatistikler).</summary>
+            public Fenerbahce.Core.Match.MatchResult Result;
         }
 
         const float Step = 1f / 60f;
@@ -158,7 +160,7 @@ namespace Fenerbahce.Runtime
             _finished = true;
             var st = _sim.Stats;
             var copy = new FieldStats { Goals = st.Goals, Shots = st.Shots, ShotsOnTarget = st.ShotsOnTarget, Saves = st.Saves, TargetPasses = st.TargetPasses, Passes = st.Passes, TacklesWon = st.TacklesWon, TacklesMissed = st.TacklesMissed, BallLosses = st.BallLosses, Skills = st.Skills };
-            _app.EndField(new Summary { SessionId = _o.SessionId, Stats = copy, Completed = completed, PlayedSeconds = _sim.Machine.ElapsedInHalf });
+            _app.EndField(new Summary { SessionId = _o.SessionId, Stats = copy, Completed = completed, PlayedSeconds = _sim.Machine.ElapsedInHalf, Result = _sim.BuildResult() });
         }
 
         void OnApplicationPause(bool paused) { if (paused && _hud != null && !_finished) _hud.SetPaused(true); }

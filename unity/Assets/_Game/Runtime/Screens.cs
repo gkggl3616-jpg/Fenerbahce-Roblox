@@ -312,6 +312,7 @@ namespace Fenerbahce.Runtime
     public class ResultScreen : GameScreen
     {
         public static FieldController.Summary Pending;
+        static string Pct(int p) { return p < 0 ? "—" : p + "%"; }
         public ResultScreen() { Id = "result"; }
         public override bool IsTab { get { return false; } }
         RectTransform _box;
@@ -331,12 +332,31 @@ namespace Fenerbahce.Runtime
 
             var bg = Ui.Panel(_box, "Bg", Ui.Surface, true); Ui.Stretch(bg.rectTransform);
             var t = Ui.FitLabel(bg.transform, s.Completed ? "OTURUM BİTTİ" : "OTURUM YARIDA KESİLDİ", DesignTokens.FontTitle + 8, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(t.rectTransform, 48, 28, 1300, 70);
-            var sc = Ui.Label(bg.transform, s.Stats.Goals + "  GOL", 110, Ui.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(sc.rectTransform, 48, 110, 700, 140);
-            string stats = "Şut: " + s.Stats.Shots + "   İsabetli: " + s.Stats.ShotsOnTarget + "   Kaleci kurtarışı: " + s.Stats.Saves +
-                "\nPas: " + s.Stats.Passes + "   Hedefli pas: " + s.Stats.TargetPasses +
-                "\nKazanılan top (kayma): " + s.Stats.TacklesWon + "   Kaybedilen top: " + s.Stats.BallLosses + "   Çalım: " + s.Stats.Skills +
-                "\nOynanan süre: " + Mathf.RoundToInt(s.PlayedSeconds) + " sn";
-            var st = Ui.Label(bg.transform, stats, 30, Ui.TextLight, TextAnchor.UpperLeft); Ui.PlaceTopLeft(st.rectTransform, 48, 270, 1300, 220);
+            var sc = Ui.Label(bg.transform, s.Stats.Goals + "  GOL", 110, Ui.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(sc.rectTransform, 48, 110, 470, 140);
+            // İstatistikler olay kaydından türetilir (G46): şut(isabetli), topa sahip olma, pas isabeti, faul, ofsayt.
+            var res = s.Result;
+            string[][] rows =
+            {
+                new[] { "ŞUT (İSABETLİ)", res.Home.Shots + " (" + res.Home.ShotsOnTarget + ")", res.Away.Shots + " (" + res.Away.ShotsOnTarget + ")" },
+                new[] { "KURTARIŞ", res.Home.Saves.ToString(), res.Away.Saves.ToString() },
+                new[] { "TOPA SAHİP OLMA", Pct(res.HomePossessionPercent), Pct(res.AwayPossessionPercent) },
+                new[] { "PAS İSABETİ", Pct(res.Home.PassAccuracyPercent), Pct(res.Away.PassAccuracyPercent) },
+                new[] { "FAUL", res.RulesStatsAvailable ? res.Home.Fouls.ToString() : "—", res.RulesStatsAvailable ? res.Away.Fouls.ToString() : "—" },
+                new[] { "OFSAYT", res.RulesStatsAvailable ? res.Home.Offsides.ToString() : "—", res.RulesStatsAvailable ? res.Away.Offsides.ToString() : "—" },
+            };
+            var h1 = Ui.Label(bg.transform, "KANARYA", 22, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.PlaceTopLeft(h1.rectTransform, 870, 112, 160, 34);
+            var h2 = Ui.Label(bg.transform, "RAKİP", 22, Ui.Muted, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.PlaceTopLeft(h2.rectTransform, 1030, 112, 160, 34);
+            for (int i = 0; i < rows.Length; i++)
+            {
+                var lab = Ui.Label(bg.transform, rows[i][0], 26, Ui.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(lab.rectTransform, 48 + 520, 150 + i * 44, 330, 40);
+                var hv = Ui.Label(bg.transform, rows[i][1], 28, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.PlaceTopLeft(hv.rectTransform, 870, 150 + i * 44, 160, 40);
+                var av = Ui.Label(bg.transform, rows[i][2], 28, Ui.Muted, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.PlaceTopLeft(av.rectTransform, 1030, 150 + i * 44, 160, 40);
+            }
+            // Golcüler (dakika ile)
+            var scorers = res.Scorers.Count == 0 ? "Gol yok" : string.Join("\n", res.Scorers.Select(x => x.Minute + "'  " + x.Name + (x.Team == 0 ? "" : "  (rakip)")).ToArray());
+            var sc2 = Ui.Label(bg.transform, "GOLCÜLER\n" + scorers, 28, Ui.TextLight, TextAnchor.UpperLeft); Ui.PlaceTopLeft(sc2.rectTransform, 48, 260, 460, 220);
+            string extra = "Hedefli pas: " + s.Stats.TargetPasses + "   Kazanılan top (kayma): " + s.Stats.TacklesWon + "   Kaybedilen top: " + s.Stats.BallLosses + "   Çalım: " + s.Stats.Skills + "   Süre: " + Mathf.RoundToInt(s.PlayedSeconds) + " sn";
+            var st = Ui.Label(bg.transform, extra, 24, Ui.Muted, TextAnchor.UpperLeft); Ui.PlaceTopLeft(st.rectTransform, 48, 440, 1200, 60);
             var rw = Ui.Panel(bg.transform, "Reward", Ui.SurfaceRaised, true); Ui.PlaceTopLeft(rw.rectTransform, 48, 510, 1000, 120);
             string rtxt = r.Ok ? (gained > 0 ? "KAZANILAN COIN:  +" + gained : "Bu oturumda coin kazanılmadı (gol/hedefli pas yok).") : ("Ödül işlenemedi: " + r.Message);
             if (r.Ok && r.Replayed) rtxt = "Bu oturumun ödülü zaten işlendi.";

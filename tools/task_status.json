@@ -111,7 +111,8 @@
   },
   "T027": {
     "status": "IN_PROGRESS",
-    "evidence": "HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı."
+    "evidence": "HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı.",
+    "next": "Açık soru: referanstaki 'OTO.' düğmesinin işlevi karelerden doğrulanamadı; kural uydurulmayacak."
   },
   "T028": {
     "status": "IN_PROGRESS",
@@ -176,7 +177,8 @@
   },
   "T048": {
     "status": "IN_PROGRESS",
-    "evidence": "Kontrol sahası istatistikleri/ödülü olaylardan türetilir (RewardCalculator, testli). Tam maç istatistiği yok."
+    "evidence": "MatchLog + MatchResultBuilder: skor, golcüler(dakika), şut/isabetli, kurtarış, topa sahip olma, pas isabeti YALNIZ olay kaydından türetilir (MatchResultTests geçti); ResultScreen bunu gösterir. Faul/ofsayt/korner/kart üretilmiyor (T044) → ekranda '—'. Tam maç yok.",
+    "next": "T044 kuralları olay kaydına eklenince faul/ofsayt dolacak"
   },
   "T050": {
     "status": "IN_PROGRESS",
@@ -194,5 +196,33 @@
   "T057": {
     "status": "IN_PROGRESS",
     "evidence": "4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok."
+  },
+  "T053": {
+    "status": "TODO",
+    "next": "Referans: SERBEST BIRAK / OTOMATİK SEÇ akışı; kilitli/kadrodaki/satıştaki kart aynı engellerle korunur."
+  },
+  "T055": {
+    "status": "TODO",
+    "next": "Kendi rank kuralımızı tasarla (D-020). Referansta kaynak kart yuvaları, 'Antrenman Maçı', 'İlerleme x/50' alanları görülüyor; başarı olasılığı videodan belirlenemez."
+  },
+  "T066": {
+    "status": "TODO",
+    "next": "Paket ekranında GARANTİ ve OLASI ödül ayrımı + 'öğeler yalnızca betimleme amaçlıdır, hiçbiri garanti edilmez' uyarısı."
+  },
+  "T072": {
+    "status": "TODO",
+    "next": "Takasta antrenman seviyesi aktarılmaz uyarısı (referansta var); T054 ile tutarlı tasarla."
+  },
+  "T081": {
+    "status": "TODO",
+    "next": "Arkadaş kapasitesi ve ONLINE/MAÇTA/ÇEVRİMDIŞI filtreleri (referansta 1/32)."
+  },
+  "T089": {
+    "status": "TODO",
+    "next": "Sıralı modda sonuç ekranında derece puanı değişimi; DERECESİZ OYNA seçeneği."
+  },
+  "T096": {
+    "status": "TODO",
+    "next": "Kulüp stadyumu seçimi (T092 ile)."
   }
 }

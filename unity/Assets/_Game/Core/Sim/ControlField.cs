@@ -22,6 +22,9 @@ namespace Fenerbahce.Core.Sim
         public readonly GoalkeeperAI Keeper;
         public readonly MatchStateMachine Machine;
         public readonly FieldStats Stats = new FieldStats();
+        /// <summary>Maç olay kaydı: sonuç ekranındaki istatistikler yalnız buradan türetilir (T048).</summary>
+        public readonly MatchLog Log = new MatchLog();
+        public readonly float[] PossessionSeconds = new float[2];
         public readonly float[] TargetFlash;
         public int SelectedTarget { get; private set; } = -1;
         public float Time { get; private set; }
@@ -61,6 +64,12 @@ namespace Fenerbahce.Core.Sim
         public IReadOnlyList<HudButton> Hud { get { return HudLayout.ButtonsFor(Ownership, Machine.Phase); } }
         public float RemainingSeconds { get { return Math.Max(0f, Machine.HalfLengthSeconds - Machine.ElapsedInHalf); } }
         public bool HasBall { get { return Ball.IsControlled && Ball.OwnerId == PlayerId; } }
+
+        /// <summary>Faul/ofsayt/korner kuralları bu sahada yoktur (T044) → RulesStatsAvailable=false.</summary>
+        public MatchResult BuildResult()
+        {
+            return MatchResultBuilder.Build(Log, PossessionSeconds[0], PossessionSeconds[1], false);
+        }
 
         public void DrainEvents(List<FieldEvent> into) { into.AddRange(_events); _events.Clear(); }
 
@@ -170,7 +179,7 @@ namespace Fenerbahce.Core.Sim
 
             // --- kaleci ---
             var outcome = Keeper.Step(dt, Ball);
-            if (outcome != GkOutcome.None) { Stats.Saves++; Raise(FieldEventType.Save, outcome == GkOutcome.Catch ? 1 : 0, Keeper.Pos); }
+            if (outcome != GkOutcome.None) { Stats.Saves++; Log.Add(MatchEventType.Save, 1, Keeper.Stats.DisplayName, Machine.DisplayMinute); Raise(FieldEventType.Save, outcome == GkOutcome.Catch ? 1 : 0, Keeper.Pos); }
             if (Keeper.State == GkState.Recovering && Ball.IsControlled && Ball.OwnerId == KeeperId) Keeper.Distribute(Ball, Player.Pos);
 
             // --- top ---
@@ -186,6 +195,7 @@ namespace Fenerbahce.Core.Sim
                 else TryPickup();
             }
 
+            if (Ball.IsControlled) PossessionSeconds[Ball.OwnerId == PlayerId ? 0 : 1] += dt;
             ResolveSlide();
             CheckBoundaries();
             CheckTargets();
@@ -224,6 +234,7 @@ namespace Fenerbahce.Core.Sim
             dir = dir.Rotated(_rng.NextSigned() * sigma * 1.7f * MathUtil.Deg2Rad);
             Ball.Kick(dir * speed, vz, PlayerId, 0.35f);
             Stats.Passes++; _passId++; _lastKickWasPass = true;
+            Log.Add(MatchEventType.Pass, 0, Player.Stats.DisplayName, Machine.DisplayMinute);
         }
 
         void DoShoot(PlayerInput input)
@@ -245,8 +256,9 @@ namespace Fenerbahce.Core.Sim
             float vz = MathUtil.Lerp(0.3f, 4.5f, power) * (0.5f + 0.8f * _rng.Next01());
             Ball.Kick(dir * speed, vz, PlayerId, 0.35f);
             Stats.Shots++; _passId++; _lastKickWasPass = false;
+            Log.Add(MatchEventType.Shot, 0, Player.Stats.DisplayName, Machine.DisplayMinute);
             bool onTarget = EstimateOnTarget();
-            if (onTarget) { Stats.ShotsOnTarget++; Raise(FieldEventType.ShotOnTarget, 0, Ball.Pos); }
+            if (onTarget) { Stats.ShotsOnTarget++; Log.Add(MatchEventType.ShotOnTarget, 0, Player.Stats.DisplayName, Machine.DisplayMinute); Raise(FieldEventType.ShotOnTarget, 0, Ball.Pos); }
             else Raise(FieldEventType.ShotOffTarget, 0, Ball.Pos);
         }
 
@@ -365,6 +377,7 @@ namespace Fenerbahce.Core.Sim
                     if (Machine.RegisterGoal(true))
                     {
                         Stats.Goals++;
+                        Log.Add(MatchEventType.Goal, 0, Player.Stats.DisplayName, Machine.DisplayMinute);
                         Raise(FieldEventType.GoalScored, Stats.Goals, new Vec2(L, yc));
                     }
                     return;
@@ -391,6 +404,7 @@ namespace Fenerbahce.Core.Sim
                 {
                     _countedPassId = _passId;
                     Stats.TargetPasses++; TargetFlash[i] = 1.5f;
+                    Log.Add(MatchEventType.PassCompleted, 0, Player.Stats.DisplayName, Machine.DisplayMinute);
                     Raise(FieldEventType.PassToTarget, i, Config.PassTargets[i]);
                     return;
                 }

@@ -134,6 +134,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Top bizde/rakipte/boşta doğru düğmeler var
   - Kanıt kodu: G35,G36,G37 · Bağımlılık: T024,T026 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı.
+  - Sıradaki: Açık soru: referanstaki 'OTO.' düğmesinin işlevi karelerden doğrulanamadı; kural uydurulmayacak.
 - [~] **T028 · P0 · Oynanış** — Takip kamerası ve sınırları
   - Kabul: Top/kale aksiyonu ekran dışında kalmaz
   - Kanıt kodu: G33 · Bağımlılık: T025 · Durum: **IN_PROGRESS**
@@ -216,7 +217,8 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T048 · P0 · Maç** — Sonuç istatistikleri ve ödül
   - Kabul: İstatistikler olay kaydından türetilir
   - Kanıt kodu: G46 · Bağımlılık: T044 · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: Kontrol sahası istatistikleri/ödülü olaylardan türetilir (RewardCalculator, testli). Tam maç istatistiği yok.
+  - Doğrulama/Not: MatchLog + MatchResultBuilder: skor, golcüler(dakika), şut/isabetli, kurtarış, topa sahip olma, pas isabeti YALNIZ olay kaydından türetilir (MatchResultTests geçti); ResultScreen bunu gösterir. Faul/ofsayt/korner/kart üretilmiyor (T044) → ekranda '—'. Tam maç yok.
+  - Sıradaki: T044 kuralları olay kaydına eklenince faul/ofsayt dolacak
 - [ ] **T049 · P0 · Backend** — Auth/profil/envanter API iskeleti
   - Kabul: İki hesap birbirinin kartını okuyamaz
   - Kanıt kodu: TEKNIK · Bağımlılık: T018 · Durum: **TODO**
@@ -239,12 +241,14 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T053 · P0 · Gelişim** — Antrenman XP/kaynak önizleme
   - Kabul: Kilitli/kadroda kart sessizce tüketilmez
   - Kanıt kodu: G20 · Bağımlılık: T040,T050 · Durum: **TODO**
+  - Sıradaki: Referans: SERBEST BIRAK / OTOMATİK SEÇ akışı; kilitli/kadrodaki/satıştaki kart aynı engellerle korunur.
 - [ ] **T054 · P1 · Gelişim** — Antrenman aktarımı
   - Kabul: Kaynak/hedef ve maliyet doğrulanır
   - Kanıt kodu: G21 · Bağımlılık: T053 · Durum: **TODO**
 - [ ] **T055 · P0 · Gelişim** — Derece yükseltme kuralları
   - Kabul: Başarı/başarısızlık tasarımı açık ve kayıtlı
   - Kanıt kodu: G22 · Bağımlılık: T053 · Durum: **TODO**
+  - Sıradaki: Kendi rank kuralımızı tasarla (D-020). Referansta kaynak kart yuvaları, 'Antrenman Maçı', 'İlerleme x/50' alanları görülüyor; başarı olasılığı videodan belirlenemez.
 - [ ] **T056 · P0 · Gelişim** — Kalıcı skill puanı sistemi
   - Kabul: Nitelik değişimi kaydedilir; çalımdan ayrıdır
   - Kanıt kodu: G25,G26,G27 · Bağımlılık: T055 · Durum: **TODO**
@@ -279,6 +283,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T066 · P0 · Paket** — Drop table ve garanti sayaç sözleşmesi
   - Kabul: Olasılık toplamı 1; sürüm sabitlenir
   - Kanıt kodu: G58 · Bağımlılık: T065 · Durum: **TODO**
+  - Sıradaki: Paket ekranında GARANTİ ve OLASI ödül ayrımı + 'öğeler yalnızca betimleme amaçlıdır, hiçbiri garanti edilmez' uyarısı.
 - [ ] **T067 · P0 · Paket** — Atomik satın alma/açılış
   - Kabul: Kopmada aynı sonuç; iki kez kesinti yok
   - Kanıt kodu: G61 · Bağımlılık: T050,T066 · Durum: **TODO**
@@ -297,6 +302,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T072 · P0 · Takas** — Tarif/kriter/hızlı ekle
   - Kabul: Satılamaz/kilit/kadro kuralları uygulanır
   - Kanıt kodu: G65,G66,G68 · Bağımlılık: T040,T050 · Durum: **TODO**
+  - Sıradaki: Takasta antrenman seviyesi aktarılmaz uyarısı (referansta var); T054 ile tutarlı tasarla.
 - [ ] **T073 · P0 · Takas** — Atomik tüketim ve ödül
   - Kabul: Çifte takas envanteri çoğaltmaz
   - Kanıt kodu: G67 · Bağımlılık: T072,T067 · Durum: **TODO**
@@ -327,6 +333,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T081 · P0 · Sosyal** — Arkadaş ve durum listesi
   - Kabul: Çevrimiçi/maçta/çevrimdışı ayrılır
   - Kanıt kodu: G47 · Bağımlılık: T049 · Durum: **TODO**
+  - Sıradaki: Arkadaş kapasitesi ve ONLINE/MAÇTA/ÇEVRİMDIŞI filtreleri (referansta 1/32).
 - [ ] **T082 · P0 · Sosyal** — Maç daveti/reddetme/zaman aşımı
   - Kabul: İki kabul aynı maç oturumuna bağlanır
   - Kanıt kodu: G47 · Bağımlılık: T081 · Durum: **TODO**
@@ -354,6 +361,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T089 · P1 · Rekabet** — Kupa/derece/sezon/liderlik
   - Kabul: Mod dereceleri ayrıdır; ödül bir kez
   - Kanıt kodu: G29 · Bağımlılık: T085,T071 · Durum: **TODO**
+  - Sıradaki: Sıralı modda sonuç ekranında derece puanı değişimi; DERECESİZ OYNA seçeneği.
 - [ ] **T090 · P1 · İçerik** — Beş Fenerbahçe temalı etkinlik
   - Kabul: Her etkinlik oynanabilir görev/ödül içerir
   - Kanıt kodu: G48 · Bağımlılık: T075 · Durum: **TODO**
@@ -375,6 +383,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T096 · P1 · Kişisel** — Forma/arma ve kulüp görünümü
   - Kabul: Seçim kayıt olur; UI ile maçta eşleşir
   - Kanıt kodu: G75 · Bağımlılık: T092 · Durum: **TODO**
+  - Sıradaki: Kulüp stadyumu seçimi (T092 ile).
 
 ## F7 — Ödeme, operasyon ve kademeli yayın (31–36+. haftalar)
 

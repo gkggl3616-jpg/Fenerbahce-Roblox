@@ -218,3 +218,82 @@ namespace Fenerbahce.Tests
         }
     }
 }
+
+namespace Fenerbahce.Tests
+{
+    public class MatchResultTests
+    {
+        [Test]
+        public void Stats_Are_Derived_Only_From_The_Event_Log()
+        {
+            var log = new MatchLog();
+            log.Add(MatchEventType.Shot, 0, "A", 10); log.Add(MatchEventType.ShotOnTarget, 0, "A", 10); log.Add(MatchEventType.Goal, 0, "A", 10);
+            log.Add(MatchEventType.Shot, 0, "B", 40); log.Add(MatchEventType.Save, 1, "K", 40);
+            log.Add(MatchEventType.Goal, 1, "R", 55);
+            log.Add(MatchEventType.Pass, 0, "A", 20); log.Add(MatchEventType.Pass, 0, "A", 21); log.Add(MatchEventType.PassCompleted, 0, "A", 21);
+            log.Add(MatchEventType.Foul, 1, "R", 60); log.Add(MatchEventType.Offside, 0, "A", 61); log.Add(MatchEventType.Corner, 0, "A", 62);
+            var r = MatchResultBuilder.Build(log, 30f, 10f, true);
+            Assert.AreEqual(1, r.ScoreHome); Assert.AreEqual(1, r.ScoreAway);
+            Assert.AreEqual(2, r.Home.Shots); Assert.AreEqual(1, r.Home.ShotsOnTarget); Assert.AreEqual(1, r.Away.Saves);
+            Assert.AreEqual(2, r.Home.Passes); Assert.AreEqual(1, r.Home.PassesCompleted); Assert.AreEqual(50, r.Home.PassAccuracyPercent);
+            Assert.AreEqual(-1, r.Away.PassAccuracyPercent, "hiç pas yoksa yüzde gösterilmez");
+            Assert.AreEqual(1, r.Away.Fouls); Assert.AreEqual(1, r.Home.Offsides); Assert.AreEqual(1, r.Home.Corners);
+            Assert.AreEqual(75, r.HomePossessionPercent); Assert.AreEqual(25, r.AwayPossessionPercent);
+            Assert.AreEqual(100, r.HomePossessionPercent + r.AwayPossessionPercent);
+            Assert.AreEqual(new[] { 10, 55 }, r.Scorers.Select(s => s.Minute).ToArray());
+            Assert.AreEqual(new[] { "A", "R" }, r.Scorers.Select(s => s.Name).ToArray());
+            Assert.IsTrue(r.RulesStatsAvailable);
+        }
+
+        [Test]
+        public void No_Possession_Time_Means_No_Data_Not_Fifty_Fifty()
+        {
+            var r = MatchResultBuilder.Build(new MatchLog(), 0f, 0f, false);
+            Assert.AreEqual(-1, r.HomePossessionPercent); Assert.AreEqual(-1, r.AwayPossessionPercent);
+            Assert.IsFalse(r.RulesStatsAvailable);
+        }
+
+        [Test]
+        public void Control_Field_Result_Matches_Machine_Score_Scorer_And_Stats()
+        {
+            var cfg = new Fenerbahce.Core.Sim.ControlFieldConfig { Seed = 5, DefenderEnabled = false };
+            var atk = new Fenerbahce.Core.Sim.SimStats { Pace = 80, Shooting = 90, Passing = 80, Dribbling = 80, Defending = 50, Physical = 70, Stamina = 80, SkillStars = 3, DisplayName = "Test Golcü" };
+            var f = new Fenerbahce.Core.Sim.ControlField(cfg, atk, Fenerbahce.Core.Sim.SimStats.Generic(10, "Kaleci"));
+            for (int i = 0; i < 600 && f.Machine.Phase != MatchPhase.Live; i++) f.Step(1f / 60, default(Fenerbahce.Core.Sim.PlayerInput));
+            // boş kale: kaleci yenik durumda
+            f.Keeper.Pos = new Fenerbahce.Core.Sim.Vec2(f.Pitch.HalfLength - 1f, 30f); f.Keeper.State = Fenerbahce.Core.Sim.GkState.Beaten; f.Keeper.Timer = 99f; f.Keeper.DiveSpeed = 0;
+            f.Player.Pos = new Fenerbahce.Core.Sim.Vec2(40, 0); f.Player.Facing = new Fenerbahce.Core.Sim.Vec2(1, 0);
+            f.Ball.Take(Fenerbahce.Core.Sim.ControlField.PlayerId); f.Ball.Pos = f.Player.Pos + new Fenerbahce.Core.Sim.Vec2(0.62f, 0);
+            for (int i = 0; i < 30; i++) f.Step(1f / 60, default(Fenerbahce.Core.Sim.PlayerInput)); // sahiplik süresi birikir
+            f.Step(1f / 60, new Fenerbahce.Core.Sim.PlayerInput { Shoot = true, Power = 0.7f });
+            for (int i = 0; i < 60 * 6; i++) f.Step(1f / 60, default(Fenerbahce.Core.Sim.PlayerInput));
+            var r = f.BuildResult();
+            Assert.AreEqual(f.Machine.ScoreHome, r.ScoreHome);
+            Assert.AreEqual(f.Stats.Goals, r.ScoreHome);
+            Assert.AreEqual(1, r.Scorers.Count);
+            Assert.AreEqual("Test Golcü", r.Scorers[0].Name);
+            Assert.That(r.Scorers[0].Minute, Is.InRange(0, 90));
+            Assert.AreEqual(f.Stats.Shots, r.Home.Shots); Assert.AreEqual(f.Stats.ShotsOnTarget, r.Home.ShotsOnTarget);
+            Assert.Greater(r.Home.PossessionSeconds, 0.3f);
+            Assert.AreEqual(100, r.HomePossessionPercent, "rakip topa hiç sahip olmadı");
+            Assert.IsFalse(r.RulesStatsAvailable, "faul/ofsayt bu sahada üretilmez → 0 değil 'veri yok'");
+        }
+
+        [Test]
+        public void Passes_And_Target_Passes_Feed_Pass_Accuracy()
+        {
+            var cfg = new Fenerbahce.Core.Sim.ControlFieldConfig { Seed = 3, DefenderEnabled = false };
+            var atk = new Fenerbahce.Core.Sim.SimStats { Pace = 80, Shooting = 80, Passing = 95, Dribbling = 80, Defending = 50, Physical = 70, Stamina = 80, SkillStars = 3, DisplayName = "Pasör" };
+            var f = new Fenerbahce.Core.Sim.ControlField(cfg, atk, Fenerbahce.Core.Sim.SimStats.Generic(60, "Kaleci"));
+            for (int i = 0; i < 600 && f.Machine.Phase != MatchPhase.Live; i++) f.Step(1f / 60, default(Fenerbahce.Core.Sim.PlayerInput));
+            f.Player.Pos = new Fenerbahce.Core.Sim.Vec2(12, 0); f.Player.Facing = new Fenerbahce.Core.Sim.Vec2(1, 0);
+            f.Ball.Take(Fenerbahce.Core.Sim.ControlField.PlayerId); f.Ball.Pos = f.Player.Pos + new Fenerbahce.Core.Sim.Vec2(0.62f, 0);
+            f.Step(1f / 60, new Fenerbahce.Core.Sim.PlayerInput { Move = new Fenerbahce.Core.Sim.Vec2(1, 0), Pass = true, Power = 0.5f });
+            for (int i = 0; i < 60 * 5; i++) f.Step(1f / 60, default(Fenerbahce.Core.Sim.PlayerInput));
+            var r = f.BuildResult();
+            Assert.AreEqual(1, r.Home.Passes);
+            Assert.AreEqual(f.Stats.TargetPasses, r.Home.PassesCompleted);
+            Assert.AreEqual(r.Home.PassesCompleted == 1 ? 100 : 0, r.Home.PassAccuracyPercent);
+        }
+    }
+}

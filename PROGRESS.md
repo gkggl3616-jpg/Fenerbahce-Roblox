@@ -1,5 +1,14 @@
 # PROGRESS — çalışma dilimi raporu
 
+## Dilim 2 (2026-11-16): referans incelemesi 2 + maç sonucu çekirdeği
+- **İnceleme:** kare arşivinin 2/5, 3/5, 4/5, 5/5 bölümleri (2.877 kare; sahne geçişleri tam, saniyelik kareler örneklemeli) incelendi → `docs/REFERANS_INCELEME_2.md`. Sonuç: G kodları doğrulandı, kapsam değişmedi, 8 ince ayrıntı görev notlarına eklendi. **Bölüm 1/5 gelmedi.** Bölüm 4/5 iki kez yüklenmiş (aynı SHA-256).
+- **Karar (D-019):** Unity lisansı bekleyen APK dışında, saf C#'ta doğrulanabilen kritik yol ilerler: önce maç sonucu/istatistik çekirdeği, sonra 5v5 AI → 11v11 + kurallar.
+- **Yapılan:** `MatchLog` + `MatchResultBuilder` (skor, golcüler+dakika, şut/isabetli, kurtarış, topa sahip olma, pas isabeti — yalnız olay kaydından); `ControlField` olayları kaydediyor; `ResultScreen` G46 düzeninde gösteriyor; faul/ofsayt üretilmediği için "—".
+- **Kanıt:** `dotnet test` 97/97 geçti (4 yeni test), Runtime compile-check geçti. Unity'de çalıştırılmadı.
+- **Sıradaki:** T041 (5v5 takım AI), T042–T045, T047; lisans gelince T004/T033.
+
+---
+
 ## Dilim 1 (2026-11-16): F0/F1 iskeleti + ilk top-kontrol sahası + APK iş akışı
 
 ### Somut değişiklik
