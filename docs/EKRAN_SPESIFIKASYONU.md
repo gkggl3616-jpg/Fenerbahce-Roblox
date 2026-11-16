@@ -75,3 +75,63 @@ Bunlar karar değil, öneridir; uygulanana kadar `TASKS.md` notudur.
 4. Kadro ekranında mevki rozeti kartın altında, yedekler sahanın altında; bizim `ClubScreen` yerleşimi buna yaklaşıyor ama yedekleri alta almalı.
 5. Maç HUD'unda düğme **kümesi sağ altta yay şeklinde**, büyük sprint/müdahale düğmesi en dışta; bizim `FieldHud` benzer; "OTO." için karar bekleniyor (T027).
 6. Oyuncu detayında nitelik **renk kodu** (düşük = sarı, yüksek = yeşil) ve **etkilenen oyuncular** listesi → `CollectionScreen` detayına eklenecek (T039/T056).
+
+---
+
+# Ek A — Bölüm 1/5 ve ikinci derin okuma (2026-11-16)
+
+Kapsam: kare arşivinin **5 bölümünün tamamı** (3.703 kare; 4/5 iki kez geldi, aynı dosya). Yayıncı kamerası maskelenerek ~590 benzersiz menü ekranı çıkarıldı; yeni olanların ~400'üne bakıldı, önemli olanlar 2× büyütülüp okundu. Aşağıdakiler *gözlemdir*; kural/formül değildir. Okunamayan her şey "doğrulanamadı" diye işaretlidir.
+
+## A1. Yeni hesap deneyimi ve seviye kilitleri (V01 00:00–05:40) — **önceki incelemelerde yoktu**
+- **Seviye kilidi:** Transfer Pazarı'na yeni hesapla basınca modal: başlık `TRANSFER PAZARI`, `KİLİTLİ!`, `Açmak için 10. Seviyeye Ulaş!`, tek düğme `Tamam`, sağ üstte ✕. Alt gezintide `LİGLER` ve `PAZAR` **soluk** (kilitli), `GÖREVLER` ve `MAĞAZA` canlı; `TAKAS` yeni hesapta yok.
+- **Çoklu kadro kilidi (V03 05:56):** `İLK 11'LERİ YÖNET`: üç kayıtlı plan kartı (`TAKIMIM`, ⚙ ayar, `AKTİF` etiketi, GEN + ikinci rozet, `GÖRÜNTÜLE`); kalan yuvalar kilitli: `15. Seviyeye yükseldikten sonra bu İlk 11'i Mağaza'dan satın al.` + pasif `KİLİTLİ` düğmesi.
+- **Hoş geldin hediyeleri (V01 03:12–04:29):** başlık `FC MOBİLE'A HOŞ GELDİN`; üst sekmeler `ÖZEL HEDİYELER · SANTRA · YENİ MÜCADELECİLER · YENİ TAKIMLAR · YENİ HEDEF…`; yatay kaydırmalı sanat + her seviye için **paket düğümü** (alt yazı `3. Seviyeye ulaştıktan sonra açılır`, `5.`, `8.`, `10.`); yeşil onay = alınmış, kilit = erken; düğmeye basınca sağ panel: `GARANTİ ÖDÜLLER` (`Karma Versiyon Oyuncu x1`, aralık `70-93`), `OLASI ÖDÜLLER:` 3 kart, yeşil `AL`; alınca `Hoş Geldin Paketi` açılışı (`AÇMAK İÇİN DOKUN` → `DEVAM ET`).
+- **Profil başlığı:** sol üst seviye rozeti (`8`), ad, `152/180XP` + çubuk; sağ üst: coin (`946.987 ＋`), elmas, (üçüncü kaynak), mail, ayarlar. Kayıtlı hesapta bayrak (🇹🇷) + seviye `250`, `400/50000XP`.
+- **Sol ikon rayı:** üç ikon (yıldız/bilet — kırmızı nokta, gazete/duyuru, elmas); V02'de `AKTİVİTELER`, `ÖNE ÇIKAN`, `YILDIZ BİLETİ`, +1; V03'te `GÜNLÜK GİRİŞ` ve `YILDIZ BİLETİ` etiketli.
+- **Geçiş animasyonu:** menüden maça/ekranlar arası **kulüp renginde mürekkep/patlama perdesi** (V01 kırmızı-beyaz, V04 mavi-beyaz). → bizde sarı-lacivert perde (T092, atlanabilir).
+
+## A2. Mağaza (V01 03:19–04:29, V03 05:12–10:48, V04 01:50–03:30)
+- **Sekmeler:** `ÖNERİLEN (rozet) · KURUCULAR · FC MOBİLE'A HOŞ GELDİN · CANLI ETKİNLİKLER · DIV…` (V01); `ÖNERİLEN · UCL · ETKİNLİK DÜKKANI · FIFA POINTS ve CEVHERLER` (V03); `ÖNERİLEN · FC POINTS ve CEVHERLER · TAKASLAR` (V04). Sol kategori çubuğu sekmeye göre değişir (`ÖNE ÇIKAN`, `HOŞ GELDİN TEKLİFLERİ`, `SINIRLI TEKLİF` (nokta), `KAHRAMANLAR`, `FANTEZİ`, `YILDIZ BİLETİ`; `KURUCULAR` tek kategori).
+- **Teklif kartı alanları:** başlık · limit satırı (`Satın Alma Limiti: 2`, `Günlük limit: 1`, `Haftalık Limit: 10`) · `%50 İNDİRİMLİ` başlık eki + `50% OFF` rozeti · oyuncu aralığı (`88-94`, `60-94`, `108+`) · fiyat (tek para birimli `2.000`; çift `500 / 7.500`; `1.000 / 15,0B`) · alt şerit `Kalan süre: 3 GÜN` / `01:35:11`.
+- **KURUCULAR örnekleri (V01):** `Seçkin Oyuncu Paketi 88-94 (limit 2) 2.000`, `İndirimli Oyuncu Paketi 60-94 (limit 50) 50`, `Standart Oyuncu Paketi 60-94 100`, `Hediyelik T…` ve ayakkabı kartı `50`, `İndirimli/Standart Jeton Paketi`, ve **`Rulet`, `Elastiko`, `Topuktan Topuğa` (limit 1)** adlı kalkan simgeli öğeler — adlar çalım hareketlerini andırıyor; işlevi (hareket açma mı?) **doğrulanamadı**.
+- **ÜCRETSİZ PAKET (V03 10:13):** sol turuncu kart, alt yazı **`Her 12 saatte bir yenilenir.`**, pasif `ÜCRETSİZ` düğmesi (kilit/geri sayım); sağda `PAKET İÇERİĞİ → OLASI ÖDÜLLER` (`Gümüş Oyuncu 60+ x1`, `Altın Oyuncu 70+ x1`, `Seçkin Oyuncu 80+ x1`, `Beceri Geliştiricisi x1`, `Jeton x10.000 / x5.000 / x1.000`, belirli 82 GEN kartlar) + uyarı *"Öğeler yalnızca betimleme amacıyla gösterilir, bu ögelerin hiçbiri garanti edilmez."* → ücretsiz teklif **kayan bekleme süresiyle** yenilenir (takvim günü değil).
+- **ETKİNLİK DÜKKANI (V03 10:48):** `ANTRENMAN AKTARIM DELİLERİ`, `BECERİ GELİŞTİRİCİSİ PAKETİ (20)`, `DERECE ÖĞESİ I PAKETİ`, `JETON PAKETİ 100.000 Jeton`, `EKSTRA İLK 11`; fiyatlar `60`, `120 / 300`, `240 / 600`, `400 / 1.000`, `10.000`; altta **`GÜNLÜK REKLAM TEKLİFİ (Günlük limit: 1)`** ve **`HAFTALIK REKLAM TEKLİFİ (7 günde 1 yeni satın alınabilir)`** → ödüllü reklam teklifleri mağazada, günlük/haftalık limitle.
+- **Gerçek para (V03 05:33):** `FIFA POINTS ve CEVHERLER`: `150 / 500 / 1.050 / 2.200 / 5.750 / 12.000 FIFA POINTS` ve ₺ fiyatlar. **Bizde MVP'de gerçek para yok** (T097, F7).
+- **Paket açılış sahneleri:** `AÇMAK İÇİN DOKUN` → paket kabarma/küre → **bayrak → mevki kısaltması (`MOO`, `KL`, `SNT`, `MDO`) → program rozeti (ikon kalkanı, vb.) → kart** sahnesi. Sahne temaya göre değişir: *Numero* tüneli (renk nadirliğe göre mavi/sarı/mor), *Ballon d'Or* (altın top, kristal, bayrak topun üstünde), *altın salon/şampiyon*, *EURO* (renkli şerit + bayrak) ve *Copa* (altın tünel). Kartın sahne ışığı nadirliğe göre değişir (mavi→turuncu). `DEVAM ET`; çoklu açılışta **özet ızgarası**: `Jeton x1.000.000`, her kartın altında `Şu Anki Değer`, ve düşük kartlar **tek satırda toplanır** (`BRONZ OYUNCU x4`, `x10`) → `DEVAM ET`. `Bonus Satılamayan Oyuncu` ayrı sahne + `TEKRAR İZLE`.
+
+## A3. Kadro ve takım düzeni
+- **Takım Düzenleme sekmeleri (V01 02:59, V03 05:54):** `DİZİLİŞLER · ROLLER · BECERİ HAREKETLERİ · İLK 11'LER`.
+- **Diziliş seçici:** başlık = diziliş adı + stil (`4-4-2 Düz`) + etiketler (`Defansif`, `Önerilen`); sağda mini saha kartları ızgarası: `4-3-3 Atak`, `4-4-2 Düz`(seçili çerçeveli), `4-2-3-1 Dar`, `4-1-4-1`, `5-2-2-1`, `4-1-2-1-2 Dar`, `4-5-1`, `4-2-2-2`, (V03) `4-3-3`, `3-4-3 Düz`, `3-4-2-1`; `SEÇ` düğmesi (seçiliyken pasif). V03 modalında her mini kartta **iki rozet** (GEN ve `90`; ikincinin anlamı **doğrulanamadı**).
+- **Roller = Duran Top (V03 05:45):** 6 kutu: `KAPTAN`, `YAKIN SERBEST VURUŞ`, `UZAK SERBEST VURUŞ`, `SOLDAN KORNER`, `SAĞDAN KORNER`, `PENALTILAR`; her kutuda seçili oyuncu kartı (dokununca değişir), sol altta ⓘ, sağ altta `VARSAYILAN`.
+- **Takımım (V02 02:05, V03 05:54):** sol panel: plan seçici açılır, arma, GEN (`125`), takım değeri (`117.570.000.000`), 3 rozet, diziliş adı (`4-2-4`, `4-3-3 1 OMS`), `OYUN PLANLARI`, `OTOMATİK KUR`; sağ üstte iki yuvarlak düğme (saha/sosyal); **alt şeritte 6–7 boş yedek yuvası (`+`)** ve sağ altta **`Oto. oyc. değişikliği ⓘ` anahtarı** (otomatik oyuncu değişikliği).
+- **Oyuncu detayı ek alanları:** `POZİSYON BONUSU` satırları (`MF +10 GEN`, `SLF, SĞF +10 GEN`, `MOO, SNT +9 GEN`) ve `OYUNCU KARTI` bağlantı tablosu (`Juventus 2`, `Serie A TİM 4`, `İtalya 3`, `İkonlar 2`) — **bağlantı/kimya benzeri sayaç; kuralı doğrulanamadı**, bizim kapsamda yok (D-026).
+
+## A4. Maça giriş ve maç (V01 04:40–15:00, V04 08:50–13:20)
+- **Eşleşme/Maç hazırlığı (V01 05:42, V04 08:52):** sol `EV SAHİBİ` panel (oyuncu adı + oynat simgesi, arma), sağ `DEPLASMAN`; ortada `V` rozeti, her iki yanda **kupa sayısı + derece adı** (`10.200 Kupa AMATÖR III` ↔ `200 Kupa YOK`; `319.000 PRO I` ↔ `290.900 PRO II`); altında üç yatay çubuk **`ATAK` / `ORTA SAHA` / `DEFANS`** (`89–64`, `74–78`, `79–68`); sol altta **`İndiriliyor... (%100) Oyun kaynakları yükleniyor...`** ilerleme.
+- **Eşleşme bekleme (V01 05:39):** `RAKİP BEKLENİYOR`, rakip adı, `LİG YOK`, `GEN 69 | SVY 8`, `kadroların maç davetini kabul etmesi bekleniyor...`, `İPTAL` (+ geri sayım).
+- **Kadro tanıtımı (V01 05:54–05:59):** iki takımın 11'i saha üzerinde (takım adı + `GEN 80`, diziliş etiketi), sonra tünel/sıra yürüyüşü, oyuncu sıralanması, **geri sayım `3`** ve iki takım armalı perde (oynat okuyla) → santra.
+- **HUD şeridi:** sol üst: yeşil **süre kutusu**, takım kısa adı, **skor kutusu**, rakip kısa ad; **uzatma süresi göstergesi `+2`** (V01 10:48). Gol anı: şerit `GOL` + golcü adı + dakika (`Moukoko 36'`) + oyuncu kartı küçük resmi. Kornerde alt ortada ipucu: **`Köşe vuruşu için oyuncuya dokun.`**
+- **Maç sonu:** `MAÇ SONU` + oyuncu adları, havai fişek, sonra sonuç tablosu (bkz. §13); sonuç tablosunda kupa/derece, golcü listesi (`6' Hayashi GOL`), `DEVAM ET`.
+
+## A5. Pazar ve oyuncu arama
+- **Arama penceresi (V02 03:50):** `ARAMA` + ✕; satırlar: `OYUNCU ADI` (metin + 🗑), `GENEL REYTİNG` (`DK` / `MAKS.` + 🗑), `PROGRAM` (`HERHANGİ` + ✎) ve en az iki satır daha (okunamadı: büyük olasılıkla mevki/ülke/lig/kulüp — **doğrulanamadı**); altta `…SIFIRLA` ve `ARAMA`.
+- **Program seç (V02 03:53):** `PROGRAM SEÇ` + ◀; 4 sütun simge ızgarası: `İkonlar`, `Kahramanlar`, `Klasik`, `POTM 27 EPL`, `POTM 27 LALIGA`, `POTM 27 SERIE A`, `POTM 27 BUNDESLIGA`, `Street Stars`, …; `SIFIRLA` / `KAYDET`.
+- **SAT penceresi (V04 14:08):** kart, **fiyat grafiği** (tarih ekseni `26/5, 3/6, 10, 18, 25`, tepe/dip etiketleri `41.400.000 / 27.600.000`), tablo `Satış Miktarı | Değer | …`, `En Düşük Değer`, `En Yüksek Değer`, **`Satış Fiyatı` düzenlenebilir alan**, ipucu *"Nihai ücretten %10 komisyon alınacak."*, mavi `SAT`.
+
+## A6. Oyna merkezi (V02 09:13) ve etkinlikler
+- **Oyna merkezi:** 4 sütun kart, her birinde renkli üst şerit: kırmızı `OYNA` (etkinlik/Ballon d'Or), mavi **`OYUNCUYA KARŞI`** → `TEKE TEK` (`FC ŞAMPİYONU` rozeti, `5 Gün`), kırmızı `OYNA` → `FUTBOL MERKEZİ`, yeşil **`YZ'YE KARŞI`** → `GÖREV MODU` (`04:21:08`), açık mavi **`ARKADAŞLARA KARŞI`** → `HIZLI MAÇ`. Üst sağ: etkinlik rozeti (`66`), top, sepet, ev. Alt sekmeler: `…RIVALS (YENİ) · CANLI ETKİNLİKLER (YENİ) · GÜNLÜKLER · FUTBOL MERKEZİ`.
+- **Etkinlik listesi (V03 00:51):** poster kartlar; başlık + alt başlık + alt şerit `KALAN SÜRE: 3 GÜN / 45 GÜN / 122 GÜN / 10 GÜN`; örnekler (referans adları, bizim değil): `FANTEZİ BİLETİ`, `KAHRAMAN SERÜVENİ 23`, `TOTW`, `Turnuva`, `LİG TURU (Her gün 1 yeni ligle yenilenir!)`, `GÜNLÜK ANTRENMAN (Normal Mücadele)`, `İKON SERÜVENİ`.
+- **Etkinlik haritası sekmeleri (V03 01:25–01:30):** `ANA · ÖDÜL YOLU · OYUNCU TAKASI · YARI FİNAL`. *Yarı Final*: `YARI FİNAL YOLU 1 / 2`, iki yolun ortasında **`VS` ile iki ödül oyuncu kartı** (yol seçimi) ve düğüm sütunları. *Ana*: `ÖNEMLİ AŞAMA` büyük ödül kartı (`UCL Oyuncusu x1`, `TAMAMLANDI`) + `BECERİ OYUNU/MAÇLAR` düğümleri sayaçlarıyla (`1/1`, `0/1`, `2/1`…), sol üstte etkinlik kaynakları (`260`, `44`, `2`).
+- **Yıldız Bileti (V01 14:00 civarı, V03):** ödül kartı + `PREMIUM`, `Sezon Sonu: 30 Gün`, seviye + `2019/2100` XP; şerit ortasında seviye elması (`5,6,7,8,81,9`), mevcut seviye yeşil dolu; her seviyede üst (premium) ve alt (ücretsiz) ödül; alınmışlar yeşil onaylı; `TÜMÜNÜ TOPLA`.
+
+## A7. Bu okumanın bize söylediği (tasarım çıkarımı → plan)
+1. **Seviye kilitleri bir sistemdir** (özellik × gereken seviye); kilitli sekme soluk görünür, basınca modal çıkar. → `FeatureGates` (T010/T012).
+2. **Çoklu kadro kilidi seviye + mağaza satın alma** ile açılır (T038).
+3. **Ücretsiz paket kayan bekleme süresiyle** yenilenir (`12 saat`) — D-025'teki "ücretsiz teklif limitli olmalı" kuralı *bekleme süresi* ile de sağlanabilir → `LimitPeriod.Cooldown` (T065).
+4. **Reklam teklifleri mağaza teklifidir** (günlük/haftalık limit) (T099).
+5. **Uzatma süresi** gösterilir (`+2`) → `MatchStateMachine`'e eklenmeli (T043).
+6. **Maç hazırlığı ekranı:** ATAK/ORTA SAHA/DEFANS değerleri kadrodan hesaplanır (T046); maç öncesi **kaynak yükleme çubuğu** (T014).
+7. **Otomatik oyuncu değişikliği** ayarı (T038/T088).
+8. **Diziliş sayısı geniş** (≥12) ve **stil sonekleri** var; bizde 3'ü başlangıç (D-012), genişleme açık.
+9. **Paket özet ekranı düşük kartları toplar** ("BRONZ OYUNCU x10") → T069.
+10. **Arama = ad + GEN aralığı + program + (okunamayan satırlar)** → T039/T077.

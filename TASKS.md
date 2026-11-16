@@ -62,6 +62,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Ana merkezden her modüle gidiş ve geri çalışır
   - Kanıt kodu: G03 · Bağımlılık: T009 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: ScreenManager: geçmiş yığını, GoRoot/Push/Back, Android geri tuşu. Çalıştırılmadı.
+  - Sıradaki: Seviye kilidi sistemi: özellik×seviye (FeatureGates), kilitli sekme soluk + 'KİLİTLİ! Açmak için N. Seviyeye Ulaş!' modalı (referans V01 02:31) — PLAN S4
 - [~] **T011 · P0 · UI** — Ana merkez ve kampanya vitrini
   - Kabul: Veri değişince afiş ve hedef ekran değişir
   - Kanıt kodu: G01,G04 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
@@ -70,6 +71,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Alınmış ödül rozeti kaldırır
   - Kanıt kodu: G05 · Bağımlılık: T011 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: Kulüp rozeti kadro doğrulama hatasına bağlı (GameApp.SquadErrorCount). Alınabilir ödül rozeti yok (ödül sistemi yok).
+  - Sıradaki: Bildirim noktaları + günlük giriş; kilitli sekme görünümü — PLAN S4
 - [~] **T013 · P0 · UI** — Kulüp merkezi
   - Kabul: Kadro/koleksiyon/forma/arma girişleri açılır
   - Kanıt kodu: G06 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
@@ -78,6 +80,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Bağlantı hatası beyaz/ölü ekran bırakmaz
   - Kanıt kodu: G74 · Bağımlılık: T010 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: GameApp.ShowBootError: hata + TEKRAR DENE + yedekle-sıfırla; boş koleksiyon durumu var. Ağ hatası durumu yok (ağ yok).
+  - Sıradaki: Maç öncesi kaynak yükleme çubuğu ('Oyun kaynakları yükleniyor %88') — PLAN S10b
 - [~] **T015 · P1 · UI** — Profil/ayarlar ve kontrol tercihleri
   - Kabul: Tercihler yeniden başlatınca korunur
   - Kanıt kodu: TEKNIK · Bağımlılık: T010 · Durum: **IN_PROGRESS**
@@ -171,6 +174,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: 4-4-2/4-3-3/4-2-3-1 ile slotlar doğru
   - Kanıt kodu: G09 · Bağımlılık: T034 · Durum: **DONE**
   - Doğrulama/Not: Formations 4-4-2/4-3-3/4-2-3-1 + PositionFit; SquadTests geçti.
+  - Sıradaki: Diziliş içeriği ≥12 + stil soneki (Atak/Düz/Dar/Geniş) + Defansif/Önerilen etiketi; 3 başlangıç korunur — PLAN S4
 - [x] **T036 · P0 · Kadro** — Otomatik kur ve kilitli seçimler
   - Kabul: Geçerli kadro üretir; tercihi ihlal etmez
   - Kanıt kodu: G10 · Bağımlılık: T035 · Durum: **DONE**
@@ -183,10 +187,12 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Plan değişimi kalıcı; görevli sahada
   - Kanıt kodu: G12,G13 · Bağımlılık: T037 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: Kaptan/penaltı/serbest vuruş/korner rol ataması AutoPicker'da var; çoklu plan ve rol UI'ı yok.
+  - Sıradaki: 6 rol (Kaptan, Yakın/Uzak SV, Sol/Sağ Korner, Penaltı)+VARSAYILAN; 3 kayıtlı plan (15. seviye+mağaza kilidi); 'Oto. oyc. değişikliği' ayarı — PLAN S4
 - [~] **T039 · P0 · Koleksiyon** — Arama/filtre/sıralama/detay
   - Kabul: Doğru kartlar döner ve boş sonuç görünür
   - Kanıt kodu: G14,G16,G17 · Bağımlılık: T018 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: CollectionScreen: arama (TextFold testli), grup filtresi, GEN sıralama, detay, 100'lük katalog sekmesi. Çalıştırılmadı.
+  - Sıradaki: Arama penceresi: ad + GEN aralığı + program seçici (+referansta okunamayan satırlar); SIFIRLA/ARAMA — PLAN S8/S10b
 - [~] **T040 · P1 · Koleksiyon** — Kilitleme ve karşılaştır
   - Kabul: Kilit tüketimi engeller; farklar doğru
   - Kanıt kodu: G18,G19 · Bağımlılık: T039 · Durum: **IN_PROGRESS**
@@ -194,26 +200,32 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T041 · P0 · AI** — Destek koşusu ve savunma yerleşimi
   - Kabul: 5v5 denemede takımlar pozisyon alır
   - Kanıt kodu: G41 · Bağımlılık: T024,T026 · Durum: **TODO**
+  - Sıradaki: PLAN S1: 5v5 takım AI + oyuncu değiştirme; yayılım/yığılma metrikleri; headless sim
 - [ ] **T042 · P0 · AI** — Kaleci ve 11v11 takım AI
   - Kabul: Kaleci/savunma/hücum birlikte çalışır
   - Kanıt kodu: G41 · Bağımlılık: T041 · Durum: **TODO**
+  - Sıradaki: PLAN S2: 11v11 + kaleci; headless hız ≥30× gerçek zaman (CI ölçer)
 - [~] **T043 · P0 · Maç** — Durum makinesi ve maç saati
   - Kabul: Santra/devre/bitiş sırası bozulmaz
   - Kanıt kodu: G38 · Bağımlılık: T042 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor.
+  - Sıradaki: PLAN S2/S3: uzatma süresi (+N) göstergesi; devre arası; süre kutusu
 - [ ] **T044 · P0 · Maç** — Faul/ofsayt/taç/korner/gol kuralları
   - Kabul: Olaylar tek kez ve doğru takıma yazılır
   - Kanıt kodu: G45,G46 · Bağımlılık: T043 · Durum: **TODO**
+  - Sıradaki: PLAN S2: aut/taç/kale vuruşu/korner/faul+sarı/ofsayt; korner ipucu 'oyuncuya dokun'
 - [ ] **T045 · P0 · Maç** — Penaltı/serbest vuruş
   - Kabul: Duran top ve canlı kontrol arasında geçer
   - Kanıt kodu: G44 · Bağımlılık: T044 · Durum: **TODO**
 - [ ] **T046 · P1 · Sunum** — Maç girişi ve kadro karşılaştırma
   - Kabul: Atlanabilir sunum maçı başlatır
   - Kanıt kodu: G31,G32 · Bağımlılık: T043 · Durum: **TODO**
+  - Sıradaki: PLAN S3: maç hazırlığı ATAK/ORTA SAHA/DEFANS hat gücü + kupa/derece + kadro tanıtımı/tünel/geri sayım (atlanabilir)
 - [~] **T047 · P0 · Maç** — Gol/kutlama/tekrar
   - Kabul: Tekrar skoru veya ödülü artırmaz
   - Kanıt kodu: G42,G43 · Bağımlılık: T044 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: Gol → kutlama durumu, kontrol kilidi, tek gol testli. Tekrar sistemi YOK (Replay durumu atlanıyor).
+  - Sıradaki: PLAN S3: son N sn konum kaydı (tekrar verisi); gol şeridi golcü+dakika
 - [~] **T048 · P0 · Maç** — Sonuç istatistikleri ve ödül
   - Kabul: İstatistikler olay kaydından türetilir
   - Kanıt kodu: G46 · Bağımlılık: T044 · Durum: **IN_PROGRESS**
@@ -245,6 +257,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T054 · P1 · Gelişim** — Antrenman aktarımı
   - Kabul: Kaynak/hedef ve maliyet doğrulanır
   - Kanıt kodu: G21 · Bağımlılık: T053 · Durum: **TODO**
+  - Sıradaki: Takasta antrenman seviyesi aktarılmaz uyarısı (EXCHANGE: TRAINING_LEVEL_LOST uyarısı kodlandı)
 - [ ] **T055 · P0 · Gelişim** — Derece yükseltme kuralları
   - Kabul: Başarı/başarısızlık tasarımı açık ve kayıtlı
   - Kanıt kodu: G22 · Bağımlılık: T053 · Durum: **TODO**
@@ -252,10 +265,12 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T056 · P0 · Gelişim** — Kalıcı skill puanı sistemi
   - Kabul: Nitelik değişimi kaydedilir; çalımdan ayrıdır
   - Kanıt kodu: G25,G26,G27 · Bağımlılık: T055 · Durum: **TODO**
+  - Sıradaki: POZİSYON BONUSU (+N GEN) ve ETKİLENEN OYUNCULAR listesi — PLAN S5
 - [~] **T057 · P0 · Skill** — Dört çalım ve slot uygunluğu
   - Kabul: Yıldız/pozisyon şartı ve cooldown çalışır
   - Kanıt kodu: G23,G24 · Bağımlılık: T031,T039 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: 4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok.
+  - Sıradaki: 4 çalım slotu + jest oku + 'N Oyuncu' + Etkinleştirildi anahtarı — PLAN S5
 - [ ] **T058 · P1 · Skill** — Önizleme ve dene sahası
   - Kabul: Her çalım için açıklama ve deneme var
   - Kanıt kodu: G24 · Bağımlılık: T057 · Durum: **TODO**
@@ -265,22 +280,26 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T060 · P0 · Etkinlik** — Düğüm/önkoşul/ödül haritası
   - Kabul: Kilitli düğüme girilmez; ilerleme korunur
   - Kanıt kodu: G49 · Bağımlılık: T059 · Durum: **TODO**
+  - Sıradaki: Yarı Final yol seçimi (VS iki ödül kartı), ANA/ÖDÜL YOLU/OYUNCU TAKASI sekmeleri, düğüm sayaçları — PLAN S7
 - [ ] **T061 · P0 · Etkinlik** — Pas/şut/skill mini eğitimleri
   - Kabul: Hedef ve skor koşulu tamamlanabilir
   - Kanıt kodu: G49 · Bağımlılık: T057,T060 · Durum: **TODO**
 - [ ] **T062 · P0 · Görev** — Günlük/haftalık olay tabanlı görev
   - Kabul: Aynı maç olayı iki kez ilerletmez
   - Kanıt kodu: G51,G52 · Bağımlılık: T048,T059 · Durum: **TODO**
+  - Sıradaki: Günlük/haftalık milestone ödülü (100/100 → AL) — PLAN S7
 - [ ] **T063 · P0 · Görev** — Ödül alma ve reset
   - Kabul: Tek claim; cihaz saatiyle reset olmaz
   - Kanıt kodu: G51 · Bağımlılık: T050,T062 · Durum: **TODO**
 - [ ] **T064 · P1 · Etkinlik** — Taraftar Merkezi/TOTW/POTM
   - Kabul: Sekmeler ve puan harcama tutarlı
   - Kanıt kodu: G53,G54 · Bağımlılık: T060 · Durum: **TODO**
+  - Sıradaki: Etkinlik dükkanı (etkinlik puanıyla teklifler, 'Yenilenme: N Gün') — PLAN S7
 - [~] **T065 · P0 · Mağaza** — Teklif katalog/kategori/fiyat/limit
   - Kabul: Yetersiz bakiye ve limit doğru
   - Kanıt kodu: G57,G58,G59 · Bağımlılık: T050 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: Core/Store: OfferDefinition (günlük/haftalık/toplam limit, çift para birimi, süre, kilit koşulu, ücretsiz), StoreService.Purchase (adet, atomik, idempotent, UTC sunucu saati); offers.v1.json. StoreTests geçti (limit sıfırlama, kilit, yetersiz bakiye, adet). Mağaza UI'ı yok; rastgele paket (T066) yok.
+  - Sıradaki: LimitPeriod.Cooldown: ücretsiz paket 'her 12 saatte bir yenilenir' (kayan bekleme); '%N İNDİRİMLİ' = içerik etiketi (hesap yok) — PLAN S6
 - [ ] **T066 · P0 · Paket** — Drop table ve garanti sayaç sözleşmesi
   - Kabul: Olasılık toplamı 1; sürüm sabitlenir
   - Kanıt kodu: G58 · Bağımlılık: T065 · Durum: **TODO**
@@ -291,9 +310,11 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T068 · P0 · Paket** — Özgün walkout/atla/toplu aç
   - Kabul: Animasyon sonucu değiştirmez
   - Kanıt kodu: G62,G63 · Bağımlılık: T067 · Durum: **TODO**
+  - Sıradaki: Sahne dizisi: bayrak→mevki→program rozeti→kart; ≥3 sahne şablonu (nadirliğe göre renk) — PLAN S6/S10b
 - [ ] **T069 · P0 · Paket** — Sonuç/tekrar izle/devam
   - Kabul: Envanter ile gösterilen kartlar eşleşir
   - Kanıt kodu: G64 · Bağımlılık: T068 · Durum: **TODO**
+  - Sıradaki: Paket özeti: düşük kartlar tek satırda toplanır ('BRONZ OYUNCU x10'); TEKRAR İZLE — PLAN S6
 - [ ] **T070 · P0 · Bilet** — Ücretsiz/premium ödül yolları
   - Kabul: XP eşiği ve entitlement ayrı doğrulanır
   - Kanıt kodu: G55,G56 · Bağımlılık: T062,T050 · Durum: **TODO**
@@ -324,6 +345,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T077 · P0 · Pazar** — Katalog/arama/filtre/takip
   - Kabul: Oyuncu adına/GEN/programa göre bulur
   - Kanıt kodu: G69,G70 · Bağımlılık: T039,T050 · Durum: **TODO**
+  - Sıradaki: Pazar arama + SAT penceresi (fiyat grafiği, düzenlenebilir fiyat, yapılandırılabilir komisyon) — PLAN S8
 - [ ] **T078 · P0 · Pazar** — Emir/emanet/fiyat sınırı
   - Kabul: Satışa konmuş kart maçta/takasta harcanmaz
   - Kanıt kodu: G71 · Bağımlılık: T077 · Durum: **TODO**
@@ -399,6 +421,7 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T099 · P1 · Reklam** — Ödüllü reklam ve limitler
   - Kabul: Doğrulanmış gösterim tek ödül verir
   - Kanıt kodu: G50 · Bağımlılık: T063 · Durum: **TODO**
+  - Sıradaki: Reklam teklifi mağazada: günlük/haftalık limit ('7 günde 1'); doğrulanmış gösterim tek ödül — PLAN S6
 - [ ] **T100 · P0 · Hesap** — Bağlama/kurtarma/destek akışları
   - Kabul: Hesap değişiminde envanter karışmaz
   - Kanıt kodu: TEKNIK · Bağımlılık: T049,T095 · Durum: **TODO**

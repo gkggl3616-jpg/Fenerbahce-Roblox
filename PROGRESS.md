@@ -1,5 +1,14 @@
 # PROGRESS — çalışma dilimi raporu
 
+## Dilim 4 (2026-11-16): beş bölümün tamamı okundu → plan
+- **Girdi:** kare arşivi **5/5 bölüm** (1/5 bu turda geldi; 4/5 iki kez geldi). Yayıncı kamerası maskelenerek ~590 benzersiz menü ekranı çıkarıldı; yeni olanların ~400'üne bakıldı, önemli ~20'si 2× okundu.
+- **Çıktı:** `docs/EKRAN_SPESIFIKASYONU.md` **Ek A** (yeni hesap/seviye kilitleri, mağaza ayrıntıları, paket sahneleri, kadro/roller, maça giriş, pazar arama/SAT, Oyna merkezi, etkinlik haritası, bilet) ve **`docs/PLAN.md`** (kapsam eşlemesi, engeller, S0–S13 dilimleri, Kapı A ölçütleri, test stratejisi, riskler).
+- **Karar:** D-026..D-030 (kimya/VALUE% kapsam dışı, plan sırası, Cooldown teklif, seviye kilitleri, diziliş genişlemesi). 104 görev kimliği korunuyor; 25 göreve plan notu eklendi.
+- **Kod değişmedi** (bu dilim yalnız analiz + plan); test sayısı 122.
+- **Sıradaki:** S1 — 5v5 takım AI + oyuncu değiştirme (T041, T026). Sizden: Unity lisans sırları + cihaz listesi.
+
+---
+
 ## Dilim 3 (2026-11-16): derin kare okuması → ekran spesifikasyonu + mağaza/takas çekirdeği
 - **Neden:** ilk inceleme özet sayfalarıyla (12–20 sn örnekleme) yapılmıştı ve çoğunlukla "G kodları doğrulandı" çıkmıştı. Bu dilimde ~35 anahtar kare **2× büyütülüp tek tek okundu** (mağaza, paket, takas, derece yükselt, kadro, pazar, sonuç, etkinlik haritası, görevler, modlar, Teke Tek, taktik, sezon bileti, beceriler, oyuncu detayı, beceri geliştirici, antrenman, Futbol Merkezi, maç HUD'u, arkadaşlar).
 - **Çıktı:** `docs/EKRAN_SPESIFIKASYONU.md` — ekran ekran tam Türkçe etiketler, alan listeleri, durumlar, limit/süre kuralları, sayı/süre biçimleri.

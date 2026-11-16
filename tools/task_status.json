@@ -41,7 +41,8 @@
   },
   "T010": {
     "status": "IN_PROGRESS",
-    "evidence": "ScreenManager: geçmiş yığını, GoRoot/Push/Back, Android geri tuşu. Çalıştırılmadı."
+    "evidence": "ScreenManager: geçmiş yığını, GoRoot/Push/Back, Android geri tuşu. Çalıştırılmadı.",
+    "next": "Seviye kilidi sistemi: özellik×seviye (FeatureGates), kilitli sekme soluk + 'KİLİTLİ! Açmak için N. Seviyeye Ulaş!' modalı (referans V01 02:31) — PLAN S4"
   },
   "T011": {
     "status": "IN_PROGRESS",
@@ -49,7 +50,8 @@
   },
   "T012": {
     "status": "IN_PROGRESS",
-    "evidence": "Kulüp rozeti kadro doğrulama hatasına bağlı (GameApp.SquadErrorCount). Alınabilir ödül rozeti yok (ödül sistemi yok)."
+    "evidence": "Kulüp rozeti kadro doğrulama hatasına bağlı (GameApp.SquadErrorCount). Alınabilir ödül rozeti yok (ödül sistemi yok).",
+    "next": "Bildirim noktaları + günlük giriş; kilitli sekme görünümü — PLAN S4"
   },
   "T013": {
     "status": "IN_PROGRESS",
@@ -57,7 +59,8 @@
   },
   "T014": {
     "status": "IN_PROGRESS",
-    "evidence": "GameApp.ShowBootError: hata + TEKRAR DENE + yedekle-sıfırla; boş koleksiyon durumu var. Ağ hatası durumu yok (ağ yok)."
+    "evidence": "GameApp.ShowBootError: hata + TEKRAR DENE + yedekle-sıfırla; boş koleksiyon durumu var. Ağ hatası durumu yok (ağ yok).",
+    "next": "Maç öncesi kaynak yükleme çubuğu ('Oyun kaynakları yükleniyor %88') — PLAN S10b"
   },
   "T015": {
     "status": "IN_PROGRESS",
@@ -145,7 +148,8 @@
   },
   "T035": {
     "status": "DONE",
-    "evidence": "Formations 4-4-2/4-3-3/4-2-3-1 + PositionFit; SquadTests geçti."
+    "evidence": "Formations 4-4-2/4-3-3/4-2-3-1 + PositionFit; SquadTests geçti.",
+    "next": "Diziliş içeriği ≥12 + stil soneki (Atak/Düz/Dar/Geniş) + Defansif/Önerilen etiketi; 3 başlangıç korunur — PLAN S4"
   },
   "T036": {
     "status": "DONE",
@@ -157,11 +161,13 @@
   },
   "T038": {
     "status": "IN_PROGRESS",
-    "evidence": "Kaptan/penaltı/serbest vuruş/korner rol ataması AutoPicker'da var; çoklu plan ve rol UI'ı yok."
+    "evidence": "Kaptan/penaltı/serbest vuruş/korner rol ataması AutoPicker'da var; çoklu plan ve rol UI'ı yok.",
+    "next": "6 rol (Kaptan, Yakın/Uzak SV, Sol/Sağ Korner, Penaltı)+VARSAYILAN; 3 kayıtlı plan (15. seviye+mağaza kilidi); 'Oto. oyc. değişikliği' ayarı — PLAN S4"
   },
   "T039": {
     "status": "IN_PROGRESS",
-    "evidence": "CollectionScreen: arama (TextFold testli), grup filtresi, GEN sıralama, detay, 100'lük katalog sekmesi. Çalıştırılmadı."
+    "evidence": "CollectionScreen: arama (TextFold testli), grup filtresi, GEN sıralama, detay, 100'lük katalog sekmesi. Çalıştırılmadı.",
+    "next": "Arama penceresi: ad + GEN aralığı + program seçici (+referansta okunamayan satırlar); SIFIRLA/ARAMA — PLAN S8/S10b"
   },
   "T040": {
     "status": "IN_PROGRESS",
@@ -169,11 +175,13 @@
   },
   "T043": {
     "status": "IN_PROGRESS",
-    "evidence": "MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor."
+    "evidence": "MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor.",
+    "next": "PLAN S2/S3: uzatma süresi (+N) göstergesi; devre arası; süre kutusu"
   },
   "T047": {
     "status": "IN_PROGRESS",
-    "evidence": "Gol → kutlama durumu, kontrol kilidi, tek gol testli. Tekrar sistemi YOK (Replay durumu atlanıyor)."
+    "evidence": "Gol → kutlama durumu, kontrol kilidi, tek gol testli. Tekrar sistemi YOK (Replay durumu atlanıyor).",
+    "next": "PLAN S3: son N sn konum kaydı (tekrar verisi); gol şeridi golcü+dakika"
   },
   "T048": {
     "status": "IN_PROGRESS",
@@ -195,7 +203,8 @@
   },
   "T057": {
     "status": "IN_PROGRESS",
-    "evidence": "4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok."
+    "evidence": "4 SkillMove tanımı (min yıldız, cooldown); yalnız 1'i uygulandı, slot/donatım yok.",
+    "next": "4 çalım slotu + jest oku + 'N Oyuncu' + Etkinleştirildi anahtarı — PLAN S5"
   },
   "T053": {
     "status": "TODO",
@@ -228,10 +237,63 @@
   },
   "T065": {
     "status": "IN_PROGRESS",
-    "evidence": "Core/Store: OfferDefinition (günlük/haftalık/toplam limit, çift para birimi, süre, kilit koşulu, ücretsiz), StoreService.Purchase (adet, atomik, idempotent, UTC sunucu saati); offers.v1.json. StoreTests geçti (limit sıfırlama, kilit, yetersiz bakiye, adet). Mağaza UI'ı yok; rastgele paket (T066) yok."
+    "evidence": "Core/Store: OfferDefinition (günlük/haftalık/toplam limit, çift para birimi, süre, kilit koşulu, ücretsiz), StoreService.Purchase (adet, atomik, idempotent, UTC sunucu saati); offers.v1.json. StoreTests geçti (limit sıfırlama, kilit, yetersiz bakiye, adet). Mağaza UI'ı yok; rastgele paket (T066) yok.",
+    "next": "LimitPeriod.Cooldown: ücretsiz paket 'her 12 saatte bir yenilenir' (kayan bekleme); '%N İNDİRİMLİ' = içerik etiketi (hesap yok) — PLAN S6"
   },
   "T073": {
     "status": "IN_PROGRESS",
     "evidence": "ExchangeService.Execute: kartlar tüketilir + ödül verilir + sayaç artar TEK atomik işlemde (EconomyService.ApplyBundle); aynı anahtar çifte ödül vermez; geçersiz ödül hiçbir şey tüketmez (testli). Paket ödülü (T067) bağımlılığı açık."
+  },
+  "T041": {
+    "status": "TODO",
+    "next": "PLAN S1: 5v5 takım AI + oyuncu değiştirme; yayılım/yığılma metrikleri; headless sim"
+  },
+  "T042": {
+    "status": "TODO",
+    "next": "PLAN S2: 11v11 + kaleci; headless hız ≥30× gerçek zaman (CI ölçer)"
+  },
+  "T044": {
+    "status": "TODO",
+    "next": "PLAN S2: aut/taç/kale vuruşu/korner/faul+sarı/ofsayt; korner ipucu 'oyuncuya dokun'"
+  },
+  "T046": {
+    "status": "TODO",
+    "next": "PLAN S3: maç hazırlığı ATAK/ORTA SAHA/DEFANS hat gücü + kupa/derece + kadro tanıtımı/tünel/geri sayım (atlanabilir)"
+  },
+  "T069": {
+    "status": "TODO",
+    "next": "Paket özeti: düşük kartlar tek satırda toplanır ('BRONZ OYUNCU x10'); TEKRAR İZLE — PLAN S6"
+  },
+  "T068": {
+    "status": "TODO",
+    "next": "Sahne dizisi: bayrak→mevki→program rozeti→kart; ≥3 sahne şablonu (nadirliğe göre renk) — PLAN S6/S10b"
+  },
+  "T064": {
+    "status": "TODO",
+    "next": "Etkinlik dükkanı (etkinlik puanıyla teklifler, 'Yenilenme: N Gün') — PLAN S7"
+  },
+  "T060": {
+    "status": "TODO",
+    "next": "Yarı Final yol seçimi (VS iki ödül kartı), ANA/ÖDÜL YOLU/OYUNCU TAKASI sekmeleri, düğüm sayaçları — PLAN S7"
+  },
+  "T062": {
+    "status": "TODO",
+    "next": "Günlük/haftalık milestone ödülü (100/100 → AL) — PLAN S7"
+  },
+  "T077": {
+    "status": "TODO",
+    "next": "Pazar arama + SAT penceresi (fiyat grafiği, düzenlenebilir fiyat, yapılandırılabilir komisyon) — PLAN S8"
+  },
+  "T099": {
+    "status": "TODO",
+    "next": "Reklam teklifi mağazada: günlük/haftalık limit ('7 günde 1'); doğrulanmış gösterim tek ödül — PLAN S6"
+  },
+  "T056": {
+    "status": "TODO",
+    "next": "POZİSYON BONUSU (+N GEN) ve ETKİLENEN OYUNCULAR listesi — PLAN S5"
+  },
+  "T054": {
+    "status": "TODO",
+    "next": "Takasta antrenman seviyesi aktarılmaz uyarısı (EXCHANGE: TRAINING_LEVEL_LOST uyarısı kodlandı)"
   }
 }
