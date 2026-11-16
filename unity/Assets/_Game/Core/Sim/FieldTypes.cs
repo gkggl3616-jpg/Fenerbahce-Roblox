@@ -16,6 +16,16 @@ namespace Fenerbahce.Core.Sim
         /// <summary>-1 = sola, +1 = sağa, 0 = yok. Beceri düğmesi kaydırma yönü (Yön Değiştirme).</summary>
         public int SkillDirection;
         public bool Slide;
+        /// <summary>UZAKLAŞTIR: topu rakip yarı sahaya doğru uzağa vurur (savunma bölgesinde ŞUT yerine).</summary>
+        public bool Clear;
+        /// <summary>MÜDAHALE: ayakta top çalma denemesi (kaymadan farklı).</summary>
+        public bool Tackle;
+        /// <summary>DEĞİŞTİR: kontrol edilen oyuncuyu topa en yakın takım arkadaşıyla değiştirir.</summary>
+        public bool Switch;
+        /// <summary>2. DEF: ikinci savunmacıyı topa baskıya çağırır.</summary>
+        public bool CallSecondDefender;
+        /// <summary>OTO.: otomatik savunmayı aç/kapat (kontrol ettiğimiz oyuncuyu yapay zekâ savunturur).</summary>
+        public bool ToggleAutoDefend;
     }
 
     public enum FieldEventType

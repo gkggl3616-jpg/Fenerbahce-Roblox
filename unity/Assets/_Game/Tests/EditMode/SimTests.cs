@@ -372,6 +372,46 @@ namespace Fenerbahce.Tests
         }
 
         [Test]
+        public void Standing_Tackle_Wins_Ball_Sometimes_Only_Within_Range_And_Respects_Cooldown()
+        {
+            int won = 0, trials = 60, farWon = 0;
+            for (int seed = 1; seed <= trials; seed++)
+            {
+                var f = NewField(seed, defender: true);
+                f.Player.Pos = new Vec2(10, 0); f.Player.Facing = new Vec2(1, 0); f.Player.Vel = Vec2.Zero;
+                f.Defender.Pos = new Vec2(11.2f, 0); f.Defender.Facing = new Vec2(-1, 0); f.Defender.Vel = Vec2.Zero;
+                f.Ball.Take(ControlField.DefenderId); f.Ball.Pos = f.Defender.Pos + f.Defender.Facing * 0.62f;
+                f.Step(Dt, new PlayerInput { Tackle = true });
+                if (f.Stats.TacklesWon == 1) won++;
+                // aynı karede ikinci deneme: bekleme süresi yüzünden sayılmaz
+                int before = f.Stats.TacklesWon + f.Stats.TacklesMissed;
+                f.Step(Dt, new PlayerInput { Tackle = true });
+                Assert.AreEqual(before, f.Stats.TacklesWon + f.Stats.TacklesMissed, "bekleme süresi");
+
+                var g = NewField(seed, defender: true);
+                g.Player.Pos = new Vec2(0, 0); g.Player.Facing = new Vec2(1, 0);
+                g.Defender.Pos = new Vec2(8f, 0); g.Defender.Facing = new Vec2(-1, 0);
+                g.Ball.Take(ControlField.DefenderId); g.Ball.Pos = g.Defender.Pos + g.Defender.Facing * 0.62f;
+                g.Step(Dt, new PlayerInput { Tackle = true });
+                farWon += g.Stats.TacklesWon;
+            }
+            Console.WriteLine("ayakta müdahale (1,2 m): " + won + "/" + trials + ", uzaktan: " + farWon);
+            Assert.Greater(won, trials * 0.2); Assert.Less(won, trials * 0.8); Assert.AreEqual(0, farWon);
+        }
+
+        [Test]
+        public void Clear_Sends_Ball_Far_Forward_And_Is_Not_Counted_As_Pass_Or_Shot()
+        {
+            var f = NewField(targets: false);
+            PlaceWithBall(f, new Vec2(-20, 4), new Vec2(1, 0));
+            f.Step(Dt, new PlayerInput { Clear = true });
+            Assert.IsFalse(f.HasBall);
+            Run(f, 1.5f, new PlayerInput());
+            Assert.Greater(f.Ball.Pos.X, -5f, "top rakip yarı sahaya doğru gitmeli");
+            Assert.AreEqual(0, f.Stats.Passes); Assert.AreEqual(0, f.Stats.Shots);
+        }
+
+        [Test]
         public void Hud_Shows_Attack_Buttons_When_We_Have_Ball()
         {
             var f = NewField();

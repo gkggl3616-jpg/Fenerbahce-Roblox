@@ -25,7 +25,7 @@ unity/Assets/_Game/
 tests/Core.Tests/   Core + EditMode testlerini Unity'siz çalıştıran .NET projesi
 tools/              catalog üretici/doğrulayıcı, görev üretici, compile-check (UnityEngine referanslı yaklaşık derleme)
 ```
-- UI, domain, girdi ve simülasyon ayrıdır: `Core.Sim.ControlField` deterministik saf C#'tır (sabit 1/60 sn adım); Unity yalnız çizer ve girdi besler. Aynı kod ileride yetkili maç sunucusunda (T083) yeniden kullanılabilir.
+- UI, domain, girdi ve simülasyon ayrıdır: `Core.Sim.ControlField` (tek futbolcu) ve `Core.Sim.MatchWorld` (5v5, iki takım AI) deterministik saf C#'tır (sabit 1/60 sn adım); Unity yalnız çizer ve girdi besler (`Runtime/FieldSource` ikisini ortak yüze indirger). Aynı kod ileride yetkili maç sunucusunda (T083) yeniden kullanılabilir.
 - UI sprite/prefab'sız, kodla kurulur; renkler `Core.Design.DesignTokens` (tek kaynak).
 - Newtonsoft.Json: kalıcılık ve içerik. `ObjectCreationHandling.Replace` zorunlu (koleksiyon ikilenmesi hatası testle yakalandı).
 

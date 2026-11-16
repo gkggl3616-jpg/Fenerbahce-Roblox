@@ -93,33 +93,38 @@ namespace Fenerbahce.Runtime
         void OnDisable() { _id = Unset; Pressed = false; Held = 0f; }
     }
 
-    /// <summary>Maç içi arayüz: joystick, bağlamsal düğmeler, skor/süre, mini harita, oyuncu etiketi, duraklatma.</summary>
+    /// <summary>
+    /// Maç içi arayüz: joystick, bağlamsal düğmeler (referans galerideki hücum/savunma setleri, G35–G37), skor/saat,
+    /// mini harita, oyuncu etiketi, duraklatma. Kaynak <see cref="FieldSource"/>'tur (tek futbolcu sahası veya 5v5 maç).
+    /// </summary>
     public class FieldHud : MonoBehaviour
     {
         public VirtualJoystick Joystick;
-        public bool SprintHeld { get { return _sprint != null && _sprint.Pressed; } }
+        public bool SprintHeld { get { return (_sprintSkill != null && _sprintSkill.Pressed) || (_sprintTackle != null && _sprintTackle.Pressed); } }
         public Action<float> OnPass, OnThrough, OnShoot;
         public Action<int> OnSkill;
-        public Action OnSlide, OnPause;
+        public Action OnClear, OnTackle, OnSwitch, OnSecondDef, OnAutoToggle, OnSlide, OnPause, OnFinish, OnQuit;
 
-        ControlField _sim; FieldWorld _world; ProfileSettings _settings; string _playerName;
+        /// <summary>Kısa dokunuş eşiği: "SPRİNT VE ..." düğmelerinde bundan kısa basış eylem, uzun basış sprint sayılır.</summary>
+        public const float TapSeconds = 0.22f;
+
+        FieldSource _src; FieldWorld _world; ProfileSettings _settings;
         Canvas _canvas;
-        HoldButton _pass, _through, _shoot, _sprint, _skill, _slide;
+        HoldButton _pass, _through, _shoot, _sprintSkill, _sprintTackle, _slide, _second, _switch, _auto;
+        Text _shootLabel; Image _autoBg;
         RectTransform _buttonsRoot;
         Text _score, _clock, _banner, _hint, _nameTag, _ownership;
         Image _powerBar; RectTransform _powerRoot, _stamina; Image _staminaFill;
-        RectTransform _mini; readonly Dictionary<string, RectTransform> _dots = new Dictionary<string, RectTransform>();
+        RectTransform _mini; readonly List<RectTransform> _dots = new List<RectTransform>(); readonly List<Image> _dotImgs = new List<Image>();
+        readonly List<MiniDot> _dotData = new List<MiniDot>();
         RectTransform _pauseRoot;
-        float _bannerTimer, _hintTimer = 7f;
-        BallOwnership _lastOwnership = (BallOwnership)(-1); MatchPhase _lastPhase = (MatchPhase)(-1);
-        string _scorer = "";
+        float _bannerTimer, _hintTimer = 8f;
+        int _lastMask = -1; bool _lastAuto; bool _clearMode;
         public bool Paused { get; private set; }
 
-        const float Unit = 1f;
-
-        public void Build(ControlField sim, FieldWorld world, ProfileSettings settings, string playerName)
+        public void Build(FieldSource src, FieldWorld world, ProfileSettings settings)
         {
-            _sim = sim; _world = world; _settings = settings; _playerName = playerName;
+            _src = src; _world = world; _settings = settings;
             var cgo = new GameObject("HudCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             cgo.transform.SetParent(transform, false);
             _canvas = cgo.GetComponent<Canvas>(); _canvas.renderMode = RenderMode.ScreenSpaceOverlay; _canvas.sortingOrder = 20;
@@ -132,15 +137,18 @@ namespace Fenerbahce.Runtime
             BuildTop(safe);
             BuildMiniMap(safe);
 
-            _nameTag = Ui.FitLabel(cgo.transform, _playerName, 30, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold, "NameTag");
+            _nameTag = Ui.FitLabel(cgo.transform, _src.ControlledName, 30, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold, "NameTag");
             var nt = _nameTag.rectTransform; nt.anchorMin = nt.anchorMax = Vector2.zero; nt.pivot = new Vector2(0.5f, 0); nt.sizeDelta = new Vector2(360, 44);
             var shadow = _nameTag.gameObject.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, 0.9f); shadow.effectDistance = new Vector2(2, -2);
 
             _banner = Ui.FitLabel(safe, "", 140, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold, "Banner");
             var br = _banner.rectTransform; br.anchorMin = br.anchorMax = new Vector2(0.5f, 0.62f); br.pivot = new Vector2(0.5f, 0.5f); br.sizeDelta = new Vector2(1500, 220);
             var bs = _banner.gameObject.AddComponent<Shadow>(); bs.effectColor = new Color(0, 0, 0, 0.9f); bs.effectDistance = new Vector2(4, -4);
-            _hint = Ui.Label(safe, "Joystick: koş  |  PAS / ŞUT: basılı tut = güç  |  BECERİ: sağa-sola kaydır  |  Top rakipteyse KAY", 26, Ui.TextLight, TextAnchor.MiddleCenter);
-            var hr = _hint.rectTransform; hr.anchorMin = hr.anchorMax = new Vector2(0.5f, 0); hr.pivot = new Vector2(0.5f, 0); hr.anchoredPosition = new Vector2(0, 12); hr.sizeDelta = new Vector2(1500, 40);
+            bool team = _src.Bodies.Count > 2;
+            _hint = Ui.Label(safe, team
+                ? "Joystick: koş  |  PAS/ŞUT: basılı tut = güç  |  SPRİNT VE BECERİ: basılı tut = sprint, dokun/kaydır = çalım  |  Top rakipteyse DEĞİŞTİR, 2. DEF, KAY, OTO."
+                : "Joystick: koş  |  PAS / ŞUT: basılı tut = güç  |  SPRİNT VE BECERİ: basılı tut = sprint, dokun/kaydır = çalım  |  Top rakipteyse KAY", 24, Ui.TextLight, TextAnchor.MiddleCenter);
+            var hr = _hint.rectTransform; hr.anchorMin = hr.anchorMax = new Vector2(0.5f, 0); hr.pivot = new Vector2(0.5f, 0); hr.anchoredPosition = new Vector2(0, 12); hr.sizeDelta = new Vector2(1700, 40);
             var hs = _hint.gameObject.AddComponent<Shadow>(); hs.effectColor = new Color(0, 0, 0, 0.9f); hs.effectDistance = new Vector2(2, -2);
             BuildPause(cgo.transform);
         }
@@ -157,13 +165,19 @@ namespace Fenerbahce.Runtime
             Joystick.Setup(area, baseImg.rectTransform, knob.rectTransform);
         }
 
-        HoldButton MakeBtn(Transform parent, string label, Vector2 pos, float size, Color bg, Color fg)
+        HoldButton MakeBtn(Transform parent, string label, Vector2 pos, float size, Color bg, Color fg, bool left, out Text labelText)
         {
             float s = size * _settings.ButtonScale;
-            var img = Ui.Panel(parent, "Btn_" + label, bg, false, true); img.sprite = Ui.Circle; img.type = Image.Type.Simple;
-            var rt = img.rectTransform; rt.anchorMin = rt.anchorMax = new Vector2(1, 0); rt.pivot = new Vector2(0.5f, 0.5f); rt.anchoredPosition = pos; rt.sizeDelta = new Vector2(s, s);
-            var t = Ui.FitLabel(img.transform, label, Mathf.RoundToInt(s * 0.22f), fg, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.Stretch(t.rectTransform, 6, 6, 6, 6);
+            var img = Ui.Panel(parent, "Btn_" + label.Replace("\n", " "), bg, false, true); img.sprite = Ui.Circle; img.type = Image.Type.Simple;
+            var rt = img.rectTransform; rt.anchorMin = rt.anchorMax = left ? new Vector2(0, 0) : new Vector2(1, 0); rt.pivot = new Vector2(0.5f, 0.5f); rt.anchoredPosition = pos; rt.sizeDelta = new Vector2(s, s);
+            bool two = label.IndexOf('\n') >= 0;
+            labelText = Ui.FitLabel(img.transform, label, Mathf.RoundToInt(s * (two ? 0.17f : 0.22f)), fg, TextAnchor.MiddleCenter, FontStyle.Bold); Ui.Stretch(labelText.rectTransform, 8, 8, 8, 8);
             return img.gameObject.AddComponent<HoldButton>();
+        }
+
+        HoldButton MakeBtn(Transform parent, string label, Vector2 pos, float size, Color bg, Color fg, bool left = false)
+        {
+            Text t; return MakeBtn(parent, label, pos, size, bg, fg, left, out t);
         }
 
         void BuildButtons(RectTransform safe)
@@ -171,38 +185,54 @@ namespace Fenerbahce.Runtime
             _buttonsRoot = Ui.NewRect("Buttons", safe); Ui.Stretch(_buttonsRoot);
             var y = Ui.Yellow; var n = Ui.Navy; var s = new Color(0.07f, 0.16f, 0.32f, 0.9f); var w = Ui.TextLight;
             float k = Mathf.Max(0.8f, _settings.ButtonScale);
-            _shoot = MakeBtn(_buttonsRoot, "ŞUT", new Vector2(-190, 200) * k, 190, y, n);
-            _pass = MakeBtn(_buttonsRoot, "PAS", new Vector2(-430, 140) * k, 168, s, w);
-            _through = MakeBtn(_buttonsRoot, "ARA", new Vector2(-330, 380) * k, 140, s, w);
-            _skill = MakeBtn(_buttonsRoot, "BECERİ", new Vector2(-110, 420) * k, 140, s, w);
-            _sprint = MakeBtn(_buttonsRoot, "SPRİNT", new Vector2(-620, 300) * k, 150, s, w);
-            _slide = MakeBtn(_buttonsRoot, "KAY", new Vector2(-190, 200) * k, 190, Ui.Danger, w);
+            // Yerleşim referans galeriye göre: sağ altta büyük "SPRİNT VE ...", üstünde ŞUT/KAY, solunda PAS/DEĞİŞTİR, ARA/2. DEF köşede.
+            _sprintSkill = MakeBtn(_buttonsRoot, "SPRİNT\nVE BECERİ", new Vector2(-170, 175) * k, 250, y, n);
+            _sprintTackle = MakeBtn(_buttonsRoot, "SPRİNT\nVE MÜDAHALE", new Vector2(-170, 175) * k, 250, y, n);
+            _shoot = MakeBtn(_buttonsRoot, "ŞUT", new Vector2(-170, 440) * k, 170, s, w, false, out _shootLabel);
+            _slide = MakeBtn(_buttonsRoot, "KAY", new Vector2(-170, 440) * k, 170, Ui.Danger, w);
+            _pass = MakeBtn(_buttonsRoot, "PAS", new Vector2(-450, 170) * k, 175, s, w);
+            _switch = MakeBtn(_buttonsRoot, "DEĞİŞTİR", new Vector2(-450, 170) * k, 175, s, w);
+            _through = MakeBtn(_buttonsRoot, "ARA", new Vector2(-420, 420) * k, 140, s, w);
+            _second = MakeBtn(_buttonsRoot, "2. DEF", new Vector2(-420, 420) * k, 140, s, w);
+            _auto = MakeBtn(_buttonsRoot, "OTO.", new Vector2(110, 720) * k, 120, s, w, true);
+            _autoBg = _auto.GetComponent<Image>();
 
             _pass.OnUp = (held, d) => { if (OnPass != null) OnPass(ChargeCurve.Power(held)); };
             _through.OnUp = (held, d) => { if (OnThrough != null) OnThrough(ChargeCurve.Power(held)); };
-            _shoot.OnUp = (held, d) => { if (OnShoot != null) OnShoot(ChargeCurve.Power(held)); };
-            _skill.OnUp = (held, d) =>
+            _shoot.OnUp = (held, d) =>
             {
-                // Kaydırma: sol/sağ yön. Dokunuş: joystick yönüne göre (sol/sağ taraf) çalım.
-                float thr = 40f; int dir = 0;
-                if (Mathf.Abs(d.x) > thr) dir = d.x < 0 ? -1 : 1;
+                if (_clearMode) { if (OnClear != null) OnClear(); }
+                else if (OnShoot != null) OnShoot(ChargeCurve.Power(held));
+            };
+            // SPRİNT VE BECERİ: basılı tut = sprint; kısa dokunuş veya kaydırma = çalım (kaydırma sol/sağ yön verir).
+            _sprintSkill.OnUp = (held, d) =>
+            {
+                float thr = 40f; int dir = 0; bool swipe = Mathf.Abs(d.x) > thr;
+                if (!swipe && held > TapSeconds) return; // uzun basış sadece sprint idi
+                if (swipe) dir = d.x < 0 ? -1 : 1;
                 else
                 {
-                    var f = _sim.Player.Facing; var m = new Fenerbahce.Core.Sim.Vec2(Joystick.Value.x, Joystick.Value.y);
+                    var c = _src.Controlled; var f = c != null ? c.Facing : new Fenerbahce.Core.Sim.Vec2(1, 0);
+                    var m = new Fenerbahce.Core.Sim.Vec2(Joystick.Value.x, Joystick.Value.y);
                     float cross = f.X * m.Y - f.Y * m.X; // + = joystick oyuncunun solunda
                     dir = Mathf.Abs(cross) > 0.15f ? (cross > 0 ? -1 : 1) : -1;
                 }
                 if (OnSkill != null) OnSkill(dir);
             };
+            // SPRİNT VE MÜDAHALE: basılı tut = sprint; kısa dokunuş = ayakta müdahale.
+            _sprintTackle.OnUp = (held, d) => { if (held <= TapSeconds && OnTackle != null) OnTackle(); };
             _slide.OnDown = () => { if (OnSlide != null) OnSlide(); };
+            _switch.OnDown = () => { if (OnSwitch != null) OnSwitch(); };
+            _second.OnDown = () => { if (OnSecondDef != null) OnSecondDef(); };
+            _auto.OnDown = () => { if (OnAutoToggle != null) OnAutoToggle(); };
         }
 
         void BuildTop(RectTransform safe)
         {
             var bar = Ui.Panel(safe, "ScoreBar", new Color(0.03f, 0.1f, 0.22f, 0.88f), true);
             bar.rectTransform.anchorMin = bar.rectTransform.anchorMax = new Vector2(0.5f, 1); bar.rectTransform.pivot = new Vector2(0.5f, 1); bar.rectTransform.anchoredPosition = new Vector2(0, -12); bar.rectTransform.sizeDelta = new Vector2(620, 84);
-            _score = Ui.FitLabel(bar.transform, "KANARYA  0 - 0  RAKİP", 38, Ui.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold); _score.rectTransform.anchorMin = Vector2.zero; _score.rectTransform.anchorMax = new Vector2(1, 1); _score.rectTransform.offsetMin = new Vector2(10, 30); _score.rectTransform.offsetMax = new Vector2(-10, -4);
-            _clock = Ui.FitLabel(bar.transform, "2:00", 28, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold); _clock.rectTransform.anchorMin = Vector2.zero; _clock.rectTransform.anchorMax = new Vector2(1, 0); _clock.rectTransform.offsetMin = new Vector2(10, 2); _clock.rectTransform.offsetMax = new Vector2(-10, 34);
+            _score = Ui.FitLabel(bar.transform, _src.HomeName + "  0 - 0  " + _src.AwayName, 38, Ui.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold); _score.rectTransform.anchorMin = Vector2.zero; _score.rectTransform.anchorMax = new Vector2(1, 1); _score.rectTransform.offsetMin = new Vector2(10, 30); _score.rectTransform.offsetMax = new Vector2(-10, -4);
+            _clock = Ui.FitLabel(bar.transform, "0:00", 28, Ui.Yellow, TextAnchor.MiddleCenter, FontStyle.Bold); _clock.rectTransform.anchorMin = Vector2.zero; _clock.rectTransform.anchorMax = new Vector2(1, 0); _clock.rectTransform.offsetMin = new Vector2(10, 2); _clock.rectTransform.offsetMax = new Vector2(-10, 34);
 
             var p = Ui.MakeButton(safe, "II", Ui.SurfaceRaised, Ui.TextLight, () => { if (OnPause != null) OnPause(); }, "Pause", 40);
             var pr = (RectTransform)p.transform; pr.anchorMin = pr.anchorMax = new Vector2(1, 1); pr.pivot = new Vector2(1, 1); pr.anchoredPosition = new Vector2(-16, -12); pr.sizeDelta = new Vector2(96, 84);
@@ -216,7 +246,7 @@ namespace Fenerbahce.Runtime
 
             // güç çubuğu (şut/pas basılıyken)
             _powerRoot = Ui.Panel(safe, "PowerBg", new Color(0, 0, 0, 0.55f), true).rectTransform;
-            _powerRoot.anchorMin = _powerRoot.anchorMax = new Vector2(1, 0); _powerRoot.pivot = new Vector2(1, 0); _powerRoot.anchoredPosition = new Vector2(-60, 560); _powerRoot.sizeDelta = new Vector2(34, 260);
+            _powerRoot.anchorMin = _powerRoot.anchorMax = new Vector2(1, 0); _powerRoot.pivot = new Vector2(1, 0); _powerRoot.anchoredPosition = new Vector2(-60, 620); _powerRoot.sizeDelta = new Vector2(34, 260);
             _powerBar = Ui.Panel(_powerRoot, "PowerFill", Ui.Yellow, true); _powerBar.rectTransform.anchorMin = Vector2.zero; _powerBar.rectTransform.anchorMax = new Vector2(1, 0); _powerBar.rectTransform.offsetMin = new Vector2(4, 4); _powerBar.rectTransform.offsetMax = new Vector2(-4, 4);
             _powerRoot.gameObject.SetActive(false);
         }
@@ -227,15 +257,31 @@ namespace Fenerbahce.Runtime
             bg.rectTransform.anchorMin = bg.rectTransform.anchorMax = new Vector2(0.5f, 0); bg.rectTransform.pivot = new Vector2(0.5f, 0); bg.rectTransform.anchoredPosition = new Vector2(0, 62); bg.rectTransform.sizeDelta = new Vector2(330, 214);
             _mini = bg.rectTransform;
             var mid = Ui.Panel(_mini, "Mid", new Color(1, 1, 1, 0.4f), false); mid.rectTransform.anchorMin = new Vector2(0.5f, 0); mid.rectTransform.anchorMax = new Vector2(0.5f, 1); mid.rectTransform.offsetMin = new Vector2(-1, 4); mid.rectTransform.offsetMax = new Vector2(1, -4);
-            AddDot("player", Ui.Yellow, 16); AddDot("defender", Ui.Danger, 14); AddDot("keeper", Ui.Success, 14); AddDot("ball", Color.white, 10);
-            for (int i = 0; i < _sim.Config.PassTargets.Count; i++) AddDot("t" + i, new Color(0.3f, 0.85f, 1f, 0.9f), 10);
         }
 
-        void AddDot(string key, Color c, float size)
+        RectTransform DotAt(int i)
         {
-            var d = Ui.Panel(_mini, "Dot_" + key, c, false); d.sprite = Ui.Circle; d.type = Image.Type.Simple;
-            d.rectTransform.anchorMin = d.rectTransform.anchorMax = Vector2.zero; d.rectTransform.pivot = new Vector2(0.5f, 0.5f); d.rectTransform.sizeDelta = new Vector2(size, size);
-            _dots[key] = d.rectTransform;
+            while (_dots.Count <= i)
+            {
+                var d = Ui.Panel(_mini, "Dot" + _dots.Count, Color.white, false); d.sprite = Ui.Circle; d.type = Image.Type.Simple; d.raycastTarget = false;
+                d.rectTransform.anchorMin = d.rectTransform.anchorMax = Vector2.zero; d.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                _dots.Add(d.rectTransform); _dotImgs.Add(d);
+            }
+            return _dots[i];
+        }
+
+        static void StyleDot(DotKind kind, out Color c, out float size)
+        {
+            switch (kind)
+            {
+                case DotKind.Controlled: c = Ui.Yellow; size = 18; break;
+                case DotKind.Mate: c = new Color(1f, 0.84f, 0f, 0.7f); size = 13; break;
+                case DotKind.Opponent: c = Ui.Danger; size = 14; break;
+                case DotKind.KeeperHome: c = Ui.Success; size = 14; break;
+                case DotKind.KeeperAway: c = new Color(0.95f, 0.55f, 0.15f); size = 14; break;
+                case DotKind.Ball: c = Color.white; size = 10; break;
+                default: c = new Color(0.3f, 0.85f, 1f, 0.9f); size = 10; break;
+            }
         }
 
         void BuildPause(Transform canvasRoot)
@@ -251,7 +297,6 @@ namespace Fenerbahce.Runtime
             _pauseRoot.gameObject.SetActive(false);
         }
 
-        public Action OnFinish, OnQuit;
         public void SetPaused(bool p) { Paused = p; _pauseRoot.gameObject.SetActive(p); }
 
         public void Banner(string text, float seconds, Color? color = null)
@@ -259,21 +304,21 @@ namespace Fenerbahce.Runtime
             _banner.text = text; _banner.color = color ?? Ui.Yellow; _bannerTimer = seconds;
         }
 
-        public void SetScorer(string name) { _scorer = name; }
-
         // ---------- her kare ----------
         void Update()
         {
-            if (_sim == null) return;
-            var own = _sim.Ownership; var phase = _sim.Machine.Phase;
+            if (_src == null) return;
+            var phase = _src.Machine.Phase; var own = _src.Ownership;
             bool live = phase == MatchPhase.Live;
-            if (own != _lastOwnership || phase != _lastPhase) { ApplyButtonSet(own, phase); _lastOwnership = own; _lastPhase = phase; }
+            var set = _src.Buttons;
+            int mask = 0; for (int i = 0; i < set.Count; i++) mask |= 1 << (int)set[i];
+            if (mask != _lastMask || _src.AutoDefend != _lastAuto) { ApplyButtonSet(set); _lastMask = mask; _lastAuto = _src.AutoDefend; }
 
-            _score.text = "KANARYA  " + _sim.Machine.ScoreHome + " - " + _sim.Machine.ScoreAway + "  RAKİP";
-            int rem = Mathf.CeilToInt(_sim.RemainingSeconds);
-            _clock.text = (rem / 60) + ":" + (rem % 60).ToString("00") + (live ? "" : "   " + PhaseLabel(phase));
-            _staminaFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(_sim.Player.Stamina), 1f);
-            _staminaFill.color = _sim.Player.Stamina > 0.35f ? Ui.Success : Ui.Danger;
+            _score.text = _src.HomeName + "  " + _src.Machine.ScoreHome + " - " + _src.Machine.ScoreAway + "  " + _src.AwayName;
+            _clock.text = _src.ClockText + (live ? "" : "   " + PhaseLabel(phase));
+            var ctl = _src.Controlled; float stam = ctl != null ? ctl.Stamina : 1f;
+            _staminaFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(stam), 1f);
+            _staminaFill.color = stam > 0.35f ? Ui.Success : Ui.Danger;
             _ownership.text = own == BallOwnership.Ours ? "TOP BİZDE" : own == BallOwnership.Theirs ? "TOP RAKİPTE" : "SERBEST TOP";
             _ownership.color = own == BallOwnership.Ours ? Ui.Success : own == BallOwnership.Theirs ? Ui.Danger : Ui.Yellow;
 
@@ -281,14 +326,18 @@ namespace Fenerbahce.Runtime
             if (_hintTimer > 0) { _hintTimer -= Time.unscaledDeltaTime; if (_hintTimer <= 0) _hint.gameObject.SetActive(false); }
 
             // güç çubuğu
-            HoldButton charging = _shoot.Pressed ? _shoot : _pass.Pressed ? _pass : _through.Pressed ? _through : null;
+            HoldButton charging = (_shoot.Pressed && !_clearMode) ? _shoot : _pass.Pressed ? _pass : _through.Pressed ? _through : null;
             _powerRoot.gameObject.SetActive(charging != null && own == BallOwnership.Ours);
             if (charging != null) _powerBar.rectTransform.anchorMax = new Vector2(1f, ChargeCurve.Power(charging.Held));
 
-            // oyuncu adı etiketi (T029)
-            var sp = _world.WorldToScreen(new Vector3(_sim.Player.Pos.X, 2.4f, _sim.Player.Pos.Y));
-            var scale = _canvas.scaleFactor <= 0f ? 1f : _canvas.scaleFactor;
-            _nameTag.rectTransform.anchoredPosition = sp / scale;
+            // oyuncu adı etiketi (T029): kontrol edilen oyuncunun üstünde
+            if (ctl != null)
+            {
+                _nameTag.text = _src.ControlledName;
+                var sp = _world.WorldToScreen(new Vector3(ctl.Pos.X, 2.4f, ctl.Pos.Y));
+                var scale = _canvas.scaleFactor <= 0f ? 1f : _canvas.scaleFactor;
+                _nameTag.rectTransform.anchoredPosition = sp / scale;
+            }
 
             UpdateMiniMap();
         }
@@ -298,34 +347,42 @@ namespace Fenerbahce.Runtime
             switch (p)
             {
                 case MatchPhase.Kickoff: return "SANTRA";
-                case MatchPhase.GoalCelebration: return "GOL";
+                case MatchPhase.GoalCelebration: case MatchPhase.Replay: return "GOL";
+                case MatchPhase.HalfTime: return "DEVRE ARASI";
                 case MatchPhase.FullTime: case MatchPhase.Result: return "BİTTİ";
                 default: return "";
             }
         }
 
-        void ApplyButtonSet(BallOwnership own, MatchPhase phase)
+        void ApplyButtonSet(IReadOnlyList<HudButton> set)
         {
-            var set = HudLayout.ButtonsFor(own, phase);
             Show(_pass, set.Contains(HudButton.Pass)); Show(_through, set.Contains(HudButton.ThroughPass));
-            Show(_shoot, set.Contains(HudButton.Shoot)); Show(_sprint, set.Contains(HudButton.Sprint));
-            Show(_skill, set.Contains(HudButton.Skill)); Show(_slide, set.Contains(HudButton.Slide));
-            var lbl = _slide.GetComponentInChildren<Text>(); if (lbl != null) lbl.text = HudLayout.Label(HudButton.Slide, own);
+            _clearMode = set.Contains(HudButton.Clear);
+            Show(_shoot, set.Contains(HudButton.Shoot) || _clearMode);
+            if (_shootLabel != null) _shootLabel.text = HudLayout.Label(_clearMode ? HudButton.Clear : HudButton.Shoot, BallOwnership.Ours);
+            Show(_sprintSkill, set.Contains(HudButton.SprintSkill)); Show(_sprintTackle, set.Contains(HudButton.SprintTackle));
+            Show(_slide, set.Contains(HudButton.Slide)); Show(_second, set.Contains(HudButton.SecondDefender));
+            Show(_switch, set.Contains(HudButton.Switch)); Show(_auto, set.Contains(HudButton.AutoDefend));
+            // OTO. açıkken sarı (etkin) görünür
+            if (_autoBg != null) _autoBg.color = _src.AutoDefend ? Ui.Yellow : new Color(0.07f, 0.16f, 0.32f, 0.9f);
+            var al = _auto.GetComponentInChildren<Text>(); if (al != null) al.color = _src.AutoDefend ? Ui.Navy : Ui.TextLight;
         }
 
         static void Show(HoldButton b, bool on) { b.gameObject.SetActive(on); }
 
         void UpdateMiniMap()
         {
-            var p = _sim.Pitch; float w = _mini.rect.width, h = _mini.rect.height;
-            Func<Fenerbahce.Core.Sim.Vec2, Vector2> map = v => new Vector2((v.X / (p.HalfLength * 2) + 0.5f) * w, (v.Y / (p.HalfWidth * 2) + 0.5f) * h);
-            _dots["player"].anchoredPosition = map(_sim.Player.Pos);
-            _dots["defender"].gameObject.SetActive(_sim.Config.DefenderEnabled); _dots["defender"].anchoredPosition = map(_sim.Defender.Pos);
-            _dots["keeper"].anchoredPosition = map(_sim.Keeper.Pos);
-            _dots["ball"].anchoredPosition = map(_sim.Ball.Pos);
-            for (int i = 0; i < _sim.Config.PassTargets.Count; i++) _dots["t" + i].anchoredPosition = map(_sim.Config.PassTargets[i]);
+            var p = _src.Pitch; float w = _mini.rect.width, h = _mini.rect.height;
+            _src.FillDots(_dotData);
+            for (int i = 0; i < _dotData.Count; i++)
+            {
+                var rt = DotAt(i); rt.gameObject.SetActive(true);
+                Color c; float size; StyleDot(_dotData[i].Kind, out c, out size);
+                _dotImgs[i].color = c; rt.sizeDelta = new Vector2(size, size);
+                var v = _dotData[i].Pos;
+                rt.anchoredPosition = new Vector2((v.X / (p.HalfLength * 2) + 0.5f) * w, (v.Y / (p.HalfWidth * 2) + 0.5f) * h);
+            }
+            for (int i = _dotData.Count; i < _dots.Count; i++) _dots[i].gameObject.SetActive(false);
         }
-
-        public string ScorerForBanner { get { return _scorer; } }
     }
 }

@@ -1,5 +1,18 @@
 # PROGRESS — çalışma dilimi raporu
 
+## Dilim 5 (2026-11-16): S1 — 5v5 takım AI + oyuncu değiştirme (T041, T026, T027)
+- **Kullanıcıdan gelen bilgiler:** isimler sorun değil (D-031), `OTO.` = savunmada kontrol edilen oyuncuyu otomatik savunturur (D-032), test cihazı POCO X7 Pro (D-033), **Unity lisansı yok** (D-034). Referans: tüm kare galerisi (HUD düğme setleri galeriye göre yeniden kuruldu, D-036).
+- **Somut değişiklik:**
+  - `Core/Sim/MatchWorld.cs`: iki takımlı 5v5 simülasyonu (4 saha + kaleci/takım): taşıyıcı AI (şut/pas/uzaklaştırma/sürme), destek koşusu, 1. savunmacı baskısı, 2. savunmacı örtüsü, pas kanalı kapatma, dizilişe dönüş, ayrışma; DEĞİŞTİR (en yakın / joystick yönü), 2. DEF (baskıya çağır), OTO., UZAKLAŞTIR, ayakta müdahale, kayma; aut/korner/kale vuruşu (basit), gol→kutlama→santra, uzatma (+N), 2 yarı + devre arası/maç sonu beklemesi; `MatchLog`'dan sonuç.
+  - `GoalkeeperAI` iki kaleyi savunabilir (`Sign`), `Hold`; `MatchStateMachine` uzatma süresi + `+N` dakika; `HudLayout` galerideki düğme setleri; `ControlField`'a UZAKLAŞTIR + ayakta müdahale.
+  - Runtime: `FieldSource` (ControlField/MatchWorld ortak yüz), `FieldWorld` ve `FieldHud` genelleştirildi (8 oyuncu, 2 kaleci, dinamik mini harita, yeni düğmeler, OTO. aç/kapa), `FieldController` iki mod, Oyna ekranında **SAHA / 5v5 MAÇ** seçimi, sonuç ekranında skor.
+- **Kanıt (çalıştırıldı):** `dotnet test` **145/145** (23 yeni test). Ölçümler (12 tohum, 2 dk): gol/maç ≈2,8; şut ≈8,8; pas isabeti ≈%65; topa sahip olma ≈%51; güçlü(82) takım zayıfı(55) 9-5-2 yener; aynı tohum=aynı maç; top en fazla 1,0 sn durur; takım yayılımı 11 m, genişlik 16 m, 3+ kişi top başında %2; hücumda takım 4,4 m yükselir. Mutasyon denemeleri (2. DEF, OTO., kaleci yönü, ayrışma, hücum kayması, diziliş) testlerce yakalandı; **çelme niteliği terimi yakalanmadı** (testler onu ölçmüyor). `dotnet build tools/compile-check` geçti.
+- **Doğrulanamayan:** Unity'de hiçbir şey çalıştırılmadı; `FieldHud`/`FieldWorld`/Oyna ekranı yalnız derleme kontrolünden geçti. Dokunmatik his, kamera, 8 oyuncunun görünümü, kare süresi **bilinmiyor**. Faul/ofsayt/tam aut-korner/penaltı/tekrar yok (T044–T047), taraf değişimi yok.
+- **Açık engel:** APK yok — Unity lisansı yok. Seçenekler A/B/C (D-034, PLAN B1); karar kullanıcıda.
+- **Sıradaki:** S2 — T042 (11v11 + kaleci), T044 (duran toplar, faul/ofsayt), T045; kullanıcı kararına göre S10a (Unity ilk ışık) öne alınır.
+
+---
+
 ## Dilim 4 (2026-11-16): beş bölümün tamamı okundu → plan
 - **Girdi:** kare arşivi **5/5 bölüm** (1/5 bu turda geldi; 4/5 iki kez geldi). Yayıncı kamerası maskelenerek ~590 benzersiz menü ekranı çıkarıldı; yeni olanların ~400'üne bakıldı, önemli ~20'si 2× okundu.
 - **Çıktı:** `docs/EKRAN_SPESIFIKASYONU.md` **Ek A** (yeni hesap/seviye kilitleri, mağaza ayrıntıları, paket sahneleri, kadro/roller, maça giriş, pazar arama/SAT, Oyna merkezi, etkinlik haritası, bilet) ve **`docs/PLAN.md`** (kapsam eşlemesi, engeller, S0–S13 dilimleri, Kapı A ölçütleri, test stratejisi, riskler).

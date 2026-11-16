@@ -5,32 +5,33 @@ Hazırlanma: 2026-11-16. Girdi: ana prompt + 104 görev + **referans kare arşiv
 ## 0. Üç cümlede
 1. Referanslar önceki 75 gözlemi **doğruladı** ve üstüne **yeni sistemler** ekledi (seviye kilitleri, çoklu kadro kilidi, kayan bekleme süreli ücretsiz paket, reklam teklifleri, rol ekranı, otomatik değişiklik, maç hazırlığı karşılaştırması, uzatma süresi, paket özet ızgarası). Hiçbiri kapsamı değiştirmiyor; **104 görev kimliği korunuyor**, ayrıntılar ilgili görevlere işlendi.
 2. Kritik yol *maçtır* (kontrol hissi → takım AI → tamamlanabilen maç → kalıcı ödül). Unity lisansı yokken de ilerlenebilen işler **saf C# çekirdekte** yapılır ve `dotnet test` ile kanıtlanır; Unity gerektiren her şey (görsel, his, kare süresi, APK) lisans gelince **toplu doğrulanır**.
-3. APK'yı engelleyen tek şey **sizin Unity lisans sırlarınızı eklemeniz**; planın bundan sonrası buna bağlı değil, ama "tamamlandı" demek bağlı.
+3. APK'yı engelleyen tek şey **Unity lisansının olmaması** (kullanıcı teyidi); çözüm seçenekleri B1'de (A: ücretsiz Personal lisans, B: Godot, C: Unity'siz devam). Planın bundan sonrası buna bağlı değil, ama "tamamlandı" demek bağlı.
 
 ## 1. Şu anki gerçek durum
 | Alan | Durum | Kanıt |
 |---|---|---|
 | Veri (100 oyuncu, 110 kart) | ✅ prototip denge verisiyle hazır, doğrulayıcılı | `validate_catalog.py`, CatalogTests |
-| Çekirdek (kadro, ekonomi, kayıt, mağaza/takas kural çekirdeği, sim, maç durum makinesi, sonuç) | ✅ yazıldı ve **122/122 test** | `dotnet test`, GitHub Core CI yeşil |
+| Çekirdek (kadro, ekonomi, kayıt, mağaza/takas kural çekirdeği, sim, maç durum makinesi, sonuç) + **5v5 takım maçı (S1)** | ✅ yazıldı ve **145/145 test** | `dotnet test`, GitHub Core CI |
 | Kontrol sahası (1 oyuncu + kaleci + savunmacı) | ✅ sim testli; Unity katmanı yazıldı | derleme kontrolü geçti; **Unity'de hiç çalıştırılmadı** |
 | Menü (ana merkez, kulüp, koleksiyon, oyna, ayarlar, sonuç) | ⚠️ kod var, **hiç görülmedi** | yalnız compile-check |
-| 11v11 maç, kurallar, tekrar | ❌ yok | TASKS T041–T047 |
+| 5v5 maç (S1) | ✅ çekirdek + Runtime bağlandı; Unity'de çalıştırılmadı | MatchWorldTests, compile-check |
+| 11v11, faul/ofsayt/tam duran toplar, tekrar | ❌ yok | TASKS T042, T044–T047 |
 | Mağaza/takas/etkinlik/bilet/pazar **ekranları** | ❌ yok (kural çekirdeği kısmen var) | |
 | Sunucu (TypeScript+Postgres), çevrimiçi | ❌ yok | |
 | APK | ❌ **üretilmedi** (lisans sırları yok) | Actions run 43858524662 |
 | Portreler, animasyon, ses | ❌ yok (siluet, kapsül gövde) | |
 
-Görev sayıları: 14 DONE · 33 IN_PROGRESS · 57 TODO (`TASKS.md`).
+Görev sayıları: 15 DONE · 33 IN_PROGRESS · 56 TODO (`TASKS.md`).
 
 ## 2. Sizden gerekenler (engeller ve kararlar)
 | # | Konu | Neden | Ne yapmanız gerekiyor | Beklerken ne yapıyorum |
 |---|---|---|---|---|
-| B1 | **Unity lisans sırları** | APK + Unity'de hiçbir şeyin doğrulanması bunsuz olmaz | Depo *Settings → Secrets and variables → Actions*: `UNITY_LICENSE` (+`UNITY_EMAIL`, `UNITY_PASSWORD`) veya `UNITY_SERIAL`. Adımlar: `docs/ANDROID_APK_WORKFLOW.md`. **Şifreyi sohbete yazmayın.** | S1–S9 (Unity'siz) |
-| B2 | **Hedef cihaz(lar)** | T007/T033: 30/60 FPS hedefi ölçülmeden anlamsız | Test edeceğiniz telefon model(ler)i (RAM, Android sürümü) | Taslak bütçe D-007 |
-| B3 | **Portre / isim hakları** | 100 gerçek futbolcu adı + fotoğraf ticari yayında hukuki risk (T003/T091) | Hangi kaynaktan fotoğraf kullanılacak / yalnız ad + özgün çizim mi? | Siluet + izin matrisi |
+| B1 | **Unity lisansı YOK** (kullanıcı teyidi) → APK üretilemiyor | APK + Unity'de hiçbir şeyin doğrulanması bunsuz olmaz | **Karar gerekli:** A) ücretsiz Unity Personal lisansı (PC'de Unity Hub; sonra `UNITY_LICENSE` sırrı) · B) Godot 4 .NET'e istemci taşıma (lisanssız ama büyük iş) · C) Unity'siz Core'a devam. Ayrıntı: D-034. **Şifreyi sohbete yazmayın.** | S1–S9 (Unity'siz) |
+| B2 | **Hedef cihaz(lar)** — *kısmen çözüldü* | T007/T033 | POCO X7 Pro verildi (D-033). Düşük/orta sınıf ikinci cihaz (veya RAM/Android alt sınırı) hâlâ gerekli | Taslak bütçe D-007 |
+| B3 | **Portre / isim hakları** — *isimler: kullanıcı beyanı (D-031)* | Portre fotoğrafı için kaynak + doğrulanmış izin hâlâ gerekir (T003/T091) | Portre kaynağı/izni geldiğinde teslim edilir | Siluet + izin matrisi |
 | B4 | Ürün adı | "Kanarya Futbol" çalışma adı; paket kimliği `com.kanaryafutbol.game` | Yayın öncesi karar | Çalışma adıyla ilerleme |
 | B5 | Sunucu altyapısı (S9) | Supabase hesabı var mı, yoksa düz PostgreSQL + kendi sunucu mu? | Tercih | Yerel docker-compose ile başlanır |
-| B6 | Açık soru (T027) | Referanstaki savunma ekranındaki **`OTO.`** düğmesinin işlevi karelerden anlaşılmıyor | Oyunu biliyorsanız bir cümle | Kural uydurulmaz |
+| B6 | ~~Açık soru (T027)~~ **Çözüldü** | `OTO.` = savunmada kontrol edilen oyuncuyu otomatik savunturur (D-032) | — | Uygulandı + testli |
 | B7 | Referans | **Bölüm 1/5 geldi**; 4/5 iki kez gönderildi. Başka video/ses varsa isteğe bağlı | — | — |
 
 ## 3. Referanstan çıkan kapsam eklemeleri → görevler
@@ -122,5 +123,5 @@ Bunlardan biri eksikse "tamamlandı" denmez.
 | Tek geliştirici + Claude için süre belirsizliği | Kesin / orta | Takvim vaadi yok; dilim büyüklükleri göreli |
 
 ## 9. Hemen sonraki adım
-**Siz:** B1 (lisans sırları) ve B2 (cihaz). **Ben (onay beklemeden, Unity'siz):** **S1 — 5v5 takım AI + oyuncu değiştirme**: `Core/Sim/TeamAI`, `Team`, `MatchWorld` (iki takım), yayılım ve yığılma metrikleri, `dotnet test`, mutasyon denemesi; ardından S2.
+**Yapıldı (S1):** 5v5 `MatchWorld` + takım AI + DEĞİŞTİR/2. DEF/OTO./UZAKLAŞTIR/müdahale; yayılım-yığılma metrikleri ve mutasyon denemeleri; Runtime'a bağlı (Oyna → 5v5 MAÇ). **Siz:** B1 (APK için lisans kararı: A/B/C) ve B2'nin kalanı (düşük sınıf cihaz). **Ben (Unity'siz):** **S2 — 11v11 + kaleci + duran toplar/faul/ofsayt (T042, T044, T045)**.
 Önceliği değiştirmek isterseniz (örneğin ekonomi/UI'yi maçtan önce) söylemeniz yeterli; sıra §5'te serbest bağlı.

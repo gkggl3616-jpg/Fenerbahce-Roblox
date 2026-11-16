@@ -28,8 +28,8 @@
   },
   "T007": {
     "status": "IN_PROGRESS",
-    "evidence": "Taslak cihaz sınıfı ve bütçe DECISIONS.md D-007'de; gerçek cihaz listesi/ölçüm yok.",
-    "next": "Kullanıcıdan hedef cihaz modelleri"
+    "evidence": "Taslak cihaz sınıfı ve bütçe D-007'de. Kullanıcı hedef/test cihazını bildirdi: POCO X7 Pro (D-033, kullanıcı beyanı; teknik özellikleri doğrulanmadı). Ölçüm yok.",
+    "next": "Düşük/orta sınıf için ikinci bir cihaz veya RAM/Android alt sınırı; cihazda ölçüm (T033)"
   },
   "T008": {
     "status": "IN_PROGRESS",
@@ -110,12 +110,13 @@
   },
   "T026": {
     "status": "IN_PROGRESS",
-    "evidence": "Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). Oyuncu değiştirme yok (tek oyunculu saha)."
+    "evidence": "Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). 5v5 MatchWorld: DEĞİŞTİR (topa en yakın / joystick yönü), 2. DEF (baskı), OTO. (otomatik savunma), UZAKLAŞTIR ve ayakta müdahale testli; top bizde olunca kontrol topu taşıyana geçer. Unity/cihazda denenmedi.",
+    "next": "T033: cihazda his; DEĞİŞTİR için imleç/işaretçi geri bildirimi Unity'de"
   },
   "T027": {
     "status": "IN_PROGRESS",
-    "evidence": "HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı.",
-    "next": "Açık soru: referanstaki 'OTO.' düğmesinin işlevi karelerden doğrulanamadı; kural uydurulmayacak."
+    "evidence": "HudLayout galerideki setlere göre testli: hücum {PAS, ARA, ŞUT, SPRİNT VE BECERİ}, kendi yarıda ŞUT→UZAKLAŞTIR, savunma {DEĞİŞTİR, 2. DEF, KAY, SPRİNT VE MÜDAHALE, OTO.}, canlı olmayan fazlarda boş. FieldHud buna göre yeniden yazıldı (compile-check geçti); Unity'de çalıştırılmadı.",
+    "next": "OTO. = savunmada kontrol edilen oyuncuyu otomatik savunturur (D-032, kullanıcı tanımı). Unity'de görsel/dokunma doğrulaması (S10a/T033)."
   },
   "T028": {
     "status": "IN_PROGRESS",
@@ -175,8 +176,8 @@
   },
   "T043": {
     "status": "IN_PROGRESS",
-    "evidence": "MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor.",
-    "next": "PLAN S2/S3: uzatma süresi (+N) göstergesi; devre arası; süre kutusu"
+    "evidence": "MatchStateMachine (geçiş tablosu, saat, gol bir kez) testli. Uzatma süresi (+N, gol sayısına göre PROTOTİP) ve devre arası/maç sonu beklemesi MatchWorld'de 2 devreli 5v5 maçta çalışıyor (testli). 11v11 ile tam maçta sınanmadı.",
+    "next": "T042 sonrası 11v11'de sınama; Unity'de HUD'daki '+N' gösterimi"
   },
   "T047": {
     "status": "IN_PROGRESS",
@@ -245,8 +246,9 @@
     "evidence": "ExchangeService.Execute: kartlar tüketilir + ödül verilir + sayaç artar TEK atomik işlemde (EconomyService.ApplyBundle); aynı anahtar çifte ödül vermez; geçersiz ödül hiçbir şey tüketmez (testli). Paket ödülü (T067) bağımlılığı açık."
   },
   "T041": {
-    "status": "TODO",
-    "next": "PLAN S1: 5v5 takım AI + oyuncu değiştirme; yayılım/yığılma metrikleri; headless sim"
+    "status": "DONE",
+    "evidence": "Core/Sim/MatchWorld (5v5, iki takım+iki kaleci, destek koşusu, 1./2. savunmacı, pas kanalı kapatma, dizilişe dönüş). Testler (MatchWorldTests, 12 tohum): gol/maç≈2,8, şut≈8,8, pas isabeti≈%65, topa sahip olma ≈%51 (eşit takımlar), güçlü takım 9-5-2 kazanır, aynı tohum=aynı maç, top durmaz (en uzun hareketsizlik 1,0 sn), yayılım 11 m, genişlik 16 m, yığılma %2, hücumda 4,4 m yükselme. Mutasyon denemeleri (2. DEF, OTO., kaleci yönü, yığılma, ayrışma, hücum kayması) testlerce yakalandı; çelme niteliği terimi yakalanmadı.",
+    "note": "Headless doğrulama; Unity'de görsel/his doğrulaması T033/S10a. Kurallar (faul/ofsayt/tam aut-korner) T044; 11v11 T042."
   },
   "T042": {
     "status": "TODO",

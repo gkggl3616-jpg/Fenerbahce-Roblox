@@ -35,6 +35,7 @@ namespace Fenerbahce.Core.Sim
         bool _lastKickWasPass;
         float _outTimer;
         bool _slideResolved;
+        float _tackleCooldown;
         bool _sessionEndRaised;
 
         public ControlField(ControlFieldConfig cfg, SimStats attacker, SimStats keeper)
@@ -61,7 +62,7 @@ namespace Fenerbahce.Core.Sim
             }
         }
 
-        public IReadOnlyList<HudButton> Hud { get { return HudLayout.ButtonsFor(Ownership, Machine.Phase); } }
+        public IReadOnlyList<HudButton> Hud { get { return HudLayout.ButtonsFor(Ownership, Machine.Phase, false, false); } }
         public float RemainingSeconds { get { return Math.Max(0f, Machine.HalfLengthSeconds - Machine.ElapsedInHalf); } }
         public bool HasBall { get { return Ball.IsControlled && Ball.OwnerId == PlayerId; } }
 
@@ -155,6 +156,7 @@ namespace Fenerbahce.Core.Sim
                 if (input.Shoot) DoShoot(input);
                 else if (input.Pass) DoPass(input, false);
                 else if (input.ThroughPass) DoPass(input, true);
+                else if (input.Clear) DoClear();
                 else if (input.SkillDirection != 0) DoSkill(input.SkillDirection);
             }
             else if (!hasBall && input.Slide && Player.Action == PlayerAction.None)
@@ -162,6 +164,8 @@ namespace Fenerbahce.Core.Sim
                 var dir = input.Move.Length > 0.3f ? input.Move.Normalized : Player.Facing;
                 Player.StartSlide(dir); _slideResolved = false;
             }
+            else if (!hasBall && input.Tackle && Player.Action == PlayerAction.None) PlayerTackle();
+            if (_tackleCooldown > 0f) _tackleCooldown -= dt;
             hasBall = HasBall;
 
             Player.Step(dt, input.Move, input.Sprint, hasBall);
@@ -303,6 +307,33 @@ namespace Fenerbahce.Core.Sim
                 Raise(FieldEventType.BallLost, 0, Ball.Pos);
             }
             else Raise(FieldEventType.TackleMissed, 0, Defender.Pos);
+        }
+
+        /// <summary>UZAKLAŞTIR: topu rakip kaleye doğru, kenara açılı ve yüksek vurur (G37). Pas/şut sayılmaz.</summary>
+        void DoClear()
+        {
+            float side = Player.Pos.Y >= 0 ? 1f : -1f;
+            var dir = new Vec2(1f, side * 0.55f).Normalized;
+            Ball.Kick(dir * 24f, 4f, PlayerId, 0.45f);
+            _passId++; _lastKickWasPass = false;
+        }
+
+        /// <summary>MÜDAHALE: ayakta top çalma (kaymadan düşük risk, düşük şans). Yalnız rakipte top varken ve 1,8 m içinde.</summary>
+        void PlayerTackle()
+        {
+            if (_tackleCooldown > 0f || !(Ball.IsControlled && Ball.OwnerId == DefenderId)) return;
+            _tackleCooldown = 1.0f;
+            if (Vec2.Distance(Player.Pos, Defender.Pos) > 1.8f) { Stats.TacklesMissed++; Raise(FieldEventType.TackleMissed, 1, Player.Pos); return; }
+            float p = MathUtil.Clamp(0.35f + 0.35f * (Player.Stats.Defending - Defender.Stats.Dribbling) / 99f, 0.1f, 0.8f);
+            if (_rng.Next01() < p)
+            {
+                var dir = (Defender.Pos - Player.Pos).Normalized;
+                Ball.SetFree(Defender.Pos + dir * 0.3f, dir * 4f);
+                Ball.LastTouchId = PlayerId; Ball.LockedId = DefenderId; Ball.LockTimer = 0.8f;
+                Stats.TacklesWon++;
+                Raise(FieldEventType.TackleWon, 0, Defender.Pos);
+            }
+            else { Stats.TacklesMissed++; Raise(FieldEventType.TackleMissed, 1, Player.Pos); }
         }
 
         void DefenderClear()

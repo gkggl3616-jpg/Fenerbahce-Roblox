@@ -11,11 +11,12 @@ namespace Fenerbahce.Runtime
     /// </summary>
     public class FieldWorld : MonoBehaviour
     {
-        ControlField _sim;
+        FieldSource _src;
         Camera _cam;
         Material _template;
         GameObject _ball, _ballShadow;
-        PlayerView _player, _defender, _keeper;
+        readonly List<PlayerView> _views = new List<PlayerView>();
+        readonly List<PlayerView> _keeperViews = new List<PlayerView>();
         Transform _marker;
         readonly List<Transform> _targetRings = new List<Transform>();
         readonly List<SpriteRenderer> _targetRenderers = new List<SpriteRenderer>();
@@ -28,9 +29,9 @@ namespace Fenerbahce.Runtime
             public Transform Root, Body; public Renderer BodyR, ShortsR; public float Phase;
         }
 
-        public void Build(ControlField sim)
+        public void Build(FieldSource src)
         {
-            _sim = sim;
+            _src = src;
             var probe = GameObject.CreatePrimitive(PrimitiveType.Cube);
             _template = probe.GetComponent<Renderer>().sharedMaterial;
             Destroy(probe);
@@ -51,14 +52,21 @@ namespace Fenerbahce.Runtime
             _ball = Prim(PrimitiveType.Sphere, "Ball", Color.white, new Vector3(0.34f, 0.34f, 0.34f));
             _ballShadow = Disc("BallShadow", new Color(0, 0, 0, 0.45f), 0.5f);
 
-            _player = MakePlayer("Oyuncu", Ui.C(DesignTokens.Yellow), Ui.C(DesignTokens.Navy));
-            _defender = MakePlayer("Rakip", new Color(0.9f, 0.9f, 0.95f), new Color(0.75f, 0.1f, 0.12f));
-            _keeper = MakePlayer("Kaleci", new Color(0.18f, 0.8f, 0.45f), new Color(0.1f, 0.3f, 0.2f));
+            // Forma: bizim takım sarı-lacivert, rakip beyaz-kırmızı; kaleciler yeşil/turuncu. (Gerçek forma/lisans T011/D-?? ile gelir.)
+            for (int i = 0; i < _src.Bodies.Count; i++)
+            {
+                bool ours = _src.BodyTeams[i] == 0;
+                _views.Add(ours ? MakePlayer("Oyuncu" + i, Ui.C(DesignTokens.Yellow), Ui.C(DesignTokens.Navy))
+                                : MakePlayer("Rakip" + i, new Color(0.9f, 0.9f, 0.95f), new Color(0.75f, 0.1f, 0.12f)));
+            }
+            foreach (var k in _src.Keepers)
+                _keeperViews.Add(k.Sign < 0 ? MakePlayer("Kaleci (bizim)", new Color(0.18f, 0.8f, 0.45f), new Color(0.1f, 0.3f, 0.2f))
+                                            : MakePlayer("Kaleci (rakip)", new Color(0.95f, 0.55f, 0.15f), new Color(0.3f, 0.2f, 0.1f)));
 
             var mk = Disc("ActiveMarker", new Color(1f, 0.84f, 0f, 0.5f), 1.7f); _marker = mk.transform;
-            foreach (var t in _sim.Config.PassTargets)
+            foreach (var t in _src.Targets)
             {
-                var ring = Disc("TargetRing", new Color(0.3f, 0.85f, 1f, 0.55f), _sim.Config.PassTargetRadius * 2f);
+                var ring = Disc("TargetRing", new Color(0.3f, 0.85f, 1f, 0.55f), _src.TargetRadius * 2f);
                 ring.transform.position = new Vector3(t.X, 0.03f, t.Y);
                 _targetRings.Add(ring.transform); _targetRenderers.Add(ring.GetComponent<SpriteRenderer>());
             }
@@ -90,7 +98,7 @@ namespace Fenerbahce.Runtime
 
         void BuildPitch()
         {
-            var p = _sim.Pitch; int ppm = 8;
+            var p = _src.Pitch; int ppm = 8;
             int w = Mathf.RoundToInt((p.HalfLength * 2 + 16) * ppm), h = Mathf.RoundToInt((p.HalfWidth * 2 + 12) * ppm);
             var tex = new Texture2D(w, h, TextureFormat.RGB24, true) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, anisoLevel = 4 };
             var px = new Color32[w * h];
@@ -139,7 +147,7 @@ namespace Fenerbahce.Runtime
 
         void BuildGoals()
         {
-            var p = _sim.Pitch;
+            var p = _src.Pitch;
             foreach (int s in new[] { -1, 1 })
             {
                 float x = s * p.HalfLength; var white = Color.white;
@@ -153,7 +161,7 @@ namespace Fenerbahce.Runtime
 
         void BuildStands()
         {
-            var p = _sim.Pitch;
+            var p = _src.Pitch;
             var navy = Ui.C(DesignTokens.NavyLight); var yellow = Ui.C(DesignTokens.Yellow);
             float zOff = p.HalfWidth + 9f;
             foreach (int s in new[] { -1, 1 })
@@ -199,19 +207,26 @@ namespace Fenerbahce.Runtime
 
         public void Sync(Vector2 worldFocusBias)
         {
-            if (_sim == null) return;
-            SyncPlayer(_player, _sim.Player, _sim.Player.Action == PlayerAction.Sliding);
-            SyncPlayer(_defender, _sim.Defender, _sim.Defender.Action == PlayerAction.Sliding);
-            _defender.Root.gameObject.SetActive(_sim.Config.DefenderEnabled);
-            // kaleci: dalışta yana yatar
-            _keeper.Root.position = new Vector3(_sim.Keeper.Pos.X, 0f, _sim.Keeper.Pos.Y);
-            _keeper.Root.rotation = Quaternion.LookRotation(new Vector3(-1, 0, 0));
-            bool diving = _sim.Keeper.State == GkState.Diving;
-            float side = Mathf.Sign(_sim.Keeper.DiveTargetY - _sim.Keeper.Pos.Y);
-            _keeper.Body.localRotation = Quaternion.Euler(0, 0, diving ? -side * 68f : 0f);
-            _keeper.Body.localPosition = diving ? new Vector3(0, 0.6f, 0) : Vector3.zero;
+            if (_src == null) return;
+            for (int i = 0; i < _views.Count; i++)
+            {
+                bool active = _src.BodyActive(i);
+                _views[i].Root.gameObject.SetActive(active);
+                if (active) SyncPlayer(_views[i], _src.Bodies[i], _src.Bodies[i].Action == PlayerAction.Sliding);
+            }
+            // kaleciler: dalışta yana yatar; kendi kalesinden dışarı bakar
+            for (int i = 0; i < _keeperViews.Count; i++)
+            {
+                var k = _src.Keepers[i]; var v = _keeperViews[i];
+                v.Root.position = new Vector3(k.Pos.X, 0f, k.Pos.Y);
+                v.Root.rotation = Quaternion.LookRotation(new Vector3(-k.Sign, 0, 0));
+                bool diving = k.State == GkState.Diving;
+                float side = Mathf.Sign(k.DiveTargetY - k.Pos.Y) * k.Sign;
+                v.Body.localRotation = Quaternion.Euler(0, 0, diving ? -side * 68f : 0f);
+                v.Body.localPosition = diving ? new Vector3(0, 0.6f, 0) : Vector3.zero;
+            }
 
-            var b = _sim.Ball;
+            var b = _src.Ball;
             _ball.transform.position = new Vector3(b.Pos.X, 0.17f + b.Z, b.Pos.Y);
             _ball.transform.Rotate(new Vector3(b.Vel.Y, 0, -b.Vel.X) * (Time.deltaTime * 60f), Space.World);
             _ballShadow.transform.position = new Vector3(b.Pos.X, 0.04f, b.Pos.Y);
@@ -219,15 +234,16 @@ namespace Fenerbahce.Runtime
             _ballShadow.transform.localScale = new Vector3(sc * 1.56f, sc * 1.56f, 1f);
 
             // Aktif oyuncu işareti
-            _marker.position = new Vector3(_sim.Player.Pos.X, 0.05f, _sim.Player.Pos.Y);
+            var c = _src.Controlled;
+            if (c != null) _marker.position = new Vector3(c.Pos.X, 0.05f, c.Pos.Y);
 
             // Hedef halkaları: seçili olan parlak, isabet olunca yeşil flaş
             for (int i = 0; i < _targetRenderers.Count; i++)
             {
-                Color c = new Color(0.3f, 0.85f, 1f, 0.45f);
-                if (_sim.SelectedTarget == i) c = new Color(1f, 1f, 1f, 0.9f);
-                if (_sim.TargetFlash[i] > 0f) c = new Color(0.2f, 1f, 0.4f, 0.9f);
-                _targetRenderers[i].color = c;
+                Color col = new Color(0.3f, 0.85f, 1f, 0.45f);
+                if (_src.SelectedTarget == i) col = new Color(1f, 1f, 1f, 0.9f);
+                if (_src.TargetFlash(i) > 0f) col = new Color(0.2f, 1f, 0.4f, 0.9f);
+                _targetRenderers[i].color = col;
             }
             UpdateCamera();
         }
@@ -235,10 +251,13 @@ namespace Fenerbahce.Runtime
         // ---------- kamera (yayın açısı, T028) ----------
         Vector3 FocusPoint()
         {
-            var p = _sim.Pitch;
-            var pl = _sim.Player.Pos; var bl = _sim.Ball.Pos;
-            var f = Vector2.Lerp(new Vector2(pl.X, pl.Y), new Vector2(bl.X, bl.Y), 0.35f);
-            f.x = Mathf.Clamp(f.x + _sim.Player.Vel.X * 0.35f, -p.HalfLength + 14f, p.HalfLength - 6f);
+            var p = _src.Pitch;
+            var c = _src.Controlled; var bl = _src.Ball.Pos;
+            var pl = c != null ? c.Pos : bl; var pv = c != null ? c.Vel : Fenerbahce.Core.Sim.Vec2.Zero;
+            // Takım maçında kamera topa daha çok bağlanır (oyun 5v5 akıyor); tek futbolcu sahasında oyuncuya.
+            float toBall = _src.Bodies.Count > 2 ? 0.55f : 0.35f;
+            var f = Vector2.Lerp(new Vector2(pl.X, pl.Y), new Vector2(bl.X, bl.Y), toBall);
+            f.x = Mathf.Clamp(f.x + pv.X * 0.35f, -p.HalfLength + 14f, p.HalfLength - 14f);
             f.y = Mathf.Clamp(f.y * 0.6f, -p.HalfWidth * 0.45f, p.HalfWidth * 0.45f);
             return new Vector3(f.x, 0, f.y);
         }

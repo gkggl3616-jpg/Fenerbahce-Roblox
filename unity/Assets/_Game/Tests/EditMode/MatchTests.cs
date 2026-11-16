@@ -124,14 +124,19 @@ namespace Fenerbahce.Tests
         [Test]
         public void Hud_Buttons_Change_With_Ownership_And_Hide_Outside_Live()
         {
+            // Hücum (G35): ARA, ŞUT, PAS ve büyük "SPRİNT VE BECERİ"
             var atk = HudLayout.ButtonsFor(BallOwnership.Ours, MatchPhase.Live);
-            Assert.IsTrue(atk.Contains(HudButton.Pass) && atk.Contains(HudButton.Shoot) && atk.Contains(HudButton.Skill) && atk.Contains(HudButton.ThroughPass) && atk.Contains(HudButton.Sprint));
-            Assert.IsFalse(atk.Contains(HudButton.Slide));
+            CollectionAssert.AreEquivalent(new[] { HudButton.Pass, HudButton.ThroughPass, HudButton.Shoot, HudButton.SprintSkill }, atk.ToArray());
+            // Kendi yarı sahada ŞUT yerine UZAKLAŞTIR (G37)
+            var own = HudLayout.ButtonsFor(BallOwnership.Ours, MatchPhase.Live, inOwnHalf: true);
+            CollectionAssert.AreEquivalent(new[] { HudButton.Pass, HudButton.ThroughPass, HudButton.Clear, HudButton.SprintSkill }, own.ToArray());
+            // Savunma (G36): DEĞİŞTİR, 2. DEF, KAY, "SPRİNT VE MÜDAHALE", OTO.
             foreach (var o in new[] { BallOwnership.Theirs, BallOwnership.Loose })
             {
                 var def = HudLayout.ButtonsFor(o, MatchPhase.Live);
-                Assert.IsTrue(def.Contains(HudButton.Slide) && def.Contains(HudButton.Sprint));
-                Assert.IsFalse(def.Contains(HudButton.Shoot));
+                CollectionAssert.AreEquivalent(new[] { HudButton.Switch, HudButton.SecondDefender, HudButton.Slide, HudButton.SprintTackle, HudButton.AutoDefend }, def.ToArray());
+                var solo = HudLayout.ButtonsFor(o, MatchPhase.Live, false, multiPlayer: false);
+                CollectionAssert.AreEquivalent(new[] { HudButton.Slide, HudButton.SprintTackle }, solo.ToArray());
             }
             foreach (MatchPhase ph in Enum.GetValues(typeof(MatchPhase)))
                 if (ph != MatchPhase.Live) Assert.AreEqual(0, HudLayout.ButtonsFor(BallOwnership.Ours, ph).Count, ph.ToString());

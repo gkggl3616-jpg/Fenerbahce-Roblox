@@ -8,9 +8,9 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 
 | Durum | Adet |
 |---|---|
-| [ ] TODO | 57 |
+| [ ] TODO | 56 |
 | [~] IN_PROGRESS | 33 |
-| [x] DONE | 14 |
+| [x] DONE | 15 |
 | [!] BLOCKED | 0 |
 | **Toplam** | **104** |
 
@@ -45,8 +45,8 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T007 · P0 · QA** — Minimum cihaz ve performans bütçesini seç
   - Kabul: En az düşük/orta sınıf gerçek cihaz listesi var
   - Kanıt kodu: TEKNIK · Bağımlılık: T004 · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: Taslak cihaz sınıfı ve bütçe DECISIONS.md D-007'de; gerçek cihaz listesi/ölçüm yok.
-  - Sıradaki: Kullanıcıdan hedef cihaz modelleri
+  - Doğrulama/Not: Taslak cihaz sınıfı ve bütçe D-007'de. Kullanıcı hedef/test cihazını bildirdi: POCO X7 Pro (D-033, kullanıcı beyanı; teknik özellikleri doğrulanmadı). Ölçüm yok.
+  - Sıradaki: Düşük/orta sınıf için ikinci bir cihaz veya RAM/Android alt sınırı; cihazda ölçüm (T033)
 
 ## F1 — Tasarım sistemi ve çalışan menü iskeleti (2–3. haftalar)
 
@@ -132,12 +132,13 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T026 · P0 · Oynanış** — Top kapma/kayma/oyuncu değiştirme
   - Kabul: Top sahipliği değişince kontrol geçer
   - Kanıt kodu: G36 · Bağımlılık: T023 · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). Oyuncu değiştirme yok (tek oyunculu saha).
+  - Doğrulama/Not: Kayma/çelme + sahiplik değişimi testli (kayarak top kazanma 29/40). 5v5 MatchWorld: DEĞİŞTİR (topa en yakın / joystick yönü), 2. DEF (baskı), OTO. (otomatik savunma), UZAKLAŞTIR ve ayakta müdahale testli; top bizde olunca kontrol topu taşıyana geçer. Unity/cihazda denenmedi.
+  - Sıradaki: T033: cihazda his; DEĞİŞTİR için imleç/işaretçi geri bildirimi Unity'de
 - [~] **T027 · P0 · Oynanış** — Sahipliğe göre HUD
   - Kabul: Top bizde/rakipte/boşta doğru düğmeler var
   - Kanıt kodu: G35,G36,G37 · Bağımlılık: T024,T026 · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: HudLayout (sahipliğe göre düğmeler) testli; FieldHud çalıştırılmadı.
-  - Sıradaki: Açık soru: referanstaki 'OTO.' düğmesinin işlevi karelerden doğrulanamadı; kural uydurulmayacak.
+  - Doğrulama/Not: HudLayout galerideki setlere göre testli: hücum {PAS, ARA, ŞUT, SPRİNT VE BECERİ}, kendi yarıda ŞUT→UZAKLAŞTIR, savunma {DEĞİŞTİR, 2. DEF, KAY, SPRİNT VE MÜDAHALE, OTO.}, canlı olmayan fazlarda boş. FieldHud buna göre yeniden yazıldı (compile-check geçti); Unity'de çalıştırılmadı.
+  - Sıradaki: OTO. = savunmada kontrol edilen oyuncuyu otomatik savunturur (D-032, kullanıcı tanımı). Unity'de görsel/dokunma doğrulaması (S10a/T033).
 - [~] **T028 · P0 · Oynanış** — Takip kamerası ve sınırları
   - Kabul: Top/kale aksiyonu ekran dışında kalmaz
   - Kanıt kodu: G33 · Bağımlılık: T025 · Durum: **IN_PROGRESS**
@@ -197,10 +198,10 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
   - Kabul: Kilit tüketimi engeller; farklar doğru
   - Kanıt kodu: G18,G19 · Bağımlılık: T039 · Durum: **IN_PROGRESS**
   - Doğrulama/Not: Kilitleme: kilitli kart harcanamaz (testli). Karşılaştırma yok.
-- [ ] **T041 · P0 · AI** — Destek koşusu ve savunma yerleşimi
+- [x] **T041 · P0 · AI** — Destek koşusu ve savunma yerleşimi
   - Kabul: 5v5 denemede takımlar pozisyon alır
-  - Kanıt kodu: G41 · Bağımlılık: T024,T026 · Durum: **TODO**
-  - Sıradaki: PLAN S1: 5v5 takım AI + oyuncu değiştirme; yayılım/yığılma metrikleri; headless sim
+  - Kanıt kodu: G41 · Bağımlılık: T024,T026 · Durum: **DONE**
+  - Doğrulama/Not: Core/Sim/MatchWorld (5v5, iki takım+iki kaleci, destek koşusu, 1./2. savunmacı, pas kanalı kapatma, dizilişe dönüş). Testler (MatchWorldTests, 12 tohum): gol/maç≈2,8, şut≈8,8, pas isabeti≈%65, topa sahip olma ≈%51 (eşit takımlar), güçlü takım 9-5-2 kazanır, aynı tohum=aynı maç, top durmaz (en uzun hareketsizlik 1,0 sn), yayılım 11 m, genişlik 16 m, yığılma %2, hücumda 4,4 m yükselme. Mutasyon denemeleri (2. DEF, OTO., kaleci yönü, yığılma, ayrışma, hücum kayması) testlerce yakalandı; çelme niteliği terimi yakalanmadı.
 - [ ] **T042 · P0 · AI** — Kaleci ve 11v11 takım AI
   - Kabul: Kaleci/savunma/hücum birlikte çalışır
   - Kanıt kodu: G41 · Bağımlılık: T041 · Durum: **TODO**
@@ -208,8 +209,8 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [~] **T043 · P0 · Maç** — Durum makinesi ve maç saati
   - Kabul: Santra/devre/bitiş sırası bozulmaz
   - Kanıt kodu: G38 · Bağımlılık: T042 · Durum: **IN_PROGRESS**
-  - Doğrulama/Not: MatchStateMachine (geçiş tablosu, saat, gol bir kez) MatchStateMachineTests ile doğrulandı; 11v11 takım AI'ı (T042 bağımlılığı) olmadan tam maçta sınanmadı. Kontrol sahasında 1 devrelik oturum olarak kullanılıyor.
-  - Sıradaki: PLAN S2/S3: uzatma süresi (+N) göstergesi; devre arası; süre kutusu
+  - Doğrulama/Not: MatchStateMachine (geçiş tablosu, saat, gol bir kez) testli. Uzatma süresi (+N, gol sayısına göre PROTOTİP) ve devre arası/maç sonu beklemesi MatchWorld'de 2 devreli 5v5 maçta çalışıyor (testli). 11v11 ile tam maçta sınanmadı.
+  - Sıradaki: T042 sonrası 11v11'de sınama; Unity'de HUD'daki '+N' gösterimi
 - [ ] **T044 · P0 · Maç** — Faul/ofsayt/taç/korner/gol kuralları
   - Kabul: Olaylar tek kez ve doğru takıma yazılır
   - Kanıt kodu: G45,G46 · Bağımlılık: T043 · Durum: **TODO**

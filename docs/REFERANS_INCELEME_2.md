@@ -46,7 +46,7 @@ Her saniyelik kare tek tek incelenmedi; ses yok. Yayıncı kamera/sohbet katmanl
 5. **Sonuç ekranı kupa/derece satırı** (ör. "10.200 KUPA — AMATÖR III" vs "200 KUPA"): sıralı modlarda sonuç ekranı derece puanı değişimini göstermeli; DERECESİZ OYNA seçeneği → T089/T085.
 6. **Kulüp stadyumu** seçimi Teke Tek ekranında → T092/T096.
 7. **Arkadaş listesi kapasitesi (1/32)** ve durum filtreleri → T081.
-8. **"OTO." düğmesi** savunma/serbest top durumunda görünüyor; işlevi kareden doğrulanamıyor → **doğrulanmamış gözlem**, uydurma kural yazılmayacak (T027'de açık soru).
+8. **"OTO." düğmesi** savunma/serbest top durumunda görünüyor; işlevi kareden doğrulanamıyordu. **Güncelleme:** kullanıcı tanımı — savunmada kontrol edilen oyuncuyu otomatik savunturur (D-032); uygulandı.
 9. **Rank yükseltme** ekranında "Antrenman Maçı" ve "İlerleme x/50" alanları var; olasılık/başarı kuralı **videodan belirlenemez** → T055'te kendi kuralımızı tasarlayacağız (D-020).
 10. Yayıncı arayüzü (kamera, abone ol penceresi, sosyal medya kartları) oyun UI'ı değildir; ürüne alınmaz.
 

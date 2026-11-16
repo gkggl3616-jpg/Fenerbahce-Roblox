@@ -7,6 +7,7 @@ using Fenerbahce.Core.Catalog;
 using Fenerbahce.Core.Design;
 using Fenerbahce.Core.Domain;
 using Fenerbahce.Core.Economy;
+using Fenerbahce.Core.Sim;
 using Fenerbahce.Core.Squad;
 
 namespace Fenerbahce.Runtime
@@ -119,6 +120,7 @@ namespace Fenerbahce.Runtime
     {
         int _difficulty = 1;           // 0 kolay, 1 orta, 2 zor
         bool _defender = true;
+        bool _team;                    // false: tek futbolculu kontrol sahası, true: 5v5 takım maçı (prototip)
         int _playerIndex;
         RectTransform _right;
         Button[] _diffBtns;
@@ -141,7 +143,7 @@ namespace Fenerbahce.Runtime
         {
             var title = Ui.Label(Root, "OYNA", DesignTokens.FontTitle, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(title.rectTransform, 32, 10, 600, 60);
             var left = Ui.VCol(Root, "Modes", 14); Ui.PlaceTopLeft((RectTransform)left.transform, 32, 84, 760, 760);
-            var first = Ui.MakeButton(left.transform, "KONTROL SAHASI  —  OYNANABİLİR", Ui.Yellow, Ui.Navy, null, "Mode_Control", 32); Ui.Size(first.gameObject, -1, 100);
+            var first = Ui.MakeButton(left.transform, "KONTROL SAHASI + 5v5 MAÇ  —  OYNANABİLİR", Ui.Yellow, Ui.Navy, null, "Mode_Control", 32); Ui.Size(first.gameObject, -1, 100);
             foreach (var m in Modes)
             {
                 var row = Ui.Panel(left.transform, "Mode_" + m[0], Ui.Surface, true, true); Ui.Size(row.gameObject, -1, 90);
@@ -186,8 +188,13 @@ namespace Fenerbahce.Runtime
             Ui.PlaceTopLeft(info.rectTransform, 32, 86, 960, 100);
 
             // Futbolcu seçimi
-            var pl = Ui.Label(box.transform, "FUTBOLCU", 22, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(pl.rectTransform, 32, 200, 300, 34);
-            if (_candidates.Count > 0)
+            var pl = Ui.Label(box.transform, _team ? "TAKIM" : "FUTBOLCU", 22, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(pl.rectTransform, 32, 210, 300, 34);
+            if (_team)
+            {
+                var tm = Ui.Label(box.transform, _candidates.Count >= 4 ? "Aktif kadro: " + App.Profile.ActiveSquad.FormationId + " dizilişinden seçilir.\nKaleci ve 4 saha oyuncusu otomatik belirlenir; rakip seviyesi zorluğa göre değişir." : "Kadroda yeterli saha oyuncusu yok (en az 4). Önce Kulüp'ten kadro kur.", 26, _candidates.Count >= 4 ? Ui.TextLight : Ui.Danger, TextAnchor.UpperLeft);
+                Ui.PlaceTopLeft(tm.rectTransform, 32, 260, 960, 160);
+            }
+            else if (_candidates.Count > 0)
             {
                 var ci = App.Profile.Inventory.Get(_candidates[_playerIndex]); var d = App.Catalog.GetCard(ci.CardDefinitionId); var player = App.Catalog.GetPlayer(d.PlayerId);
                 var rt = CardView.Create(box.transform, player, d, 210, 285, new CardView.Options { Instance = ci });
@@ -212,16 +219,57 @@ namespace Fenerbahce.Runtime
                 _diffBtns[i] = Ui.MakeButton(box.transform, names[i], i == _difficulty ? Ui.Yellow : Ui.SurfaceRaised, i == _difficulty ? Ui.Navy : Ui.TextLight, () => { _difficulty = idx; Render(); }, "Diff" + i, 28);
                 Ui.PlaceTopLeft((RectTransform)_diffBtns[i].transform, 32 + i * 190, 590, 176, 76);
             }
-            _defBtn = Ui.MakeButton(box.transform, _defender ? "SAVUNMACI: AÇIK" : "SAVUNMACI: KAPALI", _defender ? Ui.SurfaceRaised : Ui.C(DesignTokens.Locked), Ui.TextLight, () => { _defender = !_defender; Render(); }, "DefToggle", 26);
-            Ui.PlaceTopLeft((RectTransform)_defBtn.transform, 620, 590, 370, 76);
+            if (!_team)
+            {
+                _defBtn = Ui.MakeButton(box.transform, _defender ? "SAVUNMACI: AÇIK" : "SAVUNMACI: KAPALI", _defender ? Ui.SurfaceRaised : Ui.C(DesignTokens.Locked), Ui.TextLight, () => { _defender = !_defender; Render(); }, "DefToggle", 26);
+                Ui.PlaceTopLeft((RectTransform)_defBtn.transform, 620, 590, 370, 76);
+            }
 
             var go = Ui.PrimaryButton(box.transform, "BAŞLA", Begin, 46);
             Ui.PlaceTopLeft((RectTransform)go.transform, 32, 680, 960, 66);
-            go.interactable = _candidates.Count > 0;
+            go.interactable = _team ? _candidates.Count >= 4 : _candidates.Count > 0;
+        }
+
+        /// <summary>İlk 11'den 5v5 için kaleci + 4 saha oyuncusu seçer: en iyi 2 defans, 1 orta saha, 1 forvet (yoksa kalan en iyilerle doldurur).</summary>
+        void BeginTeam()
+        {
+            var p = App.Profile; var sq = p.ActiveSquad; if (sq == null) return;
+            var f = Formations.Get(sq.FormationId);
+            SimStats keeper = null; var pool = new List<KeyValuePair<PositionGroup, KeyValuePair<int, SimStats>>>();
+            for (int i = 0; i < 11; i++)
+            {
+                if (sq.Starters[i] == null) continue;
+                var ci = p.Inventory.Get(sq.Starters[i]); var d = App.Catalog.GetCard(ci.CardDefinitionId); var pl = App.Catalog.GetPlayer(d.PlayerId);
+                var st = Fenerbahce.Core.Sim.SimStats.From(pl, d.Overall);
+                if (f.Slots[i].Position == Position.GK) keeper = st;
+                else pool.Add(new KeyValuePair<PositionGroup, KeyValuePair<int, SimStats>>(pl.PositionGroup, new KeyValuePair<int, SimStats>(d.Overall, st)));
+            }
+            var chosen = new List<SimStats>();
+            Func<PositionGroup, int, bool> take = (g, n) =>
+            {
+                foreach (var e in pool.Where(x => x.Key == g).OrderByDescending(x => x.Value.Key).Take(n).ToList()) { chosen.Add(e.Value.Value); pool.Remove(e); }
+                return true;
+            };
+            take(PositionGroup.DEF, 2); take(PositionGroup.MID, 1); take(PositionGroup.ATT, 1);
+            foreach (var e in pool.OrderByDescending(x => x.Value.Key).ToList()) { if (chosen.Count >= 4) break; chosen.Add(e.Value.Value); }
+            if (chosen.Count < 4) return;
+            // sıra = slot sırası (2 defans, orta, forvet). Seçim gruplarına göre sıralı eklendiği için doğrudan eşleşir; eksikte kalanlar sona gider.
+            float[] oppLevel = { 55f, 70f, 85f };
+            var home = TeamSetup.Small5("Kanarya", 70f);
+            home.Outfield = chosen.Take(4).ToList();
+            home.Keeper = keeper ?? SimStats.Generic(65f, "Kaleci");
+            var away = TeamSetup.Small5("Rakip", oppLevel[_difficulty]);
+            var cfg = new MatchWorldConfig
+            {
+                Seed = Environment.TickCount, HalfSeconds = 90f, Halves = 2, HumanControlsHome = true,
+                Home = home, Away = away,
+            };
+            App.StartField(new FieldController.Options { Mode = FieldController.Mode.Team, Team = cfg, Settings = p.Settings, SessionId = Guid.NewGuid().ToString("N"), Seed = cfg.Seed });
         }
 
         void Begin()
         {
+            if (_team) { BeginTeam(); return; }
             if (_candidates.Count == 0) return;
             var ci = App.Profile.Inventory.Get(_candidates[_playerIndex]);
             var d = App.Catalog.GetCard(ci.CardDefinitionId); var pl = App.Catalog.GetPlayer(d.PlayerId);
@@ -331,8 +379,8 @@ namespace Fenerbahce.Runtime
             App.RefreshChrome();
 
             var bg = Ui.Panel(_box, "Bg", Ui.Surface, true); Ui.Stretch(bg.rectTransform);
-            var t = Ui.FitLabel(bg.transform, s.Completed ? "OTURUM BİTTİ" : "OTURUM YARIDA KESİLDİ", DesignTokens.FontTitle + 8, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(t.rectTransform, 48, 28, 1300, 70);
-            var sc = Ui.Label(bg.transform, s.Stats.Goals + "  GOL", 110, Ui.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(sc.rectTransform, 48, 110, 470, 140);
+            var t = Ui.FitLabel(bg.transform, s.Completed ? (s.IsTeamMatch ? "MAÇ SONU" : "OTURUM BİTTİ") : "OTURUM YARIDA KESİLDİ", DesignTokens.FontTitle + 8, Ui.Yellow, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(t.rectTransform, 48, 28, 1300, 70);
+            var sc = Ui.Label(bg.transform, s.IsTeamMatch ? s.Result.ScoreHome + " - " + s.Result.ScoreAway : s.Stats.Goals + "  GOL", 110, Ui.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.PlaceTopLeft(sc.rectTransform, 48, 110, 470, 140);
             // İstatistikler olay kaydından türetilir (G46): şut(isabetli), topa sahip olma, pas isabeti, faul, ofsayt.
             var res = s.Result;
             string[][] rows =
@@ -355,13 +403,15 @@ namespace Fenerbahce.Runtime
             // Golcüler (dakika ile)
             var scorers = res.Scorers.Count == 0 ? "Gol yok" : string.Join("\n", res.Scorers.Select(x => x.Minute + "'  " + x.Name + (x.Team == 0 ? "" : "  (rakip)")).ToArray());
             var sc2 = Ui.Label(bg.transform, "GOLCÜLER\n" + scorers, 28, Ui.TextLight, TextAnchor.UpperLeft); Ui.PlaceTopLeft(sc2.rectTransform, 48, 260, 460, 220);
-            string extra = "Hedefli pas: " + s.Stats.TargetPasses + "   Kazanılan top (kayma): " + s.Stats.TacklesWon + "   Kaybedilen top: " + s.Stats.BallLosses + "   Çalım: " + s.Stats.Skills + "   Süre: " + Mathf.RoundToInt(s.PlayedSeconds) + " sn";
+            string extra = s.IsTeamMatch
+                ? "Pas: " + res.Home.Passes + " (" + res.Home.PassesCompleted + " isabetli)   Süre: " + Mathf.RoundToInt(s.PlayedSeconds) + " sn"
+                : "Hedefli pas: " + s.Stats.TargetPasses + "   Kazanılan top (kayma): " + s.Stats.TacklesWon + "   Kaybedilen top: " + s.Stats.BallLosses + "   Çalım: " + s.Stats.Skills + "   Süre: " + Mathf.RoundToInt(s.PlayedSeconds) + " sn";
             var st = Ui.Label(bg.transform, extra, 24, Ui.Muted, TextAnchor.UpperLeft); Ui.PlaceTopLeft(st.rectTransform, 48, 440, 1200, 60);
             var rw = Ui.Panel(bg.transform, "Reward", Ui.SurfaceRaised, true); Ui.PlaceTopLeft(rw.rectTransform, 48, 510, 1000, 120);
             string rtxt = r.Ok ? (gained > 0 ? "KAZANILAN COIN:  +" + gained : "Bu oturumda coin kazanılmadı (gol/hedefli pas yok).") : ("Ödül işlenemedi: " + r.Message);
             if (r.Ok && r.Replayed) rtxt = "Bu oturumun ödülü zaten işlendi.";
             var rl = Ui.FitLabel(rw.transform, rtxt, 36, gained > 0 ? Ui.Yellow : Ui.Muted, TextAnchor.MiddleLeft, FontStyle.Bold); Ui.Stretch(rl.rectTransform, 28, 8, 28, 8);
-            var note = Ui.Label(bg.transform, "Not: Bu bir kontrol sahası ödülüdür (prototip, istemci kaynaklı). Gerçek maç/ekonomi ödülü sunucuda doğrulanır (T048–T050).", 20, Ui.Muted, TextAnchor.UpperLeft); Ui.PlaceTopLeft(note.rectTransform, 48, 650, 1300, 60);
+            var note = Ui.Label(bg.transform, (s.IsTeamMatch ? "Not: 5v5 prototip maçı; ödül yalnız gol sayısından hesaplanır (istemci kaynaklı). Gerçek maç/ekonomi ödülü sunucuda doğrulanır (T048–T050)." : "Not: Bu bir kontrol sahası ödülüdür (prototip, istemci kaynaklı). Gerçek maç/ekonomi ödülü sunucuda doğrulanır (T048–T050)."), 20, Ui.Muted, TextAnchor.UpperLeft); Ui.PlaceTopLeft(note.rectTransform, 48, 650, 1300, 60);
 
             var again = Ui.PrimaryButton(bg.transform, "TEKRAR OYNA", () => { Pending = null; App.Nav.Back(); }, 36);
             var ar = (RectTransform)again.transform; ar.anchorMin = ar.anchorMax = new Vector2(0, 0); ar.pivot = new Vector2(0, 0); ar.anchoredPosition = new Vector2(48, 32); ar.sizeDelta = new Vector2(480, 96);

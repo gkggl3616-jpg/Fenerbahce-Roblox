@@ -7,7 +7,7 @@ namespace Fenerbahce.Core.Sim
 
     /// <summary>
     /// İlk kaleci davranışı (T025): konumlanma, şut algılama + tepki gecikmesi, dalış/kurtarış, tutma veya çelme.
-    /// Kaleci rakip kaleyi (+X) savunur. Değerler PROTOTİP'tir.
+    /// Sign=+1: +X kalesini, Sign=-1: -X kalesini savunur (iki takımlı maç için). Değerler PROTOTİP'tir.
     /// </summary>
     public class GoalkeeperAI
     {
@@ -20,19 +20,23 @@ namespace Fenerbahce.Core.Sim
         public float DiveSpeed;
         public bool DiveCommitted;
         public int Id;
+        /// <summary>+1: +X kalesini savunur; -1: -X kalesini savunur.</summary>
+        public readonly int Sign;
 
         int _rolledKick = -1;
         readonly PitchSpec _pitch;
         readonly SimRandom _rng;
+        /// <summary>Kale çizgisinin İŞARETSİZ x değeri (yerel çerçeve: savunulan kale her zaman +X).</summary>
         public float GoalLineX { get { return _pitch.HalfLength; } }
 
-        public GoalkeeperAI(int id, SimStats stats, PitchSpec pitch, SimRandom rng)
+        public GoalkeeperAI(int id, SimStats stats, PitchSpec pitch, SimRandom rng, int sign = 1)
         {
-            Id = id; Stats = stats; _pitch = pitch; _rng = rng;
-            Pos = new Vec2(_pitch.HalfLength - 1.0f, 0f);
+            Id = id; Stats = stats; _pitch = pitch; _rng = rng; Sign = sign >= 0 ? 1 : -1;
+            Facing = new Vec2(-Sign, 0);
+            Pos = new Vec2(Sign * (_pitch.HalfLength - 1.0f), 0f);
         }
 
-        public void ResetPosition() { Pos = new Vec2(_pitch.HalfLength - 1.0f, 0f); State = GkState.Ready; Timer = 0; DiveCommitted = false; }
+        public void ResetPosition() { Pos = new Vec2(Sign * (_pitch.HalfLength - 1.0f), 0f); State = GkState.Ready; Timer = 0; DiveCommitted = false; }
 
         float Skill { get { return Stats.Goalkeeping / 99f; } }
 
@@ -43,7 +47,7 @@ namespace Fenerbahce.Core.Sim
 
             if (State == GkState.Holding)
             {
-                ball.Pos = Pos + new Vec2(-0.5f, 0);
+                ball.Pos = Pos + new Vec2(-0.5f * Sign, 0);
                 ball.Vel = Vec2.Zero; ball.Mode = BallMode.Controlled; ball.OwnerId = Id;
                 if (Timer <= 0f) State = GkState.Recovering;
                 return GkOutcome.None;
@@ -53,10 +57,10 @@ namespace Fenerbahce.Core.Sim
             // Şut algılama
             if (State == GkState.Ready && !ball.IsControlled)
             {
-                float toward = ball.Vel.X;
+                float toward = ball.Vel.X * Sign;
                 if (toward > 6f)
                 {
-                    float tCross = (GoalLineX - ball.Pos.X) / toward;
+                    float tCross = (GoalLineX - ball.Pos.X * Sign) / toward;
                     if (tCross > 0.05f && tCross < 1.8f)
                     {
                         float yCross = ball.Pos.Y + ball.Vel.Y * tCross;
@@ -95,20 +99,20 @@ namespace Fenerbahce.Core.Sim
             else if (State == GkState.Ready || State == GkState.Recovering)
             {
                 // Konumlanma: top-kale merkezi doğrultusunda, topa mesafeye göre öne çık.
-                var goalCenter = new Vec2(GoalLineX, 0f);
+                var goalCenter = new Vec2(Sign * GoalLineX, 0f);
                 var rel = ball.Pos - goalCenter;
                 float dist = rel.Length;
-                var dirToBall = dist > 1e-3f ? rel / dist : new Vec2(-1, 0);
+                var dirToBall = dist > 1e-3f ? rel / dist : new Vec2(-Sign, 0);
                 float offset = Math.Min(5.0f, 0.9f + dist * 0.07f);
                 var desired = goalCenter + dirToBall * offset;
                 desired.Y = MathUtil.Clamp(desired.Y, -(_pitch.GoalHalfWidth - 0.4f), _pitch.GoalHalfWidth - 0.4f);
-                desired.X = Math.Min(desired.X, GoalLineX - 0.6f);
+                desired.X = Sign * Math.Min(desired.X * Sign, GoalLineX - 0.6f);
                 float speed = MathUtil.Lerp(4.2f, 5.8f, Skill);
                 Pos = Vec2.MoveTowards(Pos, desired, speed * dt);
             }
 
             // Kurtarış: top kaleci düzlemini geçerken
-            if (!ball.IsControlled && ball.PrevPos.X < Pos.X + 0.3f && ball.Pos.X >= Pos.X - 0.3f && ball.Vel.X > 1f)
+            if (!ball.IsControlled && ball.PrevPos.X * Sign < Pos.X * Sign + 0.3f && ball.Pos.X * Sign >= Pos.X * Sign - 0.3f && ball.Vel.X * Sign > 1f)
             {
                 float dy = Math.Abs(ball.Pos.Y - Pos.Y);
                 float reachY = 0.60f + 0.30f * Skill + (State == GkState.Diving ? 0.40f : 0f);
@@ -133,9 +137,9 @@ namespace Fenerbahce.Core.Sim
                     else
                     {
                         float side = ball.Pos.Y >= Pos.Y ? 1f : -1f;
-                        ball.Vel = new Vec2(-Math.Max(4f, speed * 0.30f), side * (3f + 4f * _rng.Next01()));
+                        ball.Vel = new Vec2(-Sign * Math.Max(4f, speed * 0.30f), side * (3f + 4f * _rng.Next01()));
                         ball.VZ = 1.5f + 2f * _rng.Next01();
-                        ball.Pos = new Vec2(Pos.X - 0.35f, ball.Pos.Y);
+                        ball.Pos = new Vec2(Pos.X - 0.35f * Sign, ball.Pos.Y);
                         ball.LastTouchId = Id;
                         ball.LockedId = Id; ball.LockTimer = 0.4f;
                         State = GkState.Recovering; Timer = 0.7f; outcome = GkOutcome.Parry;
@@ -149,10 +153,18 @@ namespace Fenerbahce.Core.Sim
         public void Distribute(BallBody ball, Vec2 toward)
         {
             var dir = (toward - Pos).Normalized;
-            if (dir.SqrLength < 1e-4f) dir = new Vec2(-1, 0);
+            if (dir.SqrLength < 1e-4f) dir = new Vec2(-Sign, 0);
             ball.SetFree(Pos + dir * 0.7f, dir * 11f);
             ball.LastTouchId = Id; ball.LockedId = Id; ball.LockTimer = 0.5f;
             State = GkState.Recovering; Timer = 0.6f;
+        }
+
+        /// <summary>Kale vuruşu/yeniden başlatma: kaleci topu tutar, bir süre sonra oyuna sokar.</summary>
+        public void Hold(BallBody ball, float seconds)
+        {
+            Pos = new Vec2(Sign * (_pitch.HalfLength - 1.0f), 0f);
+            ball.Take(Id); ball.Pos = Pos + new Vec2(-0.5f * Sign, 0); ball.Vel = Vec2.Zero;
+            State = GkState.Holding; Timer = seconds;
         }
 
         public bool IsHolding { get { return State == GkState.Holding && Timer <= 0.05f; } }

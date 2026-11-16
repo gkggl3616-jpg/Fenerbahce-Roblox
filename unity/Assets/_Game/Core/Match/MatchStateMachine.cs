@@ -13,6 +13,9 @@ namespace Fenerbahce.Core.Match
         public int Halves { get; private set; }
         public float HalfLengthSeconds { get; private set; }
         public float ElapsedInHalf { get; private set; }
+        /// <summary>Uzatma (eklenen) süre, saniye. Devre/maç, HalfLength+Stoppage dolunca biter. Referansta '+2' göstergesi görüldü.</summary>
+        public float StoppageSeconds { get; set; }
+        public float PeriodEnd { get { return HalfLengthSeconds + StoppageSeconds; } }
         public float PhaseTimer { get; private set; }
         public int ScoreHome { get; private set; }
         public int ScoreAway { get; private set; }
@@ -98,9 +101,9 @@ namespace Fenerbahce.Core.Match
                     break;
                 case MatchPhase.Live:
                     ElapsedInHalf += dt;
-                    if (ElapsedInHalf >= HalfLengthSeconds)
+                    if (ElapsedInHalf >= PeriodEnd)
                     {
-                        ElapsedInHalf = HalfLengthSeconds;
+                        ElapsedInHalf = PeriodEnd;
                         TransitionTo(Half >= Halves ? MatchPhase.FullTime : MatchPhase.HalfTime);
                     }
                     break;
@@ -124,18 +127,29 @@ namespace Fenerbahce.Core.Match
 
         void AfterGoalSequence()
         {
-            if (ElapsedInHalf >= HalfLengthSeconds) TransitionTo(Half >= Halves ? MatchPhase.FullTime : MatchPhase.HalfTime);
+            if (ElapsedInHalf >= PeriodEnd) TransitionTo(Half >= Halves ? MatchPhase.FullTime : MatchPhase.HalfTime);
             else TransitionTo(MatchPhase.Kickoff);
         }
 
-        /// <summary>Ekranda gösterilen maç dakikası (0-90). Gerçek süre ölçeklenir.</summary>
+        /// <summary>Ekranda gösterilen maç dakikası (0-90). Gerçek süre ölçeklenir; uzatmada devre sonu dakikasında kalır.</summary>
         public int DisplayMinute
         {
             get
             {
                 float perHalf = 90f / Halves;
-                float frac = ElapsedInHalf / HalfLengthSeconds;
+                float frac = Math.Min(1f, ElapsedInHalf / HalfLengthSeconds);
                 return (int)(((Half - 1) * perHalf) + frac * perHalf);
+            }
+        }
+
+        /// <summary>Uzatma göstergesi ("+2"): devre süresi aşıldıysa aşan oyun dakikası, aksi halde 0.</summary>
+        public int DisplayAddedMinutes
+        {
+            get
+            {
+                if (ElapsedInHalf <= HalfLengthSeconds) return 0;
+                float perHalf = 90f / Halves;
+                return (int)Math.Ceiling((ElapsedInHalf - HalfLengthSeconds) / HalfLengthSeconds * perHalf);
             }
         }
     }
