@@ -8,8 +8,8 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 
 | Durum | Adet |
 |---|---|
-| [ ] TODO | 60 |
-| [~] IN_PROGRESS | 30 |
+| [ ] TODO | 57 |
+| [~] IN_PROGRESS | 33 |
 | [x] DONE | 14 |
 | [!] BLOCKED | 0 |
 | **Toplam** | **104** |
@@ -277,9 +277,10 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T064 · P1 · Etkinlik** — Taraftar Merkezi/TOTW/POTM
   - Kabul: Sekmeler ve puan harcama tutarlı
   - Kanıt kodu: G53,G54 · Bağımlılık: T060 · Durum: **TODO**
-- [ ] **T065 · P0 · Mağaza** — Teklif katalog/kategori/fiyat/limit
+- [~] **T065 · P0 · Mağaza** — Teklif katalog/kategori/fiyat/limit
   - Kabul: Yetersiz bakiye ve limit doğru
-  - Kanıt kodu: G57,G58,G59 · Bağımlılık: T050 · Durum: **TODO**
+  - Kanıt kodu: G57,G58,G59 · Bağımlılık: T050 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Core/Store: OfferDefinition (günlük/haftalık/toplam limit, çift para birimi, süre, kilit koşulu, ücretsiz), StoreService.Purchase (adet, atomik, idempotent, UTC sunucu saati); offers.v1.json. StoreTests geçti (limit sıfırlama, kilit, yetersiz bakiye, adet). Mağaza UI'ı yok; rastgele paket (T066) yok.
 - [ ] **T066 · P0 · Paket** — Drop table ve garanti sayaç sözleşmesi
   - Kabul: Olasılık toplamı 1; sürüm sabitlenir
   - Kanıt kodu: G58 · Bağımlılık: T065 · Durum: **TODO**
@@ -299,13 +300,15 @@ Durum anlamları: `[ ]` TODO · `[~]` IN_PROGRESS (kod/belge var, kabul ölçüt
 - [ ] **T071 · P0 · Bilet** — Toplu ödül alma/sezon bitişi
   - Kabul: Tekil claimler tekrar vermez
   - Kanıt kodu: G55 · Bağımlılık: T070 · Durum: **TODO**
-- [ ] **T072 · P0 · Takas** — Tarif/kriter/hızlı ekle
+- [~] **T072 · P0 · Takas** — Tarif/kriter/hızlı ekle
   - Kabul: Satılamaz/kilit/kadro kuralları uygulanır
-  - Kanıt kodu: G65,G66,G68 · Bağımlılık: T040,T050 · Durum: **TODO**
-  - Sıradaki: Takasta antrenman seviyesi aktarılmaz uyarısı (referansta var); T054 ile tutarlı tasarla.
-- [ ] **T073 · P0 · Takas** — Atomik tüketim ve ödül
+  - Kanıt kodu: G65,G66,G68 · Bağımlılık: T040,T050 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: Core/Exchange: koşul sayacı (3/3), limit (0/5), süre, HIZLI EKLE (en ucuz uygun kart), UZAKLAŞTIR = seçimi temizle, kilitli/kadrodaki/satıştaki kart engeli, antrenman seviyesi kaybı uyarısı; exchanges.v1.json. ExchangeTests geçti. Takas UI'ı yok.
+  - Sıradaki: Takas UI + T054 antrenman aktarımı ile uyum
+- [~] **T073 · P0 · Takas** — Atomik tüketim ve ödül
   - Kabul: Çifte takas envanteri çoğaltmaz
-  - Kanıt kodu: G67 · Bağımlılık: T072,T067 · Durum: **TODO**
+  - Kanıt kodu: G67 · Bağımlılık: T072,T067 · Durum: **IN_PROGRESS**
+  - Doğrulama/Not: ExchangeService.Execute: kartlar tüketilir + ödül verilir + sayaç artar TEK atomik işlemde (EconomyService.ApplyBundle); aynı anahtar çifte ödül vermez; geçersiz ödül hiçbir şey tüketmez (testli). Paket ödülü (T067) bağımlılığı açık.
 - [ ] **T074 · P0 · Yönetim** — Oyuncu/teklif/drop table editörü
   - Kabul: Validasyon ve taslak önizlemesi var
   - Kanıt kodu: TEKNIK · Bağımlılık: T066 · Durum: **TODO**

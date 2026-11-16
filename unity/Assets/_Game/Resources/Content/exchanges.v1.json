@@ -1,0 +1,42 @@
+{
+  "contentVersion": "exchanges.v1",
+  "recipes": [
+    {
+      "recipeId": "EX_KANARYA_1",
+      "title": "Kanarya Takası",
+      "program": "KANARYA_AKADEMISI",
+      "requirements": [
+        { "requirementId": "r1", "label": "80+ GEN Oyuncu", "minOverall": 80, "count": 2, "group": null },
+        { "requirementId": "r2", "label": "75+ GEN Oyuncu", "minOverall": 75, "count": 3, "group": null }
+      ],
+      "rewardCardDefinitionIds": [ "P050_SPECIAL_V1" ],
+      "rewardCoins": 0,
+      "maxUses": 5,
+      "expiresUtcTicks": 0
+    },
+    {
+      "recipeId": "EX_YILDIZ_1",
+      "title": "Dünya Yıldızları Takası",
+      "program": "DUNYA_YILDIZLARI",
+      "requirements": [
+        { "requirementId": "r1", "label": "86+ GEN Oyuncu", "minOverall": 86, "count": 3, "group": null }
+      ],
+      "rewardCardDefinitionIds": [ "P094_SPECIAL_V1" ],
+      "rewardCoins": 0,
+      "maxUses": 1,
+      "expiresUtcTicks": 0
+    },
+    {
+      "recipeId": "EX_EKONOMI_1",
+      "title": "Ekonomi Takası",
+      "program": "TEMEL",
+      "requirements": [
+        { "requirementId": "r1", "label": "76+ GEN Oyuncu", "minOverall": 76, "count": 1, "group": null }
+      ],
+      "rewardCardDefinitionIds": [],
+      "rewardCoins": 400,
+      "maxUses": 10,
+      "expiresUtcTicks": 0
+    }
+  ]
+}

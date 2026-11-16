@@ -1,0 +1,64 @@
+{
+  "contentVersion": "offers.v1",
+  "offers": [
+    {
+      "offerId": "OFR_GUNLUK_HEDIYE",
+      "title": "Günlük Hediye",
+      "category": "ONE_CIKAN",
+      "isNew": false,
+      "limitPeriod": "Daily",
+      "limitMax": 1,
+      "prices": [],
+      "rewardCardDefinitionIds": [],
+      "rewardCoins": 500,
+      "expiresUtcTicks": 0,
+      "requiresOfferId": null,
+      "lockedText": null
+    },
+    {
+      "offerId": "OFR_BASLANGIC_OYUNCU",
+      "title": "Başlangıç Oyuncu Teklifi",
+      "category": "ONE_CIKAN",
+      "isNew": true,
+      "limitPeriod": "Total",
+      "limitMax": 2,
+      "prices": [
+        { "currency": "Coin", "amount": 1500 },
+        { "currency": "Token", "amount": 20 }
+      ],
+      "rewardCardDefinitionIds": [ "P045_BASE_V1" ],
+      "rewardCoins": 0,
+      "expiresUtcTicks": 0,
+      "requiresOfferId": null,
+      "lockedText": null
+    },
+    {
+      "offerId": "OFR_HAFTALIK_TAKVIYE",
+      "title": "Haftalık Takviye",
+      "category": "EN_COK_SATAN",
+      "isNew": false,
+      "limitPeriod": "Weekly",
+      "limitMax": 3,
+      "prices": [ { "currency": "Coin", "amount": 900 } ],
+      "rewardCardDefinitionIds": [ "P046_BASE_V1" ],
+      "rewardCoins": 0,
+      "expiresUtcTicks": 0,
+      "requiresOfferId": null,
+      "lockedText": null
+    },
+    {
+      "offerId": "OFR_OZEL_KART",
+      "title": "Kadıköy Özel Kartı",
+      "category": "EN_IYI_ETKINLIKLER",
+      "isNew": true,
+      "limitPeriod": "Total",
+      "limitMax": 1,
+      "prices": [ { "currency": "Coin", "amount": 4000 } ],
+      "rewardCardDefinitionIds": [ "P050_SPECIAL_V1" ],
+      "rewardCoins": 0,
+      "expiresUtcTicks": 0,
+      "requiresOfferId": "OFR_BASLANGIC_OYUNCU",
+      "lockedText": "Başlangıç Oyuncu Teklifi'ni aldıktan sonra açılır."
+    }
+  ]
+}

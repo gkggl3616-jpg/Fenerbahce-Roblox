@@ -1,5 +1,14 @@
 # PROGRESS — çalışma dilimi raporu
 
+## Dilim 3 (2026-11-16): derin kare okuması → ekran spesifikasyonu + mağaza/takas çekirdeği
+- **Neden:** ilk inceleme özet sayfalarıyla (12–20 sn örnekleme) yapılmıştı ve çoğunlukla "G kodları doğrulandı" çıkmıştı. Bu dilimde ~35 anahtar kare **2× büyütülüp tek tek okundu** (mağaza, paket, takas, derece yükselt, kadro, pazar, sonuç, etkinlik haritası, görevler, modlar, Teke Tek, taktik, sezon bileti, beceriler, oyuncu detayı, beceri geliştirici, antrenman, Futbol Merkezi, maç HUD'u, arkadaşlar).
+- **Çıktı:** `docs/EKRAN_SPESIFIKASYONU.md` — ekran ekran tam Türkçe etiketler, alan listeleri, durumlar, limit/süre kuralları, sayı/süre biçimleri.
+- **Kodlanan (testli):** `NumberFormat` (`1.329.300.000`, `408,6B`, `2,491Mln`), `TimeFormat` (`25:44:04`, `6 GÜN`), `Periods` (UTC gün/Pazartesi hafta), `EconomyService.ApplyBundle` (tek atomik kapı), **`StoreService`** (limit, çift fiyat, kilit, süre, adet) ve **`ExchangeService`** (koşul sayacı, limit, süre, hızlı ekle, atomik takas); `offers.v1.json`, `exchanges.v1.json`.
+- **Kanıt:** `dotnet test` **122/122** geçti (25 yeni test); kural bozma (mutasyon) denemesinde ilgili testler kırıldı; `validate_catalog.py` yeni içeriği de denetliyor.
+- **Sınır:** mağaza/takas **UI'ı yok** (Unity'de doğrulanamaz, spesifikasyona göre sıradaki iş); referans 360p ve anahtar kareler örneklemeli; bölüm 1/5 hâlâ gelmedi.
+
+---
+
 ## Dilim 2 (2026-11-16): referans incelemesi 2 + maç sonucu çekirdeği
 - **İnceleme:** kare arşivinin 2/5, 3/5, 4/5, 5/5 bölümleri (2.877 kare; sahne geçişleri tam, saniyelik kareler örneklemeli) incelendi → `docs/REFERANS_INCELEME_2.md`. Sonuç: G kodları doğrulandı, kapsam değişmedi, 8 ince ayrıntı görev notlarına eklendi. **Bölüm 1/5 gelmedi.** Bölüm 4/5 iki kez yüklenmiş (aynı SHA-256).
 - **Karar (D-019):** Unity lisansı bekleyen APK dışında, saf C#'ta doğrulanabilen kritik yol ilerler: önce maç sonucu/istatistik çekirdeği, sonra 5v5 AI → 11v11 + kurallar.

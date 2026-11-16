@@ -36,6 +36,22 @@ namespace Fenerbahce.Core.Economy
         public long UtcTicks { get; set; }
     }
 
+    /// <summary>Dönemsel sayaç (günlük/haftalık/toplam limit). PeriodKey değişince sayaç sıfırlanmış sayılır.</summary>
+    public class UsageCounter
+    {
+        public int Count { get; set; }
+        public string PeriodKey { get; set; }
+    }
+
+    /// <summary>Atomik işlem kapısında para birimi değişimi.</summary>
+    public class CurrencyDelta
+    {
+        public Currency Currency { get; set; }
+        public long Amount { get; set; }
+        public CurrencyDelta() { }
+        public CurrencyDelta(Currency c, long amount) { Currency = c; Amount = amount; }
+    }
+
     public class ProfileSettings
     {
         public string Language { get; set; } = "tr";
@@ -63,6 +79,8 @@ namespace Fenerbahce.Core.Economy
         public List<SquadPlan> Squads { get; set; } = new List<SquadPlan>();
         public string ActiveSquadId { get; set; }
         public Dictionary<string, OperationRecord> Operations { get; set; } = new Dictionary<string, OperationRecord>();
+        /// <summary>Teklif/takas kullanım sayaçları. Anahtar: "offer:&lt;id&gt;" veya "exchange:&lt;id&gt;".</summary>
+        public Dictionary<string, UsageCounter> Usage { get; set; } = new Dictionary<string, UsageCounter>();
         public ProfileSettings Settings { get; set; } = new ProfileSettings();
         public int ControlSessionsPlayed { get; set; }
         public int ControlGoalsTotal { get; set; }

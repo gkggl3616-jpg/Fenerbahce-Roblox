@@ -105,13 +105,46 @@ def main():
         if c["targetScreen"] not in SCREENS:
             err("CAMPAIGN_TARGET: %s -> %s" % (c["id"], c["targetScreen"]))
 
+    # Teklifler ve takaslar (Core/Store, Core/Exchange): referanslar ve limit kuralları
+    offers = load("offers.v1.json")["offers"]
+    recipes = load("exchanges.v1.json")["recipes"]
+    oids = [o["offerId"] for o in offers]
+    if len(oids) != len(set(oids)):
+        err("OFFER_DUP: yinelenen offerId")
+    for o in offers:
+        for c in o["rewardCardDefinitionIds"]:
+            if c not in cids:
+                err("OFFER_REF: %s -> %s" % (o["offerId"], c))
+        if not o["prices"] and o["limitPeriod"] == "None":
+            err("OFFER_FREE_UNLIMITED: %s ücretsiz ama limitsiz (çift alma engeli yok)" % o["offerId"])
+        if o["limitPeriod"] != "None" and o["limitMax"] < 1:
+            err("OFFER_LIMIT: %s" % o["offerId"])
+        if o["requiresOfferId"] and o["requiresOfferId"] not in oids:
+            err("OFFER_REQ: %s -> %s" % (o["offerId"], o["requiresOfferId"]))
+        if not o["rewardCardDefinitionIds"] and o["rewardCoins"] <= 0:
+            err("OFFER_REWARD: %s ödül yok" % o["offerId"])
+    rids = [r["recipeId"] for r in recipes]
+    if len(rids) != len(set(rids)):
+        err("RECIPE_DUP: yinelenen recipeId")
+    for r in recipes:
+        if not r["requirements"]:
+            err("RECIPE_REQ: %s koşul yok" % r["recipeId"])
+        for q in r["requirements"]:
+            if q["count"] < 1 or not 1 <= q["minOverall"] <= 99:
+                err("RECIPE_REQ_RANGE: %s/%s" % (r["recipeId"], q["requirementId"]))
+        for c in r["rewardCardDefinitionIds"]:
+            if c not in cids:
+                err("RECIPE_REF: %s -> %s" % (r["recipeId"], c))
+        if not r["rewardCardDefinitionIds"] and r["rewardCoins"] <= 0:
+            err("RECIPE_REWARD: %s ödül yok" % r["recipeId"])
+
     if errors:
         print("DOĞRULAMA BAŞARISIZ (%d hata):" % len(errors))
         for e in errors:
             print("  - " + e)
         return 1
-    print("OK: %d futbolcu (GK %d / DEF %d / MID %d / ATT %d), %d kart tanımı (%d varyant), %d kampanya, başlangıç paketi %d kart"
-          % (len(ids), groups["GK"], groups["DEF"], groups["MID"], groups["ATT"], len(cards), len(cards) - len(ids), len(camps), len(starter)))
+    print("OK: %d futbolcu (GK %d / DEF %d / MID %d / ATT %d), %d kart tanımı (%d varyant), %d kampanya, %d teklif, %d takas tarifi, başlangıç paketi %d kart"
+          % (len(ids), groups["GK"], groups["DEF"], groups["MID"], groups["ATT"], len(cards), len(cards) - len(ids), len(camps), len(offers), len(recipes), len(starter)))
     return 0
 
 

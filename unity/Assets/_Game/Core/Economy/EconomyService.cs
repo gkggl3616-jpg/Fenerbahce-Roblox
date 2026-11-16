@@ -118,6 +118,17 @@ namespace Fenerbahce.Core.Economy
             if (string.IsNullOrEmpty(key)) return OpResult.Fail("NO_KEY", "idempotency anahtarı zorunlu");
             string fp = "consume:" + string.Join(",", cardInstanceIds);
             OpResult rp; if (TryReplay(key, "consume", fp, out rp)) return rp;
+            var bad = ValidateConsume(cardInstanceIds);
+            if (bad != null) return bad;
+            // Doğrulama bitti → tek seferde uygula.
+            _p.Inventory.Cards.RemoveAll(c => cardInstanceIds.Contains(c.CardInstanceId));
+            Record(key, "consume", fp, new List<string>(cardInstanceIds), reason);
+            return new OpResult { Ok = true, CardInstanceIds = new List<string>(cardInstanceIds) };
+        }
+
+        /// <summary>Kartların harcanabilirliğini denetler (sahip, kilit, satış, kadro, yinelenme). Sorun yoksa null.</summary>
+        public OpResult ValidateConsume(IList<string> cardInstanceIds)
+        {
             if (cardInstanceIds.Count == 0) return OpResult.Fail("EMPTY", "tüketilecek kart yok");
             if (cardInstanceIds.Distinct().Count() != cardInstanceIds.Count) return OpResult.Fail("DUPLICATE", "aynı kart iki kez seçilmiş");
             foreach (var id in cardInstanceIds)
@@ -129,10 +140,72 @@ namespace Fenerbahce.Core.Economy
                 foreach (var sq in _p.Squads)
                     if (SquadService.IsAssigned(sq, id)) return OpResult.Fail("IN_SQUAD", "kadrodaki kart harcanamaz (" + sq.Name + "): " + id);
             }
-            // Doğrulama bitti → tek seferde uygula.
-            _p.Inventory.Cards.RemoveAll(c => cardInstanceIds.Contains(c.CardInstanceId));
-            Record(key, "consume", fp, new List<string>(cardInstanceIds), reason);
-            return new OpResult { Ok = true, CardInstanceIds = new List<string>(cardInstanceIds) };
+            return null;
+        }
+
+        // ---------- ortak atomik işlem kapısı (mağaza, takas, ileride paket/antrenman) ----------
+        /// <summary>Aynı anahtarla daha önce tamamlanmış işlemin sonucunu döndürür; yoksa null. Farklı içerikle yeniden kullanım KEY_REUSED.</summary>
+        public OpResult PeekReplay(string key, string kind, string fingerprint)
+        {
+            OpResult rp; return TryReplay(key, kind, fingerprint, out rp) ? rp : null;
+        }
+
+        public long NowTicks { get { return _nowTicks(); } }
+
+        /// <summary>
+        /// Para değişimi + kart verme + kart tüketme + ek durum güncellemesini TEK atomik işlemde uygular:
+        /// önce tümü doğrulanır (bakiye negatife düşmez, kart tanımları geçerli, tüketilen kartlar serbest), sonra uygulanır.
+        /// Aynı anahtar tekrar gelirse durum değişmez, ilk sonuç döner.
+        /// </summary>
+        public OpResult ApplyBundle(string key, string kind, string fingerprint, IList<CurrencyDelta> deltas, IList<string> grantCardDefinitionIds, IList<string> consumeCardInstanceIds, Action onApplied, string reason)
+        {
+            if (string.IsNullOrEmpty(key)) return OpResult.Fail("NO_KEY", "idempotency anahtarı zorunlu");
+            OpResult rp; if (TryReplay(key, kind, fingerprint, out rp)) return rp;
+            deltas = deltas ?? new List<CurrencyDelta>();
+            grantCardDefinitionIds = grantCardDefinitionIds ?? new List<string>();
+            consumeCardInstanceIds = consumeCardInstanceIds ?? new List<string>();
+
+            var sums = new Dictionary<Currency, long>();
+            foreach (var d in deltas) { long cur; sums.TryGetValue(d.Currency, out cur); sums[d.Currency] = cur + d.Amount; }
+            foreach (var kv in sums)
+                if (_p.Wallet.Get(kv.Key) + kv.Value < 0) return OpResult.Fail("INSUFFICIENT_FUNDS", kv.Key + " bakiyesi yetersiz");
+            var defs = new List<CardDefinition>();
+            foreach (var id in grantCardDefinitionIds)
+            {
+                var def = _cat.GetCard(id);
+                if (def == null) return OpResult.Fail("BAD_REF", "geçersiz kart tanımı: " + id);
+                defs.Add(def);
+            }
+            if (consumeCardInstanceIds.Count > 0)
+            {
+                var bad = ValidateConsume(consumeCardInstanceIds);
+                if (bad != null) return bad;
+            }
+
+            // --- uygulama (hata olamaz) ---
+            foreach (var d in deltas) if (d.Amount != 0) WriteLedger(key, d.Currency, d.Amount, reason);
+            if (consumeCardInstanceIds.Count > 0) _p.Inventory.Cards.RemoveAll(c => consumeCardInstanceIds.Contains(c.CardInstanceId));
+            var created = defs.Select(d => NewInstance(d, reason)).ToList();
+            _p.Inventory.Cards.AddRange(created);
+            if (onApplied != null) onApplied();
+            var ids = created.Select(c => c.CardInstanceId).ToList();
+            Record(key, kind, fingerprint, ids, reason);
+            return new OpResult { Ok = true, CardInstanceIds = ids };
+        }
+
+        // ---------- dönemsel sayaçlar (sunucu saatine bağlı) ----------
+        public int UsageCount(string usageKey, LimitPeriod period)
+        {
+            UsageCounter c; if (!_p.Usage.TryGetValue(usageKey, out c)) return 0;
+            return c.PeriodKey == Periods.KeyOf(period, _nowTicks()) ? c.Count : 0;
+        }
+
+        public void AddUsage(string usageKey, LimitPeriod period, int amount)
+        {
+            string pk = Periods.KeyOf(period, _nowTicks());
+            UsageCounter c;
+            if (!_p.Usage.TryGetValue(usageKey, out c) || c.PeriodKey != pk) { c = new UsageCounter { PeriodKey = pk, Count = 0 }; _p.Usage[usageKey] = c; }
+            c.Count += amount;
         }
 
         public OpResult SetLocked(string cardInstanceId, bool locked)
